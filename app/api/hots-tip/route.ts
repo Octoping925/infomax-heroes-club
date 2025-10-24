@@ -16,8 +16,8 @@ export async function GET() {
   const tips = getRandomTips(2);
 
   await fetch(
-    // "https://infomax.dooray.com/services/3262462484277387103/4185584489094269528/I_-dFyZQSgOvidZnTBXvHg",
-    "https://infomax.dooray.com/services/3262462484277387103/4145159950514557822/6ZFFERWdTD2W2Epx4ouIDA",
+    "https://infomax.dooray.com/services/3262462484277387103/4185584489094269528/I_-dFyZQSgOvidZnTBXvHg",
+    // "https://infomax.dooray.com/services/3262462484277387103/4145159950514557822/6ZFFERWdTD2W2Epx4ouIDA",
     {
       method: "POST",
       headers: {
