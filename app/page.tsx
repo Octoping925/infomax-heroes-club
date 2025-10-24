@@ -145,7 +145,6 @@ export default function Home() {
           >
             {activeTab === "about" && <AboutSection />}
             {activeTab === "activities" && <ActivitiesSection />}
-            {activeTab === "members" && <MembersSection />}
           </Card>
         </Column>
       </Flex>
@@ -252,7 +251,7 @@ function AboutSection() {
           임직원들이 모여 만든 게임 커뮤니티입니다. 실력 향상과 즐거운 게임
           문화를 목표로 정기적인 게임 세션과 소통의 장을 마련하고 있습니다.
         </Text>
-        <Grid columns="2" mobileColumns="1" gap="m">
+        <Grid columns="2" gap="m">
           <FeatureCard
             title="정기 게임 세션"
             description="매주 정기적으로 진행되는 팀 게임으로 함께 성장합니다"
