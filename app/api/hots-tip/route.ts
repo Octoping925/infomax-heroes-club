@@ -1,12 +1,24 @@
 import { TIPS } from "@/app/api/hots-tip/tips";
 import { NextResponse } from "next/server";
 
+/**
+ * 암호학적으로 안전한 난수를 생성하여 0부터 max-1 사이의 정수를 반환합니다.
+ */
+function getSecureRandomInt(max: number): number {
+  const randomBuffer = new Uint32Array(1);
+  crypto.getRandomValues(randomBuffer);
+  return randomBuffer[0] % max;
+}
+
+/**
+ * Fisher-Yates 셔플 알고리즘을 사용하여 랜덤한 팁을 선택합니다.
+ */
 function getRandomTips(count: number) {
   const tipsCopy = [...TIPS];
 
-  // Fisher–Yates shuffle을 살짝만 이용: 앞 count개만 랜덤 섞기
-  for (let i = tipsCopy.length - 1; i > tipsCopy.length - 3; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+  // Fisher–Yates shuffle을 살짝만 이용: 뒤에서 count개만 랜덤 섞기
+  for (let i = tipsCopy.length - 1; i > tipsCopy.length - count - 1; i--) {
+    const j = getSecureRandomInt(i + 1);
     [tipsCopy[i], tipsCopy[j]] = [tipsCopy[j], tipsCopy[i]];
   }
   return tipsCopy.slice(-count);
