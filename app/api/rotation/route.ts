@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    await fetch(body.responseUrl, {
+    const response = await fetch(body.responseUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
         responseType: "inChannel",
         deleteOriginal: "true",
       }),
-    });
+    }).then((res) => res.text());
+
+    console.log(response);
 
     return new NextResponse("success");
   } catch (error) {
