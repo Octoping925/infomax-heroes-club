@@ -14,10 +14,9 @@ export async function POST(request: NextRequest) {
     imageURL: it.ImageURL,
   }));
 
-  const body = await request.json();
-  console.log(body);
-
   try {
+    const body = await request.json();
+
     await fetch(body.responseUrl, {
       method: "POST",
       headers: {
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
         responseType: "inChannel",
         deleteOriginal: "true",
       }),
-    }).then((res) => res.json());
+    });
 
     return new NextResponse("success");
   } catch (error) {
