@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   }));
 
   const body = await request.json();
+  console.log(body);
 
   try {
     await fetch(body.responseUrl, {
