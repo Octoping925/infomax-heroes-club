@@ -1,4 +1,3 @@
-import { DoorayBotMessageSender } from "@/domain/dooray/sender";
 import { DooraySlashCommandRequest } from "@/domain/dooray/types";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { sampleSize } from "es-toolkit";
