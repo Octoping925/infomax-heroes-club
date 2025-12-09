@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     .token(body.cmdToken)
     .body({
       text: text,
-      responseType: "ephemeral",
+      responseType: "inChannel",
       deleteOriginal: "true",
     })
     .send()
