@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     .send()
     .then((res) => res.text());
 
-  console.log(response);
+  console.log(text, response);
 
   return new NextResponse("success");
 }
