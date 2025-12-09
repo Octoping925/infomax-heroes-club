@@ -16,19 +16,8 @@ export async function POST(request: NextRequest) {
     ...randomMap.map((it) => `- ${it}`),
   ].join("\n");
 
-  //   const response = await DoorayBotMessageSender.url(body.responseUrl)
-  //     .token(body.cmdToken)
-  //     .body({
-  //       text: text,
-  //       responseType: "inChannel",
-  //     })
-  //     .send()
-  //     .then((res) => res.text());
-
-  //   console.log(body, text, response);
-
   return Response.json({
-    text: text,
+    text,
     responseType: "inChannel",
   });
 }
