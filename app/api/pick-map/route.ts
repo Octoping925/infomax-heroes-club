@@ -22,12 +22,11 @@ export async function POST(request: NextRequest) {
     .body({
       text: text,
       responseType: "inChannel",
-      deleteOriginal: "true",
     })
     .send()
     .then((res) => res.text());
 
-  console.log(text, response);
+  console.log(body, text, response);
 
   return new NextResponse("success");
 }
