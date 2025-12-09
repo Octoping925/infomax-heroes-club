@@ -11,7 +11,7 @@ export type DoorayBotMessage = {
 };
 
 export interface DoorayBotAttachment {
-  imageUrl?: string;
+  image_url?: string;
   title?: string;
   text?: string;
   color?: string;

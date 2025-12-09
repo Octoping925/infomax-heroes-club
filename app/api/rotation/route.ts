@@ -1,3 +1,5 @@
+import { DoorayBotMessageSender } from "@/domain/dooray/sender";
+import { DooraySlashCommandRequest } from "@/domain/dooray/types";
 import { NextRequest, NextResponse } from "next/server";
 
 type ApiResponse = {
@@ -15,26 +17,22 @@ export async function POST(request: NextRequest) {
   }));
 
   try {
-    const body = await request.json();
+    const body: DooraySlashCommandRequest = await request.json();
 
-    const response = await fetch(body.responseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        token: body.cmdToken,
-      },
-      body: JSON.stringify({
+    const response = await DoorayBotMessageSender.url(body.responseUrl)
+      .token(body.cmdToken)
+      .body({
         text: rotations.map((it) => `- ${it.name}`).join("\n"),
         attachments: rotations.map((it) => ({
           image_url: it.imageURL,
           title: it.name,
           text: it.name,
         })),
-        // channelId: body.channelId,
         responseType: "inChannel",
         deleteOriginal: "true",
-      }),
-    }).then((res) => res.text());
+      })
+      .send()
+      .then((res) => res.text());
 
     console.log(response);
 
