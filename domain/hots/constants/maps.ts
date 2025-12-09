@@ -15,3 +15,36 @@ export const MAPS = {
   Hanamura: "하나무라 사원",
   AlteracPass: "알터랙 고개",
 };
+
+export const MAPS_IMAGE = {
+  ControlPoints:
+    "https://nexuscompendium.com/images/battlegrounds/sky-temple/main.jpg",
+  TowersOfDoom:
+    "https://nexuscompendium.com/images/battlegrounds/towers-of-doom/main.jpg",
+  HauntedMines:
+    "https://nexuscompendium.com/images/battlegrounds/haunted-mines/main.jpg",
+  BattlefieldOfEternity:
+    "https://nexuscompendium.com/images/battlegrounds/battlefield-of-eternity/main.jpg",
+  BlackheartsBay:
+    "https://nexuscompendium.com/images/battlegrounds/blackhearts-bay/main.jpg",
+  CursedHollow:
+    "https://nexuscompendium.com/images/battlegrounds/cursed-hollow/main.jpg",
+  DragonShire:
+    "https://nexuscompendium.com/images/battlegrounds/dragon-shire/main.jpg",
+  HauntedWoods:
+    "https://nexuscompendium.com/images/battlegrounds/garden-of-terror/main.jpg",
+  Shrines:
+    "https://nexuscompendium.com/images/battlegrounds/infernal-shrines/main.jpg",
+  Crypts:
+    "https://nexuscompendium.com/images/battlegrounds/tomb-of-the-spider-queen/main.jpg",
+  Volskaya:
+    "https://nexuscompendium.com/images/battlegrounds/volskaya-foundry/main.jpg",
+  "Warhead Junction":
+    "https://nexuscompendium.com/images/battlegrounds/warhead-junction/main.jpg",
+  BraxisHoldout:
+    "https://nexuscompendium.com/images/battlegrounds/braxis-holdout/main.jpg",
+  Hanamura:
+    "https://nexuscompendium.com/images/battlegrounds/hanamura/main.jpg",
+  AlteracPass:
+    "https://nexuscompendium.com/images/battlegrounds/alterac-pass/main.jpg",
+};
