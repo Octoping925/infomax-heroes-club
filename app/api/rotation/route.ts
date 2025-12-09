@@ -8,6 +8,7 @@ export async function POST() {
   )) as ApiResponse;
 
   return Response.json({
+    text: "히오스 로테이션",
     attachments: data.RotationHero.Heroes.map((it) => ({
       thumbUrl: it.ImageURL,
       title: it.Name,
