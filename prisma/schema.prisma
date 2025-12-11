@@ -104,11 +104,11 @@ model GamePlayerStats {
 
   isWin Boolean
 
-  kills       Int
-  deaths      Int
-  takedowns   Int
-  damageDone  Int
-  damageTaken Int
+  kills       Int?
+  deaths      Int?
+  takedowns   Int?
+  damageDone  Int?
+  damageTaken Int?
   note        String
 
   game   Game   @relation(fields: [gameId], references: [id])
