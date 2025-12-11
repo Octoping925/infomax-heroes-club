@@ -3,3 +3,6 @@ export const INFOMAX_HOTS_CLUB_MESSAGE_ROOM =
 
 export const MYC_TEST_MESSAGE_ROOM =
   "https://infomax.dooray.com/services/3262462484277387103/4145159950514557822/6ZFFERWdTD2W2Epx4ouIDA";
+
+export const LUNCH_ROOM =
+  "https://infomax.dooray.com/services/3262462484277387103/4008079543538673211/TT3jqAOBSdC9vdCuLaBiqQ";

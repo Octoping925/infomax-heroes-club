@@ -1,18 +1,12 @@
 import { DoorayResponseType } from ".";
+import { DoorayAttachment } from "./attachment";
 
-export type DoorayBotMessage = {
+export interface DoorayBotMessage {
   botName?: string;
   botIconImage?: string;
   text?: string;
-  attachments?: DoorayBotAttachment[];
+  attachments?: DoorayAttachment[];
   responseType?: DoorayResponseType;
   deleteOriginal?: string;
   channelId?: string;
-};
-
-export interface DoorayBotAttachment {
-  image_url?: string;
-  title?: string;
-  text?: string;
-  color?: string;
 }
