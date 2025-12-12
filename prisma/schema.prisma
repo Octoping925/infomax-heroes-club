@@ -7,6 +7,10 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============================================
+// Enums
+// ============================================
+
 enum MatchType {
   LUNCH
   DINNER
@@ -130,4 +134,152 @@ enum Hero {
   Zarya
   Zeratul
   Zuljin
+}
+
+enum GameResult {
+  WIN
+  LOSE
+  DRAW
+}
+
+// ============================================
+// Models
+// ============================================
+
+/// 동호회 멤버
+model Player {
+  id        String   @id @default(cuid())
+  name      String // 실명
+  nickname  String   @unique // 게임 닉네임
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ledMatchTeams    MatchTeam[]       @relation("MatchTeamLeader")
+  matchTeamMembers MatchTeamMember[]
+  gameTeamMembers  GameTeamMember[]
+
+  @@map("players")
+}
+
+/// 내전 (점심/저녁)
+model Match {
+  id               String    @id @default(cuid())
+  type             MatchType
+  playedAt         DateTime // 내전 날짜
+  winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  teams MatchTeam[]
+  games Game[]
+
+  @@map("matches")
+}
+
+/// 내전 팀 (초기 편성)
+model MatchTeam {
+  id         String @id @default(cuid())
+  matchId    String
+  teamNumber Int // 팀 번호 (1 or 2)
+  leaderId   String // 팀장
+
+  // Relations
+  match            Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  leader           Player            @relation("MatchTeamLeader", fields: [leaderId], references: [id])
+  members          MatchTeamMember[]
+  // 이 MatchTeam에서 파생된 GameTeam들
+  derivedGameTeams GameTeam[]
+
+  @@unique([matchId, teamNumber])
+  @@map("match_teams")
+}
+
+/// 내전 팀 멤버 (초기 편성)
+model MatchTeamMember {
+  id          String @id @default(cuid())
+  matchTeamId String
+  playerId    String
+
+  // Relations
+  matchTeam MatchTeam @relation(fields: [matchTeamId], references: [id], onDelete: Cascade)
+  player    Player    @relation(fields: [playerId], references: [id])
+
+  @@unique([matchTeamId, playerId])
+  @@map("match_team_members")
+}
+
+/// 내전 경기
+model Game {
+  id               String   @id @default(cuid())
+  matchId          String
+  gameNumber       Int // 경기 순서 (1, 2, 3...)
+  map              GameMap
+  winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  match Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teams GameTeam[]
+
+  @@unique([matchId, gameNumber])
+  @@map("games")
+}
+
+/// 경기 팀 (실제 경기 구성)
+model GameTeam {
+  id                String     @id @default(cuid())
+  gameId            String
+  teamNumber        Int // 팀 번호 (1 or 2)
+  sourceMatchTeamId String // 파생된 원본 MatchTeam
+  result            GameResult // 승/패/무승부
+
+  // Relations
+  game            Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  sourceMatchTeam MatchTeam        @relation(fields: [sourceMatchTeamId], references: [id])
+  members         GameTeamMember[]
+  bans            GameTeamBan[]
+
+  @@unique([gameId, teamNumber])
+  @@map("game_teams")
+}
+
+/// 경기 팀 밴 목록
+model GameTeamBan {
+  id         String @id @default(cuid())
+  gameTeamId String
+  hero       Hero
+  banOrder   Int // 밴 순서 (1, 2, 3)
+
+  // Relations
+  gameTeam GameTeam @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
+
+  @@unique([gameTeamId, banOrder])
+  @@unique([gameTeamId, hero]) // 같은 팀에서 같은 영웅 중복 밴 방지
+  @@map("game_team_bans")
+}
+
+/// 경기 팀 멤버 (실제 경기 참여 + 성적)
+model GameTeamMember {
+  id          String @id @default(cuid())
+  gameTeamId  String
+  playerId    String
+  hero        Hero // 선택한 영웅
+  kills       Int? // 킬 수
+  deaths      Int? // 데스 수
+  takedowns   Int? // 테이크다운 수
+  heroDamage  Int? // 가한 피해량
+  damageTaken Int? // 받은 피해량
+
+  // Relations
+  gameTeam GameTeam @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
+  player   Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([gameTeamId, playerId])
+  @@index([playerId]) // 플레이어별 통계 조회 최적화
+  @@index([hero]) // 영웅별 통계 조회 최적화
+  @@index([playerId, hero]) // 플레이어의 영웅별 통계 조회 최적화
+  @@map("game_team_members")
 }
