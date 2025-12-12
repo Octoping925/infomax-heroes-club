@@ -13,110 +13,121 @@ enum MatchType {
 }
 
 enum HeroRole {
-  MAIN_TANK
-  OFFLANER
-  MAIN_DEALER
-  SUB_DEALER
+  TANKER
+  BRUISER
+  RANGED_ASSASSIN
+  MELEE_ASSASSIN
   HEALER
+  SUPPORT
 }
 
-model Player {
-  id       Int     @id @default(autoincrement())
-  nickname String  @unique
-  name     String
-  isActive Boolean @default(true)
-
-  // relations
-  matchTeamsLed    MatchTeam[]       @relation("MatchTeamLeader")
-  matchTeamMembers MatchTeamMember[]
-  gameStats        GamePlayerStats[]
+enum GameMap {
+  SkyTemple
+  TowersOfDoom
+  HauntedMines
+  BattlefieldOfEternity
+  BlackheartsBay
+  CursedHollow
+  DragonShire
+  HauntedWoods
+  InfernalShrines
+  TombOfTheSpiderQueen
+  VolskayaFoundry
+  WarheadJunction
+  BraxisHoldout
+  Hanamura
+  AlteracPass
 }
 
-model Hero {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  role     HeroRole?
-  isActive Boolean   @default(true)
-
-  gameStats GamePlayerStats[]
-}
-
-model Match {
-  id         Int       @id @default(autoincrement())
-  date       String
-  matchType  MatchType
-  gameCount  Int // 점심 3, 저녁 5
-  team1Score Int       @default(0)
-  team2Score Int       @default(0)
-
-  // relations
-  teams MatchTeam[]
-  games Game[]
-
-  @@index([matchType, date(sort: Desc)])
-}
-
-model MatchTeam {
-  matchId  Int
-  teamNo   Int
-  leaderId Int
-
-  match   Match             @relation(fields: [matchId], references: [id])
-  leader  Player            @relation("MatchTeamLeader", fields: [leaderId], references: [id])
-  members MatchTeamMember[]
-
-  @@id([matchId, teamNo])
-}
-
-model MatchTeamMember {
-  matchId  Int
-  teamNo   Int
-  playerId Int
-
-  matchTeam MatchTeam @relation(fields: [matchId, teamNo], references: [matchId, teamNo])
-  player    Player    @relation(fields: [playerId], references: [id])
-
-  @@id([matchId, teamNo, playerId])
-}
-
-model Game {
-  id      Int @id @default(autoincrement())
-  matchId Int
-  gameNo  Int // 1세트, 2세트...
-
-  mapName String
-
-  isDraw       Boolean @default(false)
-  winnerTeamNo Int?
-
-  match       Match             @relation(fields: [matchId], references: [id])
-  playerStats GamePlayerStats[]
-
-  @@unique([matchId, gameNo])
-  @@index([matchId])
-}
-
-model GamePlayerStats {
-  gameId   Int
-  playerId Int
-  teamNo   Int
-  heroId   Int
-
-  isWin Boolean
-
-  kills       Int?
-  deaths      Int?
-  takedowns   Int?
-  damageDone  Int?
-  damageTaken Int?
-  note        String
-
-  game   Game   @relation(fields: [gameId], references: [id])
-  player Player @relation(fields: [playerId], references: [id])
-  hero   Hero   @relation(fields: [heroId], references: [id])
-
-  @@id([gameId, playerId])
-  @@index([playerId])
-  @@index([heroId])
-  @@index([playerId, heroId])
+enum Hero {
+  Abathur
+  Alarak
+  Alexstrasza
+  Ana
+  Anduin
+  Anubarak
+  Artanis
+  Arthas
+  Auriel
+  Azmodan
+  Blaze
+  Brightwing
+  Cassia
+  Chen
+  Cho
+  Chromie
+  Deathwing
+  Deckard
+  Dehaka
+  Diablo
+  DVa
+  ETC
+  Falstad
+  Fenix
+  Gall
+  Garrosh
+  Gazlowe
+  Genji
+  Greymane
+  Guldan
+  Hanzo
+  Hogger
+  Illidan
+  Imperius
+  Jaina
+  Johanna
+  Junkrat
+  Kaelthas
+  KelThuzad
+  Kerrigan
+  Kharazim
+  Leoric
+  LiLi
+  LiMing
+  LtMorales
+  Lucio
+  Lunara
+  Maiev
+  Malfurion
+  MalGanis
+  Malthael
+  Medivh
+  Mei
+  Mephisto
+  Muradin
+  Murky
+  Nazeebo
+  Nova
+  Orphea
+  Probius
+  Qhira
+  Ragnaros
+  Raynor
+  Rehgar
+  Rexxar
+  Samuro
+  SgtHammer
+  Sonya
+  Stitches
+  Stukov
+  Sylvanas
+  Tassadar
+  TheButcher
+  TheLostVikings
+  Thrall
+  Tracer
+  Tychus
+  Tyrael
+  Tyrande
+  Uther
+  Valeera
+  Valla
+  Varian
+  Xul
+  Whitemane
+  Yrel
+  Zagara
+  Zarya
+  Zeratul
+  Zuljin
 }

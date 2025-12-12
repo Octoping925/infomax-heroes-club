@@ -1,5 +1,7 @@
-export const MAPS = {
-  ControlPoints: "하늘 사원",
+import { GameMap } from "../models/map";
+
+export const MAPS: Record<GameMap, string> = {
+  SkyTemple: "하늘 사원",
   TowersOfDoom: "파멸의 탑",
   HauntedMines: "공포의 광산",
   BattlefieldOfEternity: "영원의 전쟁터",
@@ -7,17 +9,17 @@ export const MAPS = {
   CursedHollow: "저주받은 골짜기",
   DragonShire: "용의 둥지",
   HauntedWoods: "공포의 정원",
-  Shrines: "불지옥 신단",
-  Crypts: "거미 여왕의 무덤",
-  Volskaya: "볼스카야 공장",
-  "Warhead Junction": "핵탄두 격전지", // blizz why
+  InfernalShrines: "불지옥 신단",
+  TombOfTheSpiderQueen: "거미 여왕의 무덤",
+  VolskayaFoundry: "볼스카야 공장",
+  WarheadJunction: "핵탄두 격전지",
   BraxisHoldout: "브락시스 항전",
   Hanamura: "하나무라 사원",
   AlteracPass: "알터랙 고개",
 };
 
-export const MAPS_IMAGE = {
-  ControlPoints:
+export const MAPS_IMAGE: Record<GameMap, string> = {
+  SkyTemple:
     "https://nexuscompendium.com/images/battlegrounds/sky-temple/main.jpg",
   TowersOfDoom:
     "https://nexuscompendium.com/images/battlegrounds/towers-of-doom/main.jpg",
@@ -33,13 +35,13 @@ export const MAPS_IMAGE = {
     "https://nexuscompendium.com/images/battlegrounds/dragon-shire/main.jpg",
   HauntedWoods:
     "https://nexuscompendium.com/images/battlegrounds/garden-of-terror/main.jpg",
-  Shrines:
+  InfernalShrines:
     "https://nexuscompendium.com/images/battlegrounds/infernal-shrines/main.jpg",
-  Crypts:
+  TombOfTheSpiderQueen:
     "https://nexuscompendium.com/images/battlegrounds/tomb-of-the-spider-queen/main.jpg",
-  Volskaya:
+  VolskayaFoundry:
     "https://nexuscompendium.com/images/battlegrounds/volskaya-foundry/main.jpg",
-  "Warhead Junction":
+  WarheadJunction:
     "https://nexuscompendium.com/images/battlegrounds/warhead-junction/main.jpg",
   BraxisHoldout:
     "https://nexuscompendium.com/images/battlegrounds/braxis-holdout/main.jpg",

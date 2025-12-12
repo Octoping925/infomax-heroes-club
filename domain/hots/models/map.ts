@@ -1,0 +1,16 @@
+export type GameMap =
+  | "SkyTemple"
+  | "TowersOfDoom"
+  | "HauntedMines"
+  | "BattlefieldOfEternity"
+  | "BlackheartsBay"
+  | "CursedHollow"
+  | "DragonShire"
+  | "HauntedWoods"
+  | "InfernalShrines"
+  | "TombOfTheSpiderQueen"
+  | "VolskayaFoundry"
+  | "WarheadJunction"
+  | "BraxisHoldout"
+  | "Hanamura"
+  | "AlteracPass";
