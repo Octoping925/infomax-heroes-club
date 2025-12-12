@@ -1,18 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Button,
-  Card,
-  Heading,
-  Text,
-  Avatar,
-  Badge,
-  Flex,
-  Grid,
-  Column,
-  BlockQuote,
-} from "@once-ui-system/core";
+import Link from "next/link";
 
 /**
  * 히어로즈 오브 더 스톰 동호회 메인 페이지 컴포넌트
@@ -21,271 +10,208 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<string>("about");
 
   return (
-    <Column fillWidth background="page" style={{ minHeight: "100vh" }}>
+    <div className="min-h-screen bg-[#0a0a12] text-white">
       {/* 헤더 네비게이션 */}
-      <Flex
-        as="header"
-        position="relative"
-        fillWidth
-        paddingX="l"
-        paddingY="m"
-        gap="m"
-        style={{
-          borderBottom: "1px solid var(--neutral-alpha-weak)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <Flex fillWidth maxWidth="xl" horizontal="center">
-          <Flex gap="m" vertical="center">
-            <Avatar
-              size="m"
-              style={{
-                background: "linear-gradient(135deg, #00d4ff, #7b2ff7)",
-              }}
-            >
-              <Text variant="heading-strong-xl">H</Text>
-            </Avatar>
-            <Column gap="4">
-              <Heading variant="heading-strong-l">
+      <header className="w-full px-6 py-4 border-b border-white/10 backdrop-blur-xl sticky top-0 z-50 bg-[#0a0a12]/90">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-2xl font-bold shadow-lg shadow-cyan-500/25">
+              H
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">
                 연합인포맥스 히어로즈 동호회
-              </Heading>
-              <Text variant="body-default-xs" onBackground="neutral-weak">
-                Infomax Heroes Club
-              </Text>
-            </Column>
-          </Flex>
-          <Flex gap="s" style={{ marginLeft: "auto" }}>
-            <Button
-              variant={activeTab === "about" ? "primary" : "tertiary"}
-              size="m"
-              onClick={() => setActiveTab("about")}
+              </h1>
+              <p className="text-xs text-gray-500">Infomax Heroes Club</p>
+            </div>
+          </div>
+          <nav className="flex gap-2">
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
             >
-              소개
-            </Button>
-            <Button
-              variant={activeTab === "activities" ? "primary" : "tertiary"}
-              size="m"
-              onClick={() => setActiveTab("activities")}
+              홈
+            </Link>
+            <Link
+              href="/stats"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
             >
-              활동
-            </Button>
-          </Flex>
-        </Flex>
-      </Flex>
+              통계
+            </Link>
+            <Link
+              href="/admin/match"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              경기입력
+            </Link>
+          </nav>
+        </div>
+      </header>
 
       {/* 히어로 섹션 */}
-      <Flex
-        as="section"
-        fillWidth
-        paddingTop="xl"
-        paddingBottom="xl"
-        paddingX="l"
-        horizontal="center"
-      >
-        <Column fillWidth maxWidth="xl" gap="xl">
-          <Column gap="l" horizontal="center">
-            <Badge
-              style={{
-                background:
-                  "linear-gradient(to right, rgba(0, 212, 255, 0.2), rgba(123, 47, 247, 0.2))",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
-                padding: "10px 20px",
-              }}
-            >
-              🎮 Heroes of the Storm Community
-            </Badge>
-            <Heading
-              variant="display-strong-xl"
-              align="center"
-              style={{
-                background:
-                  "linear-gradient(to right, #00d4ff, #7b2ff7, #ff3d00)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+      <section className="w-full px-6 py-16">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-6">
+            <div className="inline-flex px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 backdrop-blur-xl">
+              <span className="text-sm font-medium">
+                🎮 Heroes of the Storm Community
+              </span>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
               함께 만드는 승리의 역사
-            </Heading>
-            <Text
-              variant="heading-default-l"
-              align="center"
-              onBackground="neutral-weak"
-              style={{ maxWidth: "42rem" }}
-            >
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
               연합인포맥스 히오스 동호회에서 즐거운 게임과 소통을 경험하세요.
               <br />
               실력과 팀워크를 함께 키워나가는 커뮤니티입니다.
-            </Text>
-          </Column>
+            </p>
+          </div>
 
           {/* 주요 통계 */}
-          <Grid columns="2" gap="m">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <StatCard
               title="활동 멤버"
-              value="10+"
+              value="13+"
               description="열정적인 히어로즈 플레이어"
               icon="👥"
+              gradient="from-cyan-500/20 to-blue-500/20"
             />
             <StatCard
               title="내전"
-              value="3회"
-              description="매주 함께하는 게임 세션"
+              value="매주"
+              description="함께하는 게임 세션"
               icon="🎯"
+              gradient="from-purple-500/20 to-pink-500/20"
             />
-          </Grid>
+          </div>
+
+          {/* 탭 네비게이션 */}
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setActiveTab("about")}
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeTab === "about"
+                  ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
+                  : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              소개
+            </button>
+            <button
+              onClick={() => setActiveTab("activities")}
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeTab === "activities"
+                  ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
+                  : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              활동
+            </button>
+          </div>
 
           {/* 탭 컨텐츠 */}
-          <Card
-            padding="l"
-            style={{
-              background: "var(--neutral-alpha-weak)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
             {activeTab === "about" && <AboutSection />}
             {activeTab === "activities" && <ActivitiesSection />}
-          </Card>
-        </Column>
-      </Flex>
+          </div>
+        </div>
+      </section>
 
       {/* CTA 섹션 */}
-      <Flex
-        as="section"
-        fillWidth
-        paddingY="xl"
-        paddingX="l"
-        horizontal="center"
-      >
-        <Card
-          fillWidth
-          maxWidth="l"
-          padding="xl"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(0, 212, 255, 0.1), rgba(123, 47, 247, 0.1))",
-            border: "1px solid rgba(0, 212, 255, 0.3)",
-          }}
-        >
-          <Column gap="l" horizontal="center">
-            <Heading variant="display-strong-l" align="center">
-              함께 플레이하고 싶으신가요?
-            </Heading>
-            <Text
-              variant="heading-default-m"
-              align="center"
-              onBackground="neutral-weak"
-            >
+      <section className="w-full px-6 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-12 border border-cyan-500/30 text-center space-y-6">
+            <h3 className="text-4xl font-bold">함께 플레이하고 싶으신가요?</h3>
+            <p className="text-xl text-gray-400">
               연합인포맥스 히오스 동호회에 가입하여 즐거운 게임 문화를
               경험하세요!
-            </Text>
-            <BlockQuote author={{ name: "채수관" }}>
-              “승리에 우연은 없습니다.”
-            </BlockQuote>
-          </Column>
-        </Card>
-      </Flex>
-    </Column>
+            </p>
+            <blockquote className="border-l-4 border-cyan-500 pl-6 py-4 bg-white/5 rounded-r-xl">
+              <p className="text-lg italic text-gray-300">
+                "승리에 우연은 없습니다."
+              </p>
+              <footer className="text-sm text-gray-500 mt-2">- 채수관</footer>
+            </blockquote>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
-interface StatCardProps {
+type StatCardProps = {
   title: string;
   value: string;
   description: string;
   icon: string;
-}
+  gradient: string;
+};
 
-/**
- * 통계 카드 컴포넌트
- */
-function StatCard({ title, value, description, icon }: StatCardProps) {
+function StatCard({
+  title,
+  value,
+  description,
+  icon,
+  gradient,
+}: StatCardProps) {
   return (
-    <Card
-      padding="l"
-      style={{
-        background:
-          "linear-gradient(135deg, var(--neutral-alpha-weak), var(--neutral-alpha-medium))",
-        backdropFilter: "blur(12px)",
-        transition: "all 0.3s ease",
-      }}
+    <div
+      className={`bg-gradient-to-br ${gradient} backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-white/20 transition-all hover:scale-105 duration-300`}
     >
-      <Column gap="m">
-        <Text variant="display-default-xl">{icon}</Text>
-        <Text
-          variant="label-strong-s"
-          onBackground="neutral-weak"
-          style={{ textTransform: "uppercase", letterSpacing: "0.1em" }}
-        >
+      <div className="space-y-4">
+        <div className="text-5xl">{icon}</div>
+        <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
           {title}
-        </Text>
-        <Heading
-          variant="display-strong-xl"
-          style={{
-            background: "linear-gradient(to right, #00d4ff, #7b2ff7)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
+        </div>
+        <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
           {value}
-        </Heading>
-        <Text variant="body-default-m" onBackground="neutral-weak">
-          {description}
-        </Text>
-      </Column>
-    </Card>
+        </div>
+        <p className="text-gray-400">{description}</p>
+      </div>
+    </div>
   );
 }
 
-/**
- * 소개 섹션 컴포넌트
- */
 function AboutSection() {
   return (
-    <Column gap="l">
-      <Heading variant="display-strong-l">동호회 소개</Heading>
-      <Column gap="xl">
-        <Text variant="heading-default-m" onBackground="neutral-weak">
-          연합인포맥스 히어로즈 동호회는 히어로즈 오브 더 스톰을 사랑하는
-          임직원들이 모여 만든 게임 커뮤니티입니다. 실력 향상과 즐거운 게임
-          문화를 목표로 정기적인 게임 세션과 소통의 장을 마련하고 있습니다.
-        </Text>
-        <Grid columns="2" gap="m">
-          <FeatureCard
-            title="정기 게임 세션"
-            description="매주 정기적으로 진행되는 팀 게임으로 함께 성장합니다"
-            icon="🎮"
-          />
-          <FeatureCard
-            title="스킬 향상 프로그램"
-            description="전략 공유와 리플레이 분석으로 실력을 키워갑니다"
-            icon="📈"
-          />
-          <FeatureCard
-            title="친목 활동"
-            description="게임 외에도 다양한 친목 활동으로 유대감을 형성합니다"
-            icon="🤝"
-          />
-          <FeatureCard
-            title="자유로운 분위기"
-            description="초보자부터 고수까지 모두 환영하는 열린 커뮤니티"
-            icon="✨"
-          />
-        </Grid>
-      </Column>
-    </Column>
+    <div className="space-y-8">
+      <h3 className="text-3xl font-bold">동호회 소개</h3>
+      <p className="text-lg text-gray-400 leading-relaxed">
+        연합인포맥스 히어로즈 동호회는 히어로즈 오브 더 스톰을 사랑하는
+        임직원들이 모여 만든 게임 커뮤니티입니다. 실력 향상과 즐거운 게임 문화를
+        목표로 정기적인 게임 세션과 소통의 장을 마련하고 있습니다.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FeatureCard
+          title="정기 게임 세션"
+          description="매주 정기적으로 진행되는 팀 게임으로 함께 성장합니다"
+          icon="🎮"
+        />
+        <FeatureCard
+          title="스킬 향상 프로그램"
+          description="전략 공유와 리플레이 분석으로 실력을 키워갑니다"
+          icon="📈"
+        />
+        <FeatureCard
+          title="친목 활동"
+          description="게임 외에도 다양한 친목 활동으로 유대감을 형성합니다"
+          icon="🤝"
+        />
+        <FeatureCard
+          title="자유로운 분위기"
+          description="초보자부터 고수까지 모두 환영하는 열린 커뮤니티"
+          icon="✨"
+        />
+      </div>
+    </div>
   );
 }
 
-/**
- * 활동 섹션 컴포넌트
- */
 function ActivitiesSection() {
   return (
-    <Column gap="l">
-      <Heading variant="display-strong-l">주요 활동</Heading>
-      <Column gap="m">
+    <div className="space-y-8">
+      <h3 className="text-3xl font-bold">주요 활동</h3>
+      <div className="space-y-4">
         <ActivityCard
           title="주간 내전"
           time="1달에 2번, 점심 내전"
@@ -310,106 +236,66 @@ function ActivitiesSection() {
           description="메타 분석, 영웅 픽/밴 전략 등을 공유합니다"
           type="교육"
         />
-      </Column>
-    </Column>
+      </div>
+    </div>
   );
 }
 
-interface FeatureCardProps {
+type FeatureCardProps = {
   title: string;
   description: string;
   icon: string;
-}
+};
 
-/**
- * 기능 카드 컴포넌트
- */
 function FeatureCard({ title, description, icon }: FeatureCardProps) {
   return (
-    <Card
-      padding="l"
-      style={{
-        background: "var(--neutral-alpha-weak)",
-        transition: "all 0.3s ease",
-      }}
-    >
-      <Column gap="m">
-        <Text variant="display-default-l">{icon}</Text>
-        <Heading variant="heading-strong-l">{title}</Heading>
-        <Text variant="body-default-m" onBackground="neutral-weak">
-          {description}
-        </Text>
-      </Column>
-    </Card>
+    <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all">
+      <div className="space-y-3">
+        <div className="text-4xl">{icon}</div>
+        <h4 className="text-xl font-bold">{title}</h4>
+        <p className="text-gray-400">{description}</p>
+      </div>
+    </div>
   );
 }
 
-interface ActivityCardProps {
+type ActivityCardProps = {
   title: string;
   time: string;
   description: string;
   type: string;
-}
+};
 
-/**
- * 활동 카드 컴포넌트
- */
 function ActivityCard({ title, time, description, type }: ActivityCardProps) {
-  const getBadgeColor = (activityType: string): React.CSSProperties => {
-    switch (activityType) {
-      case "정기":
-        return {
-          background: "rgba(59, 130, 246, 0.2)",
-          color: "rgb(96, 165, 250)",
-          border: "1px solid rgba(59, 130, 246, 0.3)",
-        };
-      case "자유":
-        return {
-          background: "rgba(34, 197, 94, 0.2)",
-          color: "rgb(74, 222, 128)",
-          border: "1px solid rgba(34, 197, 94, 0.3)",
-        };
-      case "이벤트":
-        return {
-          background: "rgba(168, 85, 247, 0.2)",
-          color: "rgb(192, 132, 252)",
-          border: "1px solid rgba(168, 85, 247, 0.3)",
-        };
-      case "교육":
-        return {
-          background: "rgba(249, 115, 22, 0.2)",
-          color: "rgb(251, 146, 60)",
-          border: "1px solid rgba(249, 115, 22, 0.3)",
-        };
-      default:
-        return {
-          background: "rgba(156, 163, 175, 0.2)",
-          color: "rgb(156, 163, 175)",
-          border: "1px solid rgba(156, 163, 175, 0.3)",
-        };
-    }
+  const getBadgeStyle = (activityType: string) => {
+    const styles = {
+      정기: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      자유: "bg-green-500/20 text-green-400 border-green-500/30",
+      이벤트: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+      교육: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    };
+    return (
+      styles[activityType as keyof typeof styles] ||
+      "bg-gray-500/20 text-gray-400 border-gray-500/30"
+    );
   };
 
   return (
-    <Card
-      padding="l"
-      style={{
-        background: "var(--neutral-alpha-weak)",
-        transition: "all 0.3s ease",
-      }}
-    >
-      <Column gap="m">
-        <Flex horizontal="between">
-          <Heading variant="heading-strong-l">{title}</Heading>
-          <Badge style={getBadgeColor(type)}>{type}</Badge>
-        </Flex>
-        <Text variant="body-default-s" style={{ color: "#00d4ff" }}>
-          ⏰ {time}
-        </Text>
-        <Text variant="body-default-m" onBackground="neutral-weak">
-          {description}
-        </Text>
-      </Column>
-    </Card>
+    <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xl font-bold">{title}</h4>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium border ${getBadgeStyle(
+              type
+            )}`}
+          >
+            {type}
+          </span>
+        </div>
+        <p className="text-sm text-cyan-400">⏰ {time}</p>
+        <p className="text-gray-400">{description}</p>
+      </div>
+    </div>
   );
 }

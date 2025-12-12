@@ -35,7 +35,7 @@ export async function GET(
   }
 
   const gameResults = await prisma.gameTeamMember.findMany({
-    where: { playerId: nickname },
+    where: { playerId: player.id },
     select: {
       hero: true,
       gameTeam: {
