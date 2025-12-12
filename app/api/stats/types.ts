@@ -1,0 +1,63 @@
+import { GameMap, Hero } from "@/generated/prisma/client";
+
+/** 승률 통계 기본 타입 */
+export type WinRateStats = {
+  readonly totalGames: number;
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  readonly winRate: number; // 0 ~ 100
+};
+
+/** 플레이어 승률 응답 */
+export type PlayerWinRateResponse = WinRateStats & {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+};
+
+/** 영웅 승률 응답 */
+export type HeroWinRateResponse = WinRateStats & {
+  readonly hero: Hero;
+};
+
+/** 플레이어의 영웅별 승률 응답 */
+export type PlayerHeroWinRateResponse = {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly heroStats: ReadonlyArray<HeroWinRateResponse>;
+};
+
+/** 팀 변경 승률 응답 */
+export type TeamSwitchWinRateResponse = {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly originalTeamStats: WinRateStats;
+  readonly switchedTeamStats: WinRateStats;
+  readonly switchedWinRateDiff: number; // 팀 변경 시 승률 차이
+};
+
+/** 영웅 픽/밴 통계 응답 */
+export type HeroPopularityResponse = {
+  readonly hero: Hero;
+  readonly pickCount: number;
+  readonly banCount: number;
+  readonly totalAppearance: number;
+  readonly pickWinRate: number;
+};
+
+/** 맵별 플레이어 승률 응답 */
+export type MapPlayerWinRateResponse = {
+  readonly map: GameMap;
+  readonly playerStats: ReadonlyArray<PlayerWinRateResponse>;
+};
+
+/**
+ * 승률을 계산하는 유틸리티 함수
+ */
+export function calculateWinRate(wins: number, totalGames: number): number {
+  if (totalGames === 0) return 0;
+  return Math.round((wins / totalGames) * 10000) / 100;
+}
