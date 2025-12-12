@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "GamePlayerStats" ALTER COLUMN "kills" DROP NOT NULL,
-ALTER COLUMN "deaths" DROP NOT NULL,
-ALTER COLUMN "takedowns" DROP NOT NULL,
-ALTER COLUMN "damageDone" DROP NOT NULL,
-ALTER COLUMN "damageTaken" DROP NOT NULL;
