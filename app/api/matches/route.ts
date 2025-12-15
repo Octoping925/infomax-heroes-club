@@ -5,6 +5,7 @@ import {
   parseGameStats,
   ParsedGameStats,
 } from "@/domain/hots/utils/game-stats-parser";
+import dayjs from "dayjs";
 
 /** 게임 입력 데이터 */
 type GameInput = {
@@ -36,8 +37,8 @@ export async function POST(
     const body: CreateMatchRequest = await request.json();
 
     // 날짜 파싱 (yyyyMMdd → Date)
-    const playedAt = parseDateString(body.playedAt);
-    if (!playedAt) {
+    const playedAt = dayjs(body.playedAt, "yyyyMMdd");
+    if (!playedAt.isValid()) {
       return NextResponse.json(
         { error: "잘못된 날짜 형식입니다. yyyyMMdd 형식으로 입력해주세요." },
         { status: 400 }
@@ -109,41 +110,41 @@ export async function POST(
         const newMatch = await tx.match.create({
           data: {
             type: body.type,
-            playedAt,
+            playedAt: playedAt.format("yyyyMMdd"),
             winnerTeamNumber: matchWinnerTeamNumber,
           },
         });
 
         // 2. MatchTeam 생성 (팀장은 첫 번째 플레이어)
-        const matchTeam1 = await tx.matchTeam.create({
-          data: {
-            matchId: newMatch.id,
-            teamNumber: 1,
-            leaderId: team1Players[0],
-          },
-        });
-
-        const matchTeam2 = await tx.matchTeam.create({
-          data: {
-            matchId: newMatch.id,
-            teamNumber: 2,
-            leaderId: team2Players[0],
-          },
-        });
+        const [matchTeam1, matchTeam2] = await tx.matchTeam.createManyAndReturn(
+          {
+            data: [
+              {
+                matchId: newMatch.id,
+                teamNumber: 1,
+                leaderId: team1Players[0],
+              },
+              {
+                matchId: newMatch.id,
+                teamNumber: 2,
+                leaderId: team2Players[0],
+              },
+            ],
+          }
+        );
 
         // 3. MatchTeamMember 생성
         await tx.matchTeamMember.createMany({
-          data: team1Players.map((playerId) => ({
-            matchTeamId: matchTeam1.id,
-            playerId,
-          })),
-        });
-
-        await tx.matchTeamMember.createMany({
-          data: team2Players.map((playerId) => ({
-            matchTeamId: matchTeam2.id,
-            playerId,
-          })),
+          data: [
+            ...team1Players.map((playerId) => ({
+              matchTeamId: matchTeam1.id,
+              playerId,
+            })),
+            ...team2Players.map((playerId) => ({
+              matchTeamId: matchTeam2.id,
+              playerId,
+            })),
+          ],
         });
 
         // 4. 각 Game 생성
@@ -212,28 +213,6 @@ export async function POST(
     const message = err instanceof Error ? err.message : "알 수 없는 오류";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-function parseDateString(dateStr: string): Date | null {
-  if (!/^\d{8}$/.test(dateStr)) {
-    return null;
-  }
-
-  const year = parseInt(dateStr.slice(0, 4), 10);
-  const month = parseInt(dateStr.slice(4, 6), 10) - 1;
-  const day = parseInt(dateStr.slice(6, 8), 10);
-
-  const date = new Date(year, month, day);
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
 }
 
 function calculateGameResult(
