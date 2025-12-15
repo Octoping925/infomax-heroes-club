@@ -128,7 +128,7 @@ export function HeroPopularityChart() {
         </h3>
         <div className="w-full h-[400px]">
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={data.toSorted((a, b) => b.pickWinRate - a.pickWinRate)} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
               <YAxis
@@ -147,7 +147,7 @@ export function HeroPopularityChart() {
                 formatter={(value: number) => [`${value}%`, "승률"]}
               />
               <Bar dataKey="pickWinRate" name="승률" fill="#22c55e">
-                {data.map((entry, index) => (
+                {data.toSorted((a, b) => b.pickWinRate - a.pickWinRate).map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}

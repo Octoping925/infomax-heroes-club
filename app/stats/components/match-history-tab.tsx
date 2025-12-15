@@ -94,19 +94,12 @@ export function MatchHistoryTab() {
   return (
     <div className="space-y-6">
       <p className="text-gray-400">
-        날짜별로 match가 보이고, <span className="text-white">열기</span>를 누르면
-        해당 match의 game 상세(팀/영웅/킬·데스 등)가 표시됩니다.
+        날짜별로 match가 보이고, <span className="text-white">열기</span>를
+        누르면 해당 match의 game 상세(팀/영웅/킬·데스 등)가 표시됩니다.
       </p>
 
       {groups.map((group) => (
         <section key={group.dateKey} className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-              {group.dateKey}
-            </h3>
-            <span className="text-xs text-gray-500">{group.matches.length}건</span>
-          </div>
-
           <div className="space-y-3">
             {group.matches.map((match) => (
               <MatchCard
@@ -131,28 +124,28 @@ type MatchCardProps = {
 
 function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const winnerLabel = getWinnerLabel(match.winnerTeamNumber);
-  const matchTypeLabel = match.type === "LUNCH" ? "점심" : "저녁";
 
   const team1 = match.teams.find((t) => t.teamNumber === 1);
   const team2 = match.teams.find((t) => t.teamNumber === 2);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
+    <main className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
       <div className="p-5 flex items-start justify-between gap-4">
-        <div className="space-y-2 min-w-0">
+        <div className="flex space-y-2 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-3 py-1 rounded-full text-xs font-medium border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-              {matchTypeLabel}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-medium border bg-white/5 text-gray-300 border-white/10">
-              {winnerLabel}
-            </span>
-            <span className="text-xs text-gray-500">
-              {dayjs(match.playedAt).format("YYYY-MM-DD")}
-            </span>
+            <div className="flex flex-col gap-2">
+              <span className="text-center px-3 py-1 rounded-full text-md font-medium border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
+                {match.type === "LUNCH" ? "점심" : "저녁"}
+              </span>
+              <span className="text-center px-3 py-1 rounded-full text-md font-medium border bg-white/5 text-gray-300 border-white/10">
+                {winnerLabel}
+              </span>
+              <span className="text-md font-semibold text-gray-400 uppercase tracking-wider">
+                {dayjs(match.playedAt).format("YYYY-MM-DD")}
+              </span>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="ml-12 grid grid-cols-1 md:grid-cols-2 gap-3">
             <TeamSummaryCard
               title="팀 1"
               leaderNickname={team1?.leader.nickname ?? "-"}
@@ -189,7 +182,7 @@ function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           )}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -207,14 +200,15 @@ function TeamSummaryCard({
   accent,
 }: TeamSummaryCardProps) {
   return (
-    <div className={`bg-white/5 rounded-xl p-4 border ${accent}`}>
+    <div className={`w-36 bg-white/5 rounded-xl p-4 border ${accent}`}>
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">{title}</p>
-        <p className="text-xs text-gray-400">리더: {leaderNickname}</p>
+        <p className="text-sm text-gray-500">{title}</p>
       </div>
-      <p className="text-sm text-gray-300 mt-2 truncate">
-        {members.length === 0 ? "멤버 정보 없음" : members.join(", ")}
-      </p>
+      {members.map((member) => (
+        <p key={member} className="text-xs text-gray-300 mt-2 truncate">
+          {leaderNickname === member ? `${member} - 👑` : member}
+        </p>
+      ))}
     </div>
   );
 }
@@ -315,7 +309,9 @@ function GameTeamTable({ title, result, members, accent }: GameTeamTableProps) {
                   <td className="py-2 pr-3">
                     {HeroMap[member.hero as Hero] || member.hero}
                   </td>
-                  <td className="py-2 pr-3">{formatNumberOrDash(member.kills)}</td>
+                  <td className="py-2 pr-3">
+                    {formatNumberOrDash(member.kills)}
+                  </td>
                   <td className="py-2 pr-3">
                     {formatNumberOrDash(member.deaths)}
                   </td>
@@ -346,5 +342,3 @@ function getTeamBackgroundClass(result: string | null): string {
   if (result === "LOSE") return "bg-red-500/10";
   return "bg-white/0";
 }
-
-
