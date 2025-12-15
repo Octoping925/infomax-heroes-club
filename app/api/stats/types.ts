@@ -9,6 +9,27 @@ export interface WinRateStats {
   readonly winRate: number; // 0 ~ 100
 }
 
+/** 점심/저녁 승률 응답(게임 단위, Match.type으로 구분) */
+export interface PlayerLunchDinnerWinRateResponse {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly lunchStats: WinRateStats;
+  readonly dinnerStats: WinRateStats;
+  readonly dinnerWinRateDiff: number; // dinner - lunch
+  readonly absWinRateDiff: number;
+}
+
+/** 플레이어 평균 킬/데스 통계 응답(게임 단위) */
+export interface PlayerAverageKillsDeathsResponse {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly totalGames: number;
+  readonly averageKills: number;
+  readonly averageDeaths: number;
+}
+
 /** 플레이어 승률 응답 */
 export interface PlayerWinRateResponse extends WinRateStats {
   readonly playerId: string;
@@ -60,4 +81,12 @@ export interface MapPlayerWinRateResponse {
 export function calculateWinRate(wins: number, totalGames: number): number {
   if (totalGames === 0) return 0;
   return Math.round((wins / totalGames) * 10000) / 100;
+}
+
+/**
+ * 평균을 계산하는 유틸리티 함수
+ */
+export function calculateAverage(total: number, count: number): number {
+  if (count === 0) return 0;
+  return Math.round((total / count) * 100) / 100;
 }

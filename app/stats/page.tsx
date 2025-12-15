@@ -6,6 +6,11 @@ import { PlayerWinRateChart } from "./components/player-win-rate-chart";
 import { PlayerHeroChart } from "./components/player-hero-chart";
 import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
+import { LunchDinnerWinRateChart } from "./components/lunch-dinner-win-rate-chart";
+import { LunchDinnerDiffRankingChart } from "./components/lunch-dinner-diff-ranking-chart";
+import { AvgKillsDeathsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
+import { MatchWinRateRankingChart } from "./components/match-win-rate-ranking-chart";
+import { MatchHistoryTab } from "./components/match-history-tab";
 import type { PlayerListItem } from "../api/players/route";
 
 type TabType =
@@ -13,7 +18,12 @@ type TabType =
   | "playerWinRate"
   | "playerHero"
   | "mapWinRate"
-  | "teamSwitch";
+  | "teamSwitch"
+  | "lunchDinnerWinRate"
+  | "lunchDinnerDiffRanking"
+  | "avgKillsDeathsRanking"
+  | "matchWinRateRanking"
+  | "matchHistory";
 
 const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "heroPopularity", label: "영웅 픽/밴", icon: "🎯" },
@@ -21,6 +31,11 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "playerHero", label: "플레이어별 영웅", icon: "⚔️" },
   { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
+  { id: "lunchDinnerWinRate", label: "점심/저녁 승률", icon: "🍱" },
+  { id: "lunchDinnerDiffRanking", label: "점심/저녁 차이", icon: "📈" },
+  { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
+  { id: "matchWinRateRanking", label: "매치 승률", icon: "🏆" },
+  { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
 /**
@@ -151,6 +166,19 @@ export default function StatsPage() {
                 )}
                 {activeTab === "mapWinRate" && <MapWinRateChart />}
                 {activeTab === "teamSwitch" && <TeamSwitchChart />}
+                {activeTab === "lunchDinnerWinRate" && (
+                  <LunchDinnerWinRateChart />
+                )}
+                {activeTab === "lunchDinnerDiffRanking" && (
+                  <LunchDinnerDiffRankingChart />
+                )}
+                {activeTab === "avgKillsDeathsRanking" && (
+                  <AvgKillsDeathsRankingChart />
+                )}
+                {activeTab === "matchWinRateRanking" && (
+                  <MatchWinRateRankingChart />
+                )}
+                {activeTab === "matchHistory" && <MatchHistoryTab />}
               </div>
             </div>
           </div>

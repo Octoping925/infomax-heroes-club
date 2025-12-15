@@ -39,6 +39,12 @@ export default function Home() {
               통계
             </Link>
             <Link
+              href="/matches"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              전적
+            </Link>
+            <Link
               href="/admin/match"
               className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
             >

@@ -7,6 +7,190 @@ import {
 } from "@/domain/hots/utils/game-stats-parser";
 import dayjs from "dayjs";
 
+type MatchHistoryPlayer = {
+  readonly id: string;
+  readonly name: string;
+  readonly nickname: string;
+};
+
+type MatchHistoryMatchTeam = {
+  readonly id: string;
+  readonly teamNumber: number;
+  readonly leader: MatchHistoryPlayer;
+  readonly members: ReadonlyArray<MatchHistoryPlayer>;
+};
+
+type MatchHistoryGameTeamMember = {
+  readonly player: MatchHistoryPlayer;
+  readonly hero: string;
+  readonly kills: number | null;
+  readonly deaths: number | null;
+  readonly takedowns: number | null;
+};
+
+type MatchHistoryGameTeam = {
+  readonly id: string;
+  readonly teamNumber: number;
+  readonly result: GameResult;
+  readonly members: ReadonlyArray<MatchHistoryGameTeamMember>;
+};
+
+type MatchHistoryGame = {
+  readonly id: string;
+  readonly gameNumber: number;
+  readonly map: string;
+  readonly winnerTeamNumber: number | null;
+  readonly teams: ReadonlyArray<MatchHistoryGameTeam>;
+};
+
+export type MatchHistoryItem = {
+  readonly id: string;
+  readonly playedAt: string; // ISO String
+  readonly type: MatchType;
+  readonly winnerTeamNumber: number | null;
+  readonly teams: ReadonlyArray<MatchHistoryMatchTeam>;
+  readonly games: ReadonlyArray<MatchHistoryGame>;
+};
+
+/**
+ * 역대 내전(match) 전적 조회
+ * GET /api/matches?take=50
+ *
+ * - 날짜별 grouping은 프론트에서 처리합니다.
+ * - 열기 시 match의 games, 각 game의 team members + hero + kills/deaths 등을 제공합니다.
+ */
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<MatchHistoryItem[] | { error: string }>> {
+  try {
+    const take = parseTakeParam(request.nextUrl.searchParams.get("take"));
+
+    const matches = await prisma.match.findMany({
+      orderBy: {
+        playedAt: "desc",
+      },
+      take,
+      select: {
+        id: true,
+        playedAt: true,
+        type: true,
+        winnerTeamNumber: true,
+        teams: {
+          orderBy: {
+            teamNumber: "asc",
+          },
+          select: {
+            id: true,
+            teamNumber: true,
+            leader: {
+              select: {
+                id: true,
+                name: true,
+                nickname: true,
+              },
+            },
+            members: {
+              select: {
+                player: {
+                  select: {
+                    id: true,
+                    name: true,
+                    nickname: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        games: {
+          orderBy: {
+            gameNumber: "asc",
+          },
+          select: {
+            id: true,
+            gameNumber: true,
+            map: true,
+            winnerTeamNumber: true,
+            teams: {
+              orderBy: {
+                teamNumber: "asc",
+              },
+              select: {
+                id: true,
+                teamNumber: true,
+                result: true,
+                members: {
+                  select: {
+                    hero: true,
+                    kills: true,
+                    deaths: true,
+                    takedowns: true,
+                    player: {
+                      select: {
+                        id: true,
+                        name: true,
+                        nickname: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const response: MatchHistoryItem[] = matches.map((match) => ({
+      id: match.id,
+      playedAt: match.playedAt.toISOString(),
+      type: match.type,
+      winnerTeamNumber: match.winnerTeamNumber,
+      teams: match.teams.map((team) => ({
+        id: team.id,
+        teamNumber: team.teamNumber,
+        leader: team.leader,
+        members: team.members.map((member) => member.player),
+      })),
+      games: match.games.map((game) => ({
+        id: game.id,
+        gameNumber: game.gameNumber,
+        map: game.map,
+        winnerTeamNumber: game.winnerTeamNumber,
+        teams: game.teams.map((team) => ({
+          id: team.id,
+          teamNumber: team.teamNumber,
+          result: team.result,
+          members: team.members.map((member) => ({
+            player: member.player,
+            hero: member.hero,
+            kills: member.kills,
+            deaths: member.deaths,
+            takedowns: member.takedowns,
+          })),
+        })),
+      })),
+    }));
+
+    return NextResponse.json(response);
+  } catch (err) {
+    console.error("역대 내전 조회 오류:", err);
+    const message = err instanceof Error ? err.message : "알 수 없는 오류";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+const DEFAULT_TAKE = 50;
+const MAX_TAKE = 200;
+
+function parseTakeParam(input: string | null): number {
+  if (!input) return DEFAULT_TAKE;
+  const parsed = Number(input);
+  if (!Number.isFinite(parsed)) return DEFAULT_TAKE;
+  if (parsed <= 0) return DEFAULT_TAKE;
+  return Math.min(Math.floor(parsed), MAX_TAKE);
+}
+
 /** 게임 입력 데이터 */
 type GameInput = {
   readonly statsText: string;
