@@ -160,7 +160,7 @@ export function PlayerWinRateChart({ nickname }: Props) {
         />
         <StatCard
           label="무승부"
-          value={`${data.draws}무`}
+          value={`${data.draws ?? 0}무`}
           color={COLORS.draws}
         />
       </div>

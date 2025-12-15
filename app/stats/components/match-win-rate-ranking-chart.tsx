@@ -129,7 +129,7 @@ export function MatchWinRateRankingChart() {
               }}
             />
             <Legend />
-            <Bar dataKey="winRate" name="승률">
+            <Bar dataKey="winRate" name="승률" fill="#22c55e">
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}

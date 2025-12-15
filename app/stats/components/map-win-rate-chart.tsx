@@ -121,42 +121,6 @@ export function MapWinRateChart() {
 
       {chartData.length > 0 ? (
         <>
-          {/* 경기 수 차트 */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-              {MAPS[selectedMap as GameMap]} - 플레이어별 경기 수
-            </h3>
-            <div
-              style={{
-                width: "100%",
-                height: Math.max(300, chartData.length * 35),
-              }}
-            >
-              <ResponsiveContainer>
-                <BarChart data={chartData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis type="number" stroke="#888" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={100}
-                    stroke="#888"
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1a1a2e",
-                      border: "1px solid #333",
-                      borderRadius: 8,
-                    }}
-                    formatter={(value: number) => [`${value}경기`, "경기 수"]}
-                  />
-                  <Bar dataKey="totalGames" name="경기 수" fill="#00d4ff" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
           {/* 승률 차트 */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -192,7 +156,7 @@ export function MapWinRateChart() {
                     }}
                     formatter={(value: number) => [`${value}%`, "승률"]}
                   />
-                  <Bar dataKey="winRate" name="승률">
+                  <Bar dataKey="winRate" name="승률" fill="#22c55e">
                     {chartData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}

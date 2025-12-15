@@ -177,7 +177,7 @@ export function PlayerHeroChart({ nickname }: Props) {
                 }}
                 formatter={(value: number) => [`${value}%`, "승률"]}
               />
-              <Bar dataKey="winRate" name="승률">
+              <Bar dataKey="winRate" name="승률" fill="#22c55e">
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}

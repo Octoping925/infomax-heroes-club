@@ -12,6 +12,7 @@ import { AvgKillsDeathsRankingChart } from "./components/avg-kills-deaths-rankin
 import { MatchWinRateRankingChart } from "./components/match-win-rate-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
+import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
 
 type TabType =
@@ -25,6 +26,7 @@ type TabType =
   | "avgKillsDeathsRanking"
   | "matchWinRateRanking"
   | "fantasyDuo"
+  | "heroDuo"
   | "matchHistory";
 
 const TABS: { id: TabType; label: string; icon: string }[] = [
@@ -38,6 +40,7 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "matchWinRateRanking", label: "매치 승률", icon: "🏆" },
   { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
+  { id: "heroDuo", label: "영웅 듀오", icon: "🧩" },
   { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
@@ -82,7 +85,7 @@ export default function StatsPage() {
       {/* 헤더 */}
       <header className="w-full px-6 py-4 border-b border-white/10 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-linear-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
             📊 내전 통계 대시보드
           </h1>
         </div>
@@ -113,7 +116,7 @@ export default function StatsPage() {
           <div className="flex gap-6">
             {/* 플레이어 사이드바 */}
             {showPlayerSidebar && (
-              <aside className="w-64 flex-shrink-0">
+              <aside className="w-64 shrink-0">
                 <div className="sticky top-24 bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
                     플레이어 목록
@@ -182,6 +185,7 @@ export default function StatsPage() {
                   <MatchWinRateRankingChart />
                 )}
                 {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
+                {activeTab === "heroDuo" && <HeroDuoRankingChart />}
                 {activeTab === "matchHistory" && <MatchHistoryTab />}
               </div>
             </div>

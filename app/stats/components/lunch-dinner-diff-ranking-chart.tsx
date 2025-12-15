@@ -133,7 +133,7 @@ export function LunchDinnerDiffRankingChart() {
               labelFormatter={(label) => `플레이어: ${label}`}
             />
             <Legend />
-            <Bar dataKey="absDiff" name="승률 차이(절대값)">
+            <Bar dataKey="absDiff" name="승률 차이(절대값)" fill="#22c55e">
               {topData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}

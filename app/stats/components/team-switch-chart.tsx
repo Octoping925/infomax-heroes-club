@@ -51,7 +51,7 @@ export function TeamSwitchChart() {
       const chartData: ChartData[] = result
         .filter(
           (item) =>
-            item.originalTeamStats.totalGames > 0 ||
+            item.originalTeamStats.totalGames > 0 &&
             item.switchedTeamStats.totalGames > 0
         )
         .map((item) => ({
@@ -209,7 +209,7 @@ export function TeamSwitchChart() {
                 ]}
               />
               <ReferenceLine x={0} stroke="#666" />
-              <Bar dataKey="diff" name="승률 변화">
+              <Bar dataKey="diff" name="승률 변화" fill="#22c55e">
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}

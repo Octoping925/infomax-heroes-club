@@ -42,6 +42,12 @@ export interface HeroWinRateResponse extends WinRateStats {
   readonly hero: Hero;
 }
 
+/** 영웅 듀오(같은 팀) 승률 응답 (게임 단위) */
+export interface HeroDuoWinRateResponse extends WinRateStats {
+  readonly heroA: Hero;
+  readonly heroB: Hero;
+}
+
 /** 플레이어의 영웅별 승률 응답 */
 export interface PlayerHeroWinRateResponse {
   readonly playerId: string;
