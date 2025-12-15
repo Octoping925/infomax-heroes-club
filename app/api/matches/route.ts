@@ -17,6 +17,8 @@ type GameInput = {
 type CreateMatchRequest = {
   readonly playedAt: string; // yyyyMMdd 형식
   readonly type: MatchType;
+  readonly team1Leader: string;
+  readonly team2Leader: string;
   readonly games: ReadonlyArray<GameInput>;
 };
 
@@ -97,6 +99,16 @@ export async function POST(
       (p) => playerMap.get(p.nickname)!
     );
 
+    const team1LeaderId = playerMap.get(body.team1Leader);
+    const team2LeaderId = playerMap.get(body.team2Leader);
+
+    if (!team1LeaderId || !team2LeaderId) {
+      return NextResponse.json(
+        { error: `등록되지 않은 리더` },
+        { status: 400 }
+      );
+    }
+
     // 전체 승패 계산
     const team1Wins = body.games.filter((g) => g.winnerTeamNumber === 1).length;
     const team2Wins = body.games.filter((g) => g.winnerTeamNumber === 2).length;
@@ -122,12 +134,12 @@ export async function POST(
               {
                 matchId: newMatch.id,
                 teamNumber: 1,
-                leaderId: team1Players[0],
+                leaderId: team1LeaderId,
               },
               {
                 matchId: newMatch.id,
                 teamNumber: 2,
-                leaderId: team2Players[0],
+                leaderId: team2LeaderId,
               },
             ],
           }

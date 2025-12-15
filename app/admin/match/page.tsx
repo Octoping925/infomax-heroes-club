@@ -16,6 +16,8 @@ type MatchType = "LUNCH" | "DINNER";
 export default function MatchInputPage() {
   const [playedAt, setPlayedAt] = useState<string>("");
   const [matchType, setMatchType] = useState<MatchType>("LUNCH");
+  const [team1Leader, setTeam1Leader] = useState<string>("");
+  const [team2Leader, setTeam2Leader] = useState<string>("");
   const [games, setGames] = useState<GameInput[]>([
     { statsText: "", winnerTeamNumber: null },
   ]);
@@ -56,6 +58,14 @@ export default function MatchInputPage() {
       return;
     }
 
+    if (!team1Leader.trim() || !team2Leader.trim()) {
+      setResult({
+        success: false,
+        message: "팀 리더의 닉네임을 입력해주세요.",
+      });
+      return;
+    }
+
     if (games.some((g) => !g.statsText.trim())) {
       setResult({
         success: false,
@@ -75,6 +85,8 @@ export default function MatchInputPage() {
           playedAt,
           type: matchType,
           games,
+          team1Leader,
+          team2Leader,
         }),
       });
 
@@ -87,6 +99,8 @@ export default function MatchInputPage() {
         });
         // 폼 초기화
         setPlayedAt("");
+        setTeam1Leader("");
+        setTeam2Leader("");
         setGames([{ statsText: "", winnerTeamNumber: null }]);
       } else {
         setResult({
@@ -161,6 +175,32 @@ export default function MatchInputPage() {
                     저녁 내전
                   </option>
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">
+                  팀 1 리더
+                </label>
+                <input
+                  type="text"
+                  value={team1Leader}
+                  onChange={(e) => setTeam1Leader(e.target.value)}
+                  placeholder="리더 닉네임 입력"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">
+                  팀 2 리더
+                </label>
+                <input
+                  type="text"
+                  value={team2Leader}
+                  onChange={(e) => setTeam2Leader(e.target.value)}
+                  placeholder="리더 닉네임 입력"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                />
               </div>
             </div>
           </div>
