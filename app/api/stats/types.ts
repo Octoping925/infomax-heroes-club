@@ -75,6 +75,20 @@ export interface MapPlayerWinRateResponse {
   readonly playerStats: ReadonlyArray<PlayerWinRateResponse>;
 }
 
+/** 2인 조합(듀오) 승률 응답 (매치 단위) */
+export interface FantasyDuoWinRateResponse extends WinRateStats {
+  readonly playerA: {
+    readonly playerId: string;
+    readonly playerName: string;
+    readonly playerNickname: string;
+  };
+  readonly playerB: {
+    readonly playerId: string;
+    readonly playerName: string;
+    readonly playerNickname: string;
+  };
+}
+
 /**
  * 승률을 계산하는 유틸리티 함수
  */

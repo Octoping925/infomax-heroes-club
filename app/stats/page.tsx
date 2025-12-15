@@ -11,6 +11,7 @@ import { LunchDinnerDiffRankingChart } from "./components/lunch-dinner-diff-rank
 import { AvgKillsDeathsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
 import { MatchWinRateRankingChart } from "./components/match-win-rate-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
+import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
 
 type TabType =
@@ -23,6 +24,7 @@ type TabType =
   | "lunchDinnerDiffRanking"
   | "avgKillsDeathsRanking"
   | "matchWinRateRanking"
+  | "fantasyDuo"
   | "matchHistory";
 
 const TABS: { id: TabType; label: string; icon: string }[] = [
@@ -35,6 +37,7 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "lunchDinnerDiffRanking", label: "점심/저녁 차이", icon: "📈" },
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "matchWinRateRanking", label: "매치 승률", icon: "🏆" },
+  { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
   { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
@@ -178,6 +181,7 @@ export default function StatsPage() {
                 {activeTab === "matchWinRateRanking" && (
                   <MatchWinRateRankingChart />
                 )}
+                {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
                 {activeTab === "matchHistory" && <MatchHistoryTab />}
               </div>
             </div>
