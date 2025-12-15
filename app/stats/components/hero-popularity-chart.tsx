@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   BarChart,
   Bar,
@@ -28,41 +28,39 @@ type ChartData = {
  */
 export function HeroPopularityChart() {
   const [data, setData] = useState<ChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
+    startTransition(async () => {
+      setError(null);
+      try {
+        const response = await fetch("/api/stats/heroes/popular");
+        if (!response.ok) {
+          throw new Error("데이터를 불러오는데 실패했습니다.");
+        }
 
-    try {
-      const response = await fetch("/api/stats/heroes/popular");
-      if (!response.ok) {
-        throw new Error("데이터를 불러오는데 실패했습니다.");
+        const result: HeroPopularityResponse[] = await response.json();
+
+        const chartData: ChartData[] = result.slice(0, 15).map((item) => ({
+          name: HeroMap[item.hero as Hero] || item.hero,
+          pickCount: item.pickCount,
+          banCount: item.banCount,
+          pickWinRate: item.pickWinRate,
+        }));
+
+        setData(chartData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
       }
-
-      const result: HeroPopularityResponse[] = await response.json();
-
-      const chartData: ChartData[] = result.slice(0, 15).map((item) => ({
-        name: HeroMap[item.hero as Hero] || item.hero,
-        pickCount: item.pickCount,
-        banCount: item.banCount,
-        pickWinRate: item.pickWinRate,
-      }));
-
-      setData(chartData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">

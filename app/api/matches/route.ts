@@ -103,99 +103,105 @@ export async function POST(
       team1Wins > team2Wins ? 1 : team2Wins > team1Wins ? 2 : null;
 
     // 트랜잭션으로 모든 데이터 저장
-    const match = await prisma.$transaction(async (tx) => {
-      // 1. Match 생성
-      const newMatch = await tx.match.create({
-        data: {
-          type: body.type,
-          playedAt,
-          winnerTeamNumber: matchWinnerTeamNumber,
-        },
-      });
-
-      // 2. MatchTeam 생성 (팀장은 첫 번째 플레이어)
-      const matchTeam1 = await tx.matchTeam.create({
-        data: {
-          matchId: newMatch.id,
-          teamNumber: 1,
-          leaderId: team1Players[0],
-        },
-      });
-
-      const matchTeam2 = await tx.matchTeam.create({
-        data: {
-          matchId: newMatch.id,
-          teamNumber: 2,
-          leaderId: team2Players[0],
-        },
-      });
-
-      // 3. MatchTeamMember 생성
-      await tx.matchTeamMember.createMany({
-        data: team1Players.map((playerId) => ({
-          matchTeamId: matchTeam1.id,
-          playerId,
-        })),
-      });
-
-      await tx.matchTeamMember.createMany({
-        data: team2Players.map((playerId) => ({
-          matchTeamId: matchTeam2.id,
-          playerId,
-        })),
-      });
-
-      // 4. 각 Game 생성
-      for (let i = 0; i < parsedGames.length; i++) {
-        const parsedGame = parsedGames[i];
-        const gameInput = body.games[i];
-
-        const game = await tx.game.create({
+    const match = await prisma.$transaction(
+      async (tx) => {
+        // 1. Match 생성
+        const newMatch = await tx.match.create({
           data: {
-            matchId: newMatch.id,
-            gameNumber: i + 1,
-            map: parsedGame.map,
-            winnerTeamNumber: gameInput.winnerTeamNumber,
+            type: body.type,
+            playedAt,
+            winnerTeamNumber: matchWinnerTeamNumber,
           },
         });
 
-        // 5. GameTeam 생성
-        for (const parsedTeam of parsedGame.teams) {
-          const sourceMatchTeamId =
-            parsedTeam.teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
+        // 2. MatchTeam 생성 (팀장은 첫 번째 플레이어)
+        const matchTeam1 = await tx.matchTeam.create({
+          data: {
+            matchId: newMatch.id,
+            teamNumber: 1,
+            leaderId: team1Players[0],
+          },
+        });
 
-          const gameResult = calculateGameResult(
-            parsedTeam.teamNumber,
-            gameInput.winnerTeamNumber
-          );
+        const matchTeam2 = await tx.matchTeam.create({
+          data: {
+            matchId: newMatch.id,
+            teamNumber: 2,
+            leaderId: team2Players[0],
+          },
+        });
 
-          const gameTeam = await tx.gameTeam.create({
+        // 3. MatchTeamMember 생성
+        await tx.matchTeamMember.createMany({
+          data: team1Players.map((playerId) => ({
+            matchTeamId: matchTeam1.id,
+            playerId,
+          })),
+        });
+
+        await tx.matchTeamMember.createMany({
+          data: team2Players.map((playerId) => ({
+            matchTeamId: matchTeam2.id,
+            playerId,
+          })),
+        });
+
+        // 4. 각 Game 생성
+        for (let i = 0; i < parsedGames.length; i++) {
+          const parsedGame = parsedGames[i];
+          const gameInput = body.games[i];
+
+          const game = await tx.game.create({
             data: {
-              gameId: game.id,
-              teamNumber: parsedTeam.teamNumber,
-              sourceMatchTeamId,
-              result: gameResult,
+              matchId: newMatch.id,
+              gameNumber: i + 1,
+              map: parsedGame.map,
+              winnerTeamNumber: gameInput.winnerTeamNumber,
             },
           });
 
-          // 6. GameTeamMember 생성
-          await tx.gameTeamMember.createMany({
-            data: parsedTeam.players.map((player) => ({
-              gameTeamId: gameTeam.id,
-              playerId: playerMap.get(player.nickname)!,
-              hero: player.hero,
-              kills: player.kills,
-              deaths: player.deaths,
-              takedowns: player.takedowns,
-              heroDamage: player.heroDamage,
-              damageTaken: player.damageTaken,
-            })),
-          });
-        }
-      }
+          // 5. GameTeam 생성
+          for (const parsedTeam of parsedGame.teams) {
+            const sourceMatchTeamId =
+              parsedTeam.teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
 
-      return newMatch;
-    });
+            const gameResult = calculateGameResult(
+              parsedTeam.teamNumber,
+              gameInput.winnerTeamNumber
+            );
+
+            const gameTeam = await tx.gameTeam.create({
+              data: {
+                gameId: game.id,
+                teamNumber: parsedTeam.teamNumber,
+                sourceMatchTeamId,
+                result: gameResult,
+              },
+            });
+
+            // 6. GameTeamMember 생성
+            await tx.gameTeamMember.createMany({
+              data: parsedTeam.players.map((player) => ({
+                gameTeamId: gameTeam.id,
+                playerId: playerMap.get(player.nickname)!,
+                hero: player.hero,
+                kills: player.kills,
+                deaths: player.deaths,
+                takedowns: player.takedowns,
+                heroDamage: player.heroDamage,
+                damageTaken: player.damageTaken,
+              })),
+            });
+          }
+        }
+
+        return newMatch;
+      },
+      {
+        timeout: 10000,
+        maxWait: 10000,
+      }
+    );
 
     return NextResponse.json({
       matchId: match.id,

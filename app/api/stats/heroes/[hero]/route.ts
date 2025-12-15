@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult, Hero } from "@/generated/prisma/client";
 import { HeroWinRateResponse, calculateWinRate } from "@/app/api/stats/types";
+import { countBy } from "es-toolkit";
 
 type RouteParams = {
   params: Promise<{ hero: string }>;
@@ -22,7 +23,7 @@ export async function GET(
   }
 
   const gameResults = await prisma.gameTeamMember.findMany({
-    where: { hero: hero as Hero },
+    where: { hero: hero },
     select: {
       gameTeam: {
         select: {
@@ -34,12 +35,7 @@ export async function GET(
 
   const stats = calculateGameStats(gameResults.map((r) => r.gameTeam.result));
 
-  const response: HeroWinRateResponse = {
-    hero: hero as Hero,
-    ...stats,
-  };
-
-  return NextResponse.json(response);
+  return NextResponse.json({ hero, ...stats });
 }
 
 function isValidHero(hero: string): hero is Hero {
@@ -48,15 +44,13 @@ function isValidHero(hero: string): hero is Hero {
 
 function calculateGameStats(results: GameResult[]) {
   const totalGames = results.length;
-  const wins = results.filter((r) => r === GameResult.WIN).length;
-  const losses = results.filter((r) => r === GameResult.LOSE).length;
-  const draws = results.filter((r) => r === GameResult.DRAW).length;
+  const counts = countBy(results, (r) => r);
 
   return {
     totalGames,
-    wins,
-    losses,
-    draws,
-    winRate: calculateWinRate(wins, totalGames),
+    wins: counts.WIN,
+    losses: counts.LOSE,
+    draws: counts.DRAW,
+    winRate: calculateWinRate(counts.WIN, totalGames),
   };
 }
