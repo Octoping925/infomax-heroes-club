@@ -39,10 +39,10 @@ export async function POST(
     const body: CreateMatchRequest = await request.json();
 
     // 날짜 파싱 (yyyyMMdd → Date)
-    const playedAt = dayjs(body.playedAt, "yyyyMMdd");
+    const playedAt = dayjs(body.playedAt, "YYYYMMDD");
     if (!playedAt.isValid()) {
       return NextResponse.json(
-        { error: "잘못된 날짜 형식입니다. yyyyMMdd 형식으로 입력해주세요." },
+        { error: "잘못된 날짜 형식입니다. YYYYMMDD 형식으로 입력해주세요." },
         { status: 400 }
       );
     }
@@ -122,7 +122,7 @@ export async function POST(
         const newMatch = await tx.match.create({
           data: {
             type: body.type,
-            playedAt: playedAt.format("yyyyMMdd"),
+            playedAt: playedAt.format("YYYYMMDD"),
             winnerTeamNumber: matchWinnerTeamNumber,
           },
         });
