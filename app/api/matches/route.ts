@@ -122,7 +122,7 @@ export async function POST(
         const newMatch = await tx.match.create({
           data: {
             type: body.type,
-            playedAt: playedAt.format("YYYYMMDD"),
+            playedAt: playedAt.toDate(),
             winnerTeamNumber: matchWinnerTeamNumber,
           },
         });
