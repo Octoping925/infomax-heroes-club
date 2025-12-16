@@ -16,6 +16,7 @@ import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
 import { statsQueryKeys } from "@/config/query-keys";
+import { useHashSyncedTab } from "./use-tab-hash";
 
 type TabType =
   | "heroPopularity"
@@ -50,7 +51,10 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
  * 통계 대시보드 페이지
  */
 export default function StatsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("heroPopularity");
+  const [activeTab, handleTabSelect] = useHashSyncedTab(
+    "heroPopularity",
+    TABS.map((tab) => tab.id)
+  );
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const {
@@ -105,7 +109,7 @@ export default function StatsPage() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabSelect(tab.id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
