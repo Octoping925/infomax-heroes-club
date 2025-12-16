@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
 
@@ -59,7 +59,7 @@ export function FantasyDuoRankingChart() {
       }
       return (await response.json()) as FantasyDuoWinRateResponse[];
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const rows = useMemo<ReadonlyArray<DuoRow>>(() => {

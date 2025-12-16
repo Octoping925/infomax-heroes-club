@@ -214,7 +214,7 @@ export function TeamSwitchChart() {
               />
               <ReferenceLine x={0} stroke="#666" />
               <Bar dataKey="diff" name="승률 변화" fill="#22c55e">
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.diff >= 0 ? "#22c55e" : "#ef4444"}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { Hero } from "@/generated/prisma/client";
@@ -40,7 +40,7 @@ export function HeroDuoRankingChart() {
       }
       return (await response.json()) as HeroDuoWinRateResponse[];
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
