@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,6 +15,7 @@ import {
 import { MapPlayerWinRateResponse } from "@/app/api/stats/types";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { GameMap } from "@/generated/prisma/client";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -27,39 +29,29 @@ type ChartData = {
  * 맵별 플레이어 승률 차트
  */
 export function MapWinRateChart() {
-  const [data, setData] = useState<MapPlayerWinRateResponse[]>([]);
   const [selectedMap, setSelectedMap] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<MapPlayerWinRateResponse[]>({
+    queryKey: statsQueryKeys.stats.maps(),
+    queryFn: async () => {
       const response = await fetch("/api/stats/maps");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
+      return (await response.json()) as MapPlayerWinRateResponse[];
+    },
+  });
 
-      const result: MapPlayerWinRateResponse[] = await response.json();
-      setData(result);
-
-      if (result.length > 0 && !selectedMap) {
-        setSelectedMap(result[0].map);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
+  const currentMap = useMemo(() => {
+    if (!data || data.length === 0) {
+      return "";
     }
-  };
+    if (selectedMap && data.some((item) => item.map === selectedMap)) {
+      return selectedMap;
+    }
+    return data[0]?.map ?? "";
+  }, [data, selectedMap]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -73,12 +65,12 @@ export function MapWinRateChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">데이터가 없습니다.</p>
@@ -86,7 +78,7 @@ export function MapWinRateChart() {
     );
   }
 
-  const selectedMapData = data.find((item) => item.map === selectedMap);
+  const selectedMapData = data.find((item) => item.map === currentMap);
 
   const chartData: ChartData[] =
     selectedMapData?.playerStats.map((stat) => ({
@@ -103,7 +95,7 @@ export function MapWinRateChart() {
       <div className="flex flex-col gap-2 max-w-xs">
         <label className="text-sm font-semibold text-gray-400">맵 선택</label>
         <select
-          value={selectedMap}
+          value={currentMap}
           onChange={(e) => setSelectedMap(e.target.value)}
           className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
         >
@@ -124,7 +116,7 @@ export function MapWinRateChart() {
           {/* 승률 차트 */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-              {MAPS[selectedMap as GameMap]} - 플레이어별 승률
+              {MAPS[currentMap as GameMap]} - 플레이어별 승률
             </h3>
             <div
               style={{

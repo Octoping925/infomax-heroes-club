@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -13,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { PlayerLunchDinnerWinRateResponse } from "@/app/api/stats/types";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -28,44 +30,35 @@ type ChartData = {
  * 점심/저녁 승률 차이 랭킹 차트
  */
 export function LunchDinnerDiffRankingChart() {
-  const [data, setData] = useState<ChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<
+    PlayerLunchDinnerWinRateResponse[]
+  >({
+    queryKey: statsQueryKeys.stats.rankings.lunchDinnerDiff(),
+    queryFn: async () => {
       const response = await fetch("/api/stats/rankings/lunch-dinner-diff");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
+      return (await response.json()) as PlayerLunchDinnerWinRateResponse[];
+    },
+  });
 
-      const result: PlayerLunchDinnerWinRateResponse[] = await response.json();
-      const chartData: ChartData[] = result.map((item) => ({
-        name: item.playerNickname,
-        absDiff: item.absWinRateDiff,
-        diff: item.dinnerWinRateDiff,
-        lunchWinRate: item.lunchStats.winRate,
-        dinnerWinRate: item.dinnerStats.winRate,
-        lunchGames: item.lunchStats.totalGames,
-        dinnerGames: item.dinnerStats.totalGames,
-      }));
-
-      setData(chartData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
+  const chartData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
     }
-  };
+    return data.map((item) => ({
+      name: item.playerNickname,
+      absDiff: item.absWinRateDiff,
+      diff: item.dinnerWinRateDiff,
+      lunchWinRate: item.lunchStats.winRate,
+      dinnerWinRate: item.dinnerStats.winRate,
+      lunchGames: item.lunchStats.totalGames,
+      dinnerGames: item.dinnerStats.totalGames,
+    }));
+  }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -79,12 +72,12 @@ export function LunchDinnerDiffRankingChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (chartData.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">데이터가 없습니다.</p>
@@ -92,17 +85,20 @@ export function LunchDinnerDiffRankingChart() {
     );
   }
 
-  const topData = data.slice(0, 30);
+  const topData = chartData.slice(0, 30);
 
   return (
     <div className="space-y-6">
       <p className="text-gray-400">
         점심/저녁 승률 차이(<span className="text-white">절대값</span>)가 큰
-        순서입니다. 색상은 <span className="text-green-400">저녁이 더 높음</span>,
+        순서입니다. 색상은{" "}
+        <span className="text-green-400">저녁이 더 높음</span>,
         <span className="text-red-400"> 점심이 더 높음</span>을 의미합니다.
       </p>
 
-      <div style={{ width: "100%", height: Math.max(420, topData.length * 34) }}>
+      <div
+        style={{ width: "100%", height: Math.max(420, topData.length * 34) }}
+      >
         <ResponsiveContainer>
           <BarChart data={topData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -147,5 +143,3 @@ export function LunchDinnerDiffRankingChart() {
     </div>
   );
 }
-
-

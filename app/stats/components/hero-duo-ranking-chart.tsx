@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { Hero } from "@/generated/prisma/client";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type DuoRow = {
   readonly duoName: string;
@@ -21,46 +23,30 @@ const DEFAULT_LIMIT: number = 50;
  * 영웅 듀오(같은 팀) 승률 랭킹 (게임 단위)
  */
 export function HeroDuoRankingChart() {
-  const [data, setData] = useState<HeroDuoWinRateResponse[]>([]);
   const [minCount, setMinCount] = useState<number>(DEFAULT_MIN_GAMES);
   const [limit, setLimit] = useState<number>(DEFAULT_LIMIT);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchData({ minCount, limit });
-  }, [minCount, limit]);
-
-  const fetchData = async (input: {
-    readonly minCount: number;
-    readonly limit: number;
-  }): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<HeroDuoWinRateResponse[]>({
+    queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit }),
+    queryFn: async () => {
       const searchParams = new URLSearchParams({
-        minCount: String(input.minCount),
-        limit: String(input.limit),
+        minCount: String(minCount),
+        limit: String(limit),
       });
-
       const response = await fetch(
         `/api/stats/heroes/fantasy-duo?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-
-      const result: HeroDuoWinRateResponse[] = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (await response.json()) as HeroDuoWinRateResponse[];
+    },
+    keepPreviousData: true,
+  });
 
   const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
+    if (!data) {
+      return [];
+    }
     return data.map((item) => {
       const heroAName = HeroMap[item.heroA as Hero] ?? String(item.heroA);
       const heroBName = HeroMap[item.heroB as Hero] ?? String(item.heroB);
@@ -75,7 +61,7 @@ export function HeroDuoRankingChart() {
     });
   }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -89,7 +75,7 @@ export function HeroDuoRankingChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
@@ -99,8 +85,8 @@ export function HeroDuoRankingChart() {
       <div className="space-y-1">
         <p className="text-gray-400">
           <span className="text-white">게임 1판을 1경기</span>로 보고,{" "}
-          <span className="text-white">같은 팀</span>이었던 영웅 2개 조합의 승률을
-          집계합니다.
+          <span className="text-white">같은 팀</span>이었던 영웅 2개 조합의
+          승률을 집계합니다.
         </p>
         <p className="text-xs text-gray-500">
           무승부는 분모(총 경기 수)에 포함되며, 승률 계산은{" "}
@@ -135,7 +121,9 @@ export function HeroDuoRankingChart() {
 
       {rows.length === 0 ? (
         <div className="flex justify-center py-12">
-          <p className="text-gray-500">조건에 맞는 영웅 듀오 데이터가 없습니다.</p>
+          <p className="text-gray-500">
+            조건에 맞는 영웅 듀오 데이터가 없습니다.
+          </p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -183,5 +171,3 @@ export function HeroDuoRankingChart() {
     </div>
   );
 }
-
-

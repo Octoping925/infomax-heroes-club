@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { Hero } from "@/generated/prisma/client";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type MatchGroup = {
   readonly dateKey: string; // YYYY-MM-DD
@@ -16,32 +18,21 @@ type MatchGroup = {
  * Stats 탭에서 보여주는 역대 match 전적
  */
 export function MatchHistoryTab() {
-  const [matches, setMatches] = useState<MatchHistoryItem[]>([]);
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
-  const fetchMatches = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data: matches = [],
+    isPending,
+    error,
+  } = useQuery<MatchHistoryItem[]>({
+    queryKey: statsQueryKeys.matches.latest(200),
+    queryFn: async () => {
       const response = await fetch("/api/matches?take=200");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-      const result: MatchHistoryItem[] = await response.json();
-      setMatches(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (await response.json()) as MatchHistoryItem[];
+    },
+  });
 
   const groups = useMemo<MatchGroup[]>(() => {
     const map = new Map<string, MatchHistoryItem[]>();
@@ -64,7 +55,7 @@ export function MatchHistoryTab() {
     }));
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -78,7 +69,7 @@ export function MatchHistoryTab() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }

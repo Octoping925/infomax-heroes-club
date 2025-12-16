@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -15,6 +16,7 @@ import {
 import { HeroPopularityResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { Hero } from "@/generated/prisma/client";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -27,38 +29,28 @@ type ChartData = {
  * 영웅 픽/밴 통계 차트
  */
 export function HeroPopularityChart() {
-  const [data, setData] = useState<ChartData[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    startTransition(async () => {
-      setError(null);
-      try {
-        const response = await fetch("/api/stats/heroes/popular");
-        if (!response.ok) {
-          throw new Error("데이터를 불러오는데 실패했습니다.");
-        }
-
-        const result: HeroPopularityResponse[] = await response.json();
-
-        const chartData: ChartData[] = result.slice(0, 15).map((item) => ({
-          name: HeroMap[item.hero as Hero] || item.hero,
-          pickCount: item.pickCount,
-          banCount: item.banCount,
-          pickWinRate: item.pickWinRate,
-        }));
-
-        setData(chartData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+  const { data, isPending, error } = useQuery<HeroPopularityResponse[]>({
+    queryKey: statsQueryKeys.stats.heroes.popular(),
+    queryFn: async () => {
+      const response = await fetch("/api/stats/heroes/popular");
+      if (!response.ok) {
+        throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-    });
-  };
+      return (await response.json()) as HeroPopularityResponse[];
+    },
+  });
+
+  const chartData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
+    }
+    return data.slice(0, 15).map((item) => ({
+      name: HeroMap[item.hero as Hero] || item.hero,
+      pickCount: item.pickCount,
+      banCount: item.banCount,
+      pickWinRate: item.pickWinRate,
+    }));
+  }, [data]);
 
   if (isPending) {
     return (
@@ -74,12 +66,12 @@ export function HeroPopularityChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (chartData.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">데이터가 없습니다.</p>
@@ -96,7 +88,7 @@ export function HeroPopularityChart() {
         </h3>
         <div className="w-full h-[400px]">
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" stroke="#888" />
               <YAxis
@@ -128,7 +120,10 @@ export function HeroPopularityChart() {
         </h3>
         <div className="w-full h-[400px]">
           <ResponsiveContainer>
-            <BarChart data={data.toSorted((a, b) => b.pickWinRate - a.pickWinRate)} layout="vertical">
+            <BarChart
+              data={chartData.toSorted((a, b) => b.pickWinRate - a.pickWinRate)}
+              layout="vertical"
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
               <YAxis
@@ -147,12 +142,14 @@ export function HeroPopularityChart() {
                 formatter={(value: number) => [`${value}%`, "승률"]}
               />
               <Bar dataKey="pickWinRate" name="승률" fill="#22c55e">
-                {data.toSorted((a, b) => b.pickWinRate - a.pickWinRate).map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}
-                  />
-                ))}
+                {chartData
+                  .toSorted((a, b) => b.pickWinRate - a.pickWinRate)
+                  .map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}
+                    />
+                  ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

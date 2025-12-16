@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   PieChart,
   Pie,
@@ -10,6 +10,7 @@ import {
   Legend,
 } from "recharts";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type Props = {
   nickname: string;
@@ -25,21 +26,9 @@ const COLORS = {
  * 플레이어 승률 차트
  */
 export function PlayerWinRateChart({ nickname }: Props) {
-  const [data, setData] = useState<PlayerWinRateResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (nickname) {
-      fetchData();
-    }
-  }, [nickname]);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<PlayerWinRateResponse>({
+    queryKey: statsQueryKeys.stats.players.winRate(nickname),
+    queryFn: async () => {
       const response = await fetch(
         `/api/stats/players/${encodeURIComponent(nickname)}`
       );
@@ -49,18 +38,12 @@ export function PlayerWinRateChart({ nickname }: Props) {
         }
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
+      return (await response.json()) as PlayerWinRateResponse;
+    },
+    enabled: Boolean(nickname),
+  });
 
-      const result: PlayerWinRateResponse = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-      setData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -74,7 +57,7 @@ export function PlayerWinRateChart({ nickname }: Props) {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }

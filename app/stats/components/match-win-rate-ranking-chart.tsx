@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -13,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -27,34 +29,21 @@ type ChartData = {
  * 플레이어별 내전(match) 총 승률(매치 단위) 랭킹 차트
  */
 export function MatchWinRateRankingChart() {
-  const [data, setData] = useState<PlayerWinRateResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<PlayerWinRateResponse[]>({
+    queryKey: statsQueryKeys.stats.players.matchWinRate(),
+    queryFn: async () => {
       const response = await fetch("/api/stats/players/match-win-rate");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-
-      const result: PlayerWinRateResponse[] = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (await response.json()) as PlayerWinRateResponse[];
+    },
+  });
 
   const chartData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
+    }
     return [...data]
       .sort((a, b) => b.winRate - a.winRate || b.totalGames - a.totalGames)
       .slice(0, 30)
@@ -68,7 +57,7 @@ export function MatchWinRateRankingChart() {
       }));
   }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -82,7 +71,7 @@ export function MatchWinRateRankingChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
@@ -98,11 +87,13 @@ export function MatchWinRateRankingChart() {
   return (
     <div className="space-y-6">
       <p className="text-gray-400">
-        <span className="text-white">매치 1건을 1경기</span>로 보고 계산한 승률입니다.
-        (game 승률 아님)
+        <span className="text-white">매치 1건을 1경기</span>로 보고 계산한
+        승률입니다. (game 승률 아님)
       </p>
 
-      <div style={{ width: "100%", height: Math.max(420, chartData.length * 34) }}>
+      <div
+        style={{ width: "100%", height: Math.max(420, chartData.length * 34) }}
+      >
         <ResponsiveContainer>
           <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -143,5 +134,3 @@ export function MatchWinRateRankingChart() {
     </div>
   );
 }
-
-

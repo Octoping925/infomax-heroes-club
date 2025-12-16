@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -12,8 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { PlayerLunchDinnerWinRateResponse } from "@/app/api/stats/types";
-
-type LunchDinnerUnit = "game" | "match";
+import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -26,87 +26,42 @@ type ChartData = {
 /**
  * 플레이어별 점심/저녁 내전 승률 차트 (게임/매치 단위 동시 표시)
  */
+async function fetchUnitData(unit: LunchDinnerUnit): Promise<ChartData[]> {
+  const response = await fetch(`/api/stats/players/lunch-dinner?unit=${unit}`);
+  if (!response.ok) {
+    throw new Error("데이터를 불러오는데 실패했습니다.");
+  }
+
+  const result: PlayerLunchDinnerWinRateResponse[] = await response.json();
+  return result
+    .filter(
+      (item) =>
+        item.lunchStats.totalGames > 0 || item.dinnerStats.totalGames > 0
+    )
+    .map((item) => ({
+      name: item.playerNickname,
+      lunchWinRate: item.lunchStats.winRate,
+      dinnerWinRate: item.dinnerStats.winRate,
+      lunchCount: item.lunchStats.totalGames,
+      dinnerCount: item.dinnerStats.totalGames,
+    }));
+}
+
 export function LunchDinnerWinRateChart() {
-  const [gameData, setGameData] = useState<ChartData[]>([]);
-  const [matchData, setMatchData] = useState<ChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [gameError, setGameError] = useState<string | null>(null);
-  const [matchError, setMatchError] = useState<string | null>(null);
+  const matchQuery = useQuery<ChartData[]>({
+    queryKey: statsQueryKeys.stats.players.lunchDinner("match"),
+    queryFn: () => fetchUnitData("match"),
+  });
+  const gameQuery = useQuery<ChartData[]>({
+    queryKey: statsQueryKeys.stats.players.lunchDinner("game"),
+    queryFn: () => fetchUnitData("game"),
+  });
 
-  const fetchUnitData = useCallback(
-    async (input: { readonly unit: LunchDinnerUnit }): Promise<ChartData[]> => {
-      const response = await fetch(
-        `/api/stats/players/lunch-dinner?unit=${input.unit}`
-      );
-      if (!response.ok) {
-        throw new Error("데이터를 불러오는데 실패했습니다.");
-      }
-
-      const result: PlayerLunchDinnerWinRateResponse[] = await response.json();
-      return result
-        .filter(
-          (item) =>
-            item.lunchStats.totalGames > 0 || item.dinnerStats.totalGames > 0
-        )
-        .map((item) => ({
-          name: item.playerNickname,
-          lunchWinRate: item.lunchStats.winRate,
-          dinnerWinRate: item.dinnerStats.winRate,
-          lunchCount: item.lunchStats.totalGames,
-          dinnerCount: item.dinnerStats.totalGames,
-        }));
-    },
-    []
-  );
-
-  const fetchAllData = useCallback(async (): Promise<void> => {
-    // NOTE: setState를 useEffect 본문에서 "동기적으로" 호출하는 것을 피하기 위해
-    // 1 tick 이후에 상태를 갱신합니다.
-    await Promise.resolve();
-
-    setIsLoading(true);
-    setGameError(null);
-    setMatchError(null);
-
-    const [gameResult, matchResult] = await Promise.allSettled([
-      fetchUnitData({ unit: "game" }),
-      fetchUnitData({ unit: "match" }),
-    ]);
-
-    if (gameResult.status === "fulfilled") {
-      setGameData(gameResult.value);
-    } else {
-      setGameData([]);
-      setGameError(
-        gameResult.reason instanceof Error
-          ? gameResult.reason.message
-          : "오류가 발생했습니다."
-      );
-    }
-
-    if (matchResult.status === "fulfilled") {
-      setMatchData(matchResult.value);
-    } else {
-      setMatchData([]);
-      setMatchError(
-        matchResult.reason instanceof Error
-          ? matchResult.reason.message
-          : "오류가 발생했습니다."
-      );
-    }
-
-    setIsLoading(false);
-  }, [fetchUnitData]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void fetchAllData();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [fetchAllData]);
+  const isLoading = matchQuery.isPending || gameQuery.isPending;
+  const gameData = gameQuery.data ?? [];
+  const matchData = matchQuery.data ?? [];
+  const gameError = gameQuery.error ? gameQuery.error.message : null;
+  const matchError = matchQuery.error ? matchQuery.error.message : null;
 
   if (isLoading) {
     return (

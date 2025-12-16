@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -12,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { PlayerAverageKillsDeathsResponse } from "@/app/api/stats/types";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -23,34 +25,23 @@ type ChartData = {
  * 평균 킬/데스 랭킹 차트
  */
 export function AvgKillsDeathsRankingChart() {
-  const [data, setData] = useState<PlayerAverageKillsDeathsResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<
+    PlayerAverageKillsDeathsResponse[]
+  >({
+    queryKey: statsQueryKeys.stats.rankings.avgKillsDeaths(),
+    queryFn: async () => {
       const response = await fetch("/api/stats/rankings/avg-kills-deaths");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-
-      const result: PlayerAverageKillsDeathsResponse[] = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (await response.json()) as PlayerAverageKillsDeathsResponse[];
+    },
+  });
 
   const avgKillsData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
+    }
     return [...data]
       .sort((a, b) => b.averageKills - a.averageKills)
       .slice(0, 20)
@@ -62,6 +53,9 @@ export function AvgKillsDeathsRankingChart() {
   }, [data]);
 
   const avgDeathsData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
+    }
     return [...data]
       .sort((a, b) => b.averageDeaths - a.averageDeaths)
       .slice(0, 20)
@@ -72,7 +66,7 @@ export function AvgKillsDeathsRankingChart() {
       }));
   }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -86,12 +80,12 @@ export function AvgKillsDeathsRankingChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">데이터가 없습니다.</p>
@@ -110,7 +104,12 @@ export function AvgKillsDeathsRankingChart() {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           평균 킬 TOP 20
         </h3>
-        <div style={{ width: "100%", height: Math.max(420, avgKillsData.length * 34) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(420, avgKillsData.length * 34),
+          }}
+        >
           <ResponsiveContainer>
             <BarChart data={avgKillsData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -130,7 +129,10 @@ export function AvgKillsDeathsRankingChart() {
                 }}
                 formatter={(value: number, _key: string, ctx) => {
                   const payload = ctx?.payload as ChartData | undefined;
-                  return [`${value} (총 ${payload?.totalGames ?? 0}게임)`, "평균 킬"];
+                  return [
+                    `${value} (총 ${payload?.totalGames ?? 0}게임)`,
+                    "평균 킬",
+                  ];
                 }}
               />
               <Legend />
@@ -144,7 +146,12 @@ export function AvgKillsDeathsRankingChart() {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           평균 데스 TOP 20
         </h3>
-        <div style={{ width: "100%", height: Math.max(420, avgDeathsData.length * 34) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(420, avgDeathsData.length * 34),
+          }}
+        >
           <ResponsiveContainer>
             <BarChart data={avgDeathsData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -164,7 +171,10 @@ export function AvgKillsDeathsRankingChart() {
                 }}
                 formatter={(value: number, _key: string, ctx) => {
                   const payload = ctx?.payload as ChartData | undefined;
-                  return [`${value} (총 ${payload?.totalGames ?? 0}게임)`, "평균 데스"];
+                  return [
+                    `${value} (총 ${payload?.totalGames ?? 0}게임)`,
+                    "평균 데스",
+                  ];
                 }}
               />
               <Legend />
@@ -176,5 +186,3 @@ export function AvgKillsDeathsRankingChart() {
     </div>
   );
 }
-
-

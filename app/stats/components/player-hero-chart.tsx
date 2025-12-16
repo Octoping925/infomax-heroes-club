@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,6 +15,7 @@ import {
 import { PlayerHeroWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { Hero } from "@/generated/prisma/client";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type Props = {
   nickname: string;
@@ -31,25 +33,9 @@ type ChartData = {
  * 플레이어별 영웅 승률 차트
  */
 export function PlayerHeroChart({ nickname }: Props) {
-  const [data, setData] = useState<ChartData[]>([]);
-  const [playerInfo, setPlayerInfo] = useState<{
-    name: string;
-    nickname: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (nickname) {
-      fetchData();
-    }
-  }, [nickname]);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<PlayerHeroWinRateResponse>({
+    queryKey: statsQueryKeys.stats.players.heroStats(nickname),
+    queryFn: async () => {
       const response = await fetch(
         `/api/stats/players/${encodeURIComponent(nickname)}/heroes`
       );
@@ -59,33 +45,29 @@ export function PlayerHeroChart({ nickname }: Props) {
         }
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
+      return (await response.json()) as PlayerHeroWinRateResponse;
+    },
+    enabled: Boolean(nickname),
+  });
 
-      const result: PlayerHeroWinRateResponse = await response.json();
-
-      setPlayerInfo({
-        name: result.playerName,
-        nickname: result.playerNickname,
-      });
-
-      const chartData: ChartData[] = result.heroStats.map((stat) => ({
-        name: HeroMap[stat.hero as Hero] || stat.hero,
-        totalGames: stat.totalGames,
-        winRate: stat.winRate,
-        wins: stat.wins,
-        losses: stat.losses,
-      }));
-
-      setData(chartData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-      setData([]);
-      setPlayerInfo(null);
-    } finally {
-      setIsLoading(false);
+  const chartData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
     }
-  };
+    return data.heroStats.map((stat) => ({
+      name: HeroMap[stat.hero as Hero] || stat.hero,
+      totalGames: stat.totalGames,
+      winRate: stat.winRate,
+      wins: stat.wins,
+      losses: stat.losses,
+    }));
+  }, [data]);
 
-  if (isLoading) {
+  const playerInfo = data
+    ? { name: data.playerName, nickname: data.playerNickname }
+    : null;
+
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -99,12 +81,12 @@ export function PlayerHeroChart({ nickname }: Props) {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (chartData.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">경기 데이터가 없습니다.</p>
@@ -126,9 +108,14 @@ export function PlayerHeroChart({ nickname }: Props) {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           영웅별 경기 수
         </h3>
-        <div style={{ width: "100%", height: Math.max(300, data.length * 35) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(300, chartData.length * 35),
+          }}
+        >
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" stroke="#888" />
               <YAxis
@@ -157,9 +144,14 @@ export function PlayerHeroChart({ nickname }: Props) {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           영웅별 승률
         </h3>
-        <div style={{ width: "100%", height: Math.max(300, data.length * 35) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(300, chartData.length * 35),
+          }}
+        >
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
               <YAxis
@@ -178,7 +170,7 @@ export function PlayerHeroChart({ nickname }: Props) {
                 formatter={(value: number) => [`${value}%`, "승률"]}
               />
               <Bar dataKey="winRate" name="승률" fill="#22c55e">
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"}

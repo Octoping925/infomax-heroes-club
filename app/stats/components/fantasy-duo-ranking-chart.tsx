@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
-
-type UnitType = "match" | "game";
+import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
 
 type DuoRow = {
   readonly duoName: string;
@@ -22,51 +22,50 @@ const DEFAULT_LIMIT: number = 50;
  * '환상의 듀오' 랭킹 (매치 단위)
  */
 export function FantasyDuoRankingChart() {
-  const [data, setData] = useState<FantasyDuoWinRateResponse[]>([]);
-  const [unit, setUnit] = useState<UnitType>("game");
-  const [minCount, setMinCount] = useState<number>(DEFAULT_MIN_MATCHES);
+  const [unit, setUnit] = useState<LunchDinnerUnit>("game");
+  const [minCountByUnit, setMinCountByUnit] = useState<
+    Record<LunchDinnerUnit, number>
+  >({
+    match: DEFAULT_MIN_MATCHES,
+    game: DEFAULT_MIN_GAMES,
+  });
   const [limit, setLimit] = useState<number>(DEFAULT_LIMIT);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const minCount = minCountByUnit[unit];
 
-  useEffect(() => {
-    void fetchData({ unit, minCount, limit });
-  }, [unit, minCount, limit]);
+  const handleMinCountChange = (nextValue: number) => {
+    setMinCountByUnit((prev) => ({
+      ...prev,
+      [unit]: nextValue,
+    }));
+  };
 
-  useEffect(() => {
-    setMinCount(unit === "match" ? DEFAULT_MIN_MATCHES : DEFAULT_MIN_GAMES);
-  }, [unit]);
-
-  const fetchData = async (input: {
-    readonly unit: UnitType;
-    readonly minCount: number;
-    readonly limit: number;
-  }): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<FantasyDuoWinRateResponse[]>({
+    queryKey: statsQueryKeys.stats.players.fantasyDuo({
+      unit,
+      minCount,
+      limit,
+    }),
+    queryFn: async () => {
       const searchParams = new URLSearchParams({
-        unit: input.unit,
-        minCount: String(input.minCount),
-        limit: String(input.limit),
+        unit,
+        minCount: String(minCount),
+        limit: String(limit),
       });
-
-      const response = await fetch(`/api/stats/players/fantasy-duo?${searchParams.toString()}`);
+      const response = await fetch(
+        `/api/stats/players/fantasy-duo?${searchParams.toString()}`
+      );
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
-
-      const result: FantasyDuoWinRateResponse[] = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (await response.json()) as FantasyDuoWinRateResponse[];
+    },
+    keepPreviousData: true,
+  });
 
   const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
+    if (!data) {
+      return [];
+    }
     return [...data].map((item) => ({
       duoName: `${item.playerA.playerNickname} × ${item.playerB.playerNickname}`,
       winRate: item.winRate,
@@ -77,7 +76,7 @@ export function FantasyDuoRankingChart() {
     }));
   }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -91,7 +90,7 @@ export function FantasyDuoRankingChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
@@ -103,17 +102,20 @@ export function FantasyDuoRankingChart() {
           {unit === "match" ? (
             <>
               <span className="text-white">매치 1건을 1경기</span>로 보고,{" "}
-              <span className="text-white">같은 팀</span>이었던 2인 조합의 승률을 집계합니다.
+              <span className="text-white">같은 팀</span>이었던 2인 조합의
+              승률을 집계합니다.
             </>
           ) : (
             <>
               <span className="text-white">게임 1판을 1경기</span>로 보고,{" "}
-              <span className="text-white">같은 팀</span>이었던 2인 조합의 승률을 집계합니다.
+              <span className="text-white">같은 팀</span>이었던 2인 조합의
+              승률을 집계합니다.
             </>
           )}
         </p>
         <p className="text-xs text-gray-500">
-          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은 <span className="text-gray-300">승 / (승+패+무)</span> 기준입니다.
+          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은{" "}
+          <span className="text-gray-300">승 / (승+패+무)</span> 기준입니다.
         </p>
       </div>
 
@@ -122,11 +124,17 @@ export function FantasyDuoRankingChart() {
           <span className="text-xs text-gray-400">기준</span>
           <select
             value={unit}
-            onChange={(e) => setUnit(e.target.value === "game" ? "game" : "match")}
+            onChange={(e) =>
+              setUnit(e.target.value === "game" ? "game" : "match")
+            }
             className="w-40 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
           >
-            <option className="text-black" value="game">게임</option>
-            <option className="text-black" value="match">매치</option>
+            <option className="text-black" value="game">
+              게임
+            </option>
+            <option className="text-black" value="match">
+              매치
+            </option>
           </select>
         </label>
 
@@ -138,7 +146,7 @@ export function FantasyDuoRankingChart() {
             type="number"
             min={1}
             value={minCount}
-            onChange={(e) => setMinCount(Number(e.target.value))}
+            onChange={(e) => handleMinCountChange(Number(e.target.value))}
             className="w-32 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
           />
         </label>
@@ -181,9 +189,15 @@ export function FantasyDuoRankingChart() {
                   className="border-t border-white/10 hover:bg-white/[0.06] transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-400">{index + 1}</td>
-                  <td className="px-4 py-3 font-medium text-white">{row.duoName}</td>
+                  <td className="px-4 py-3 font-medium text-white">
+                    {row.duoName}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className={row.winRate >= 50 ? "text-green-400" : "text-red-400"}>
+                    <span
+                      className={
+                        row.winRate >= 50 ? "text-green-400" : "text-red-400"
+                      }
+                    >
                       {row.winRate}%
                     </span>
                   </td>
@@ -200,5 +214,3 @@ export function FantasyDuoRankingChart() {
     </div>
   );
 }
-
-

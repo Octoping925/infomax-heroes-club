@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { HeroPopularityChart } from "./components/hero-popularity-chart";
 import { PlayerWinRateChart } from "./components/player-win-rate-chart";
 import { PlayerHeroChart } from "./components/player-hero-chart";
@@ -14,6 +15,7 @@ import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type TabType =
   | "heroPopularity"
@@ -49,33 +51,39 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
  */
 export default function StatsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("heroPopularity");
-  const [players, setPlayers] = useState<PlayerListItem[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerListItem | null>(
-    null
-  );
-  const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPlayers();
-  }, []);
-
-  const fetchPlayers = async () => {
-    setIsLoadingPlayers(true);
-    try {
+  const {
+    data: players = [],
+    isPending: isLoadingPlayers,
+    error: playersError,
+  } = useQuery<PlayerListItem[]>({
+    queryKey: statsQueryKeys.players(),
+    queryFn: async () => {
       const response = await fetch("/api/players");
-      if (response.ok) {
-        const data = await response.json();
-        setPlayers(data);
-        if (data.length > 0) {
-          setSelectedPlayer(data[0]);
-        }
+      if (!response.ok) {
+        throw new Error("플레이어 목록을 불러오는 중 오류가 발생했습니다.");
       }
-    } catch (err) {
-      console.error("플레이어 목록 조회 실패:", err);
-    } finally {
-      setIsLoadingPlayers(false);
+      return (await response.json()) as PlayerListItem[];
+    },
+  });
+
+  const selectedPlayer = useMemo(() => {
+    if (!players.length) {
+      return null;
     }
-  };
+    const hasSelected =
+      selectedPlayerId &&
+      players.some((player) => player.id === selectedPlayerId);
+    const playerIdToUse = hasSelected
+      ? selectedPlayerId
+      : players[0]?.id ?? null;
+    return (
+      players.find((player) => player.id === playerIdToUse) ??
+      players[0] ??
+      null
+    );
+  }, [players, selectedPlayerId]);
 
   const showPlayerSidebar =
     activeTab === "playerWinRate" || activeTab === "playerHero";
@@ -126,12 +134,18 @@ export default function StatsPage() {
                     <div className="flex justify-center py-8">
                       <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
                     </div>
+                  ) : playersError ? (
+                    <div className="flex justify-center py-8">
+                      <p className="text-red-400 text-sm">
+                        {playersError.message}
+                      </p>
+                    </div>
                   ) : (
                     <div className="space-y-1 max-h-[calc(100vh-250px)] overflow-y-auto">
                       {players.map((player) => (
                         <button
                           key={player.id}
-                          onClick={() => setSelectedPlayer(player)}
+                          onClick={() => setSelectedPlayerId(player.id)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
                             selectedPlayer?.id === player.id
                               ? "bg-cyan-500 text-white"

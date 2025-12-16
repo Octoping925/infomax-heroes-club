@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,6 +15,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { TeamSwitchWinRateResponse } from "@/app/api/stats/types";
+import { statsQueryKeys } from "@/config/query-keys";
 
 type ChartData = {
   name: string;
@@ -28,50 +30,38 @@ type ChartData = {
  * 팀 변경 효과 차트
  */
 export function TeamSwitchChart() {
-  const [data, setData] = useState<ChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isPending, error } = useQuery<TeamSwitchWinRateResponse[]>({
+    queryKey: statsQueryKeys.stats.teamSwitch(),
+    queryFn: async () => {
       const response = await fetch("/api/stats/team-switch");
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
+      return (await response.json()) as TeamSwitchWinRateResponse[];
+    },
+  });
 
-      const result: TeamSwitchWinRateResponse[] = await response.json();
-
-      const chartData: ChartData[] = result
-        .filter(
-          (item) =>
-            item.originalTeamStats.totalGames > 0 &&
-            item.switchedTeamStats.totalGames > 0
-        )
-        .map((item) => ({
-          name: item.playerNickname,
-          originalWinRate: item.originalTeamStats.winRate,
-          switchedWinRate: item.switchedTeamStats.winRate,
-          diff: item.switchedWinRateDiff,
-          originalGames: item.originalTeamStats.totalGames,
-          switchedGames: item.switchedTeamStats.totalGames,
-        }));
-
-      setData(chartData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
+  const chartData = useMemo<ChartData[]>(() => {
+    if (!data) {
+      return [];
     }
-  };
+    return data
+      .filter(
+        (item) =>
+          item.originalTeamStats.totalGames > 0 &&
+          item.switchedTeamStats.totalGames > 0
+      )
+      .map((item) => ({
+        name: item.playerNickname,
+        originalWinRate: item.originalTeamStats.winRate,
+        switchedWinRate: item.switchedTeamStats.winRate,
+        diff: item.switchedWinRateDiff,
+        originalGames: item.originalTeamStats.totalGames,
+        switchedGames: item.switchedTeamStats.totalGames,
+      }));
+  }, [data]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center py-12">
         <div className="flex items-center gap-3 text-gray-400">
@@ -85,12 +75,12 @@ export function TeamSwitchChart() {
   if (error) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">❌ {error}</p>
+        <p className="text-red-400">❌ {error.message}</p>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (chartData.length === 0) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-gray-500">데이터가 없습니다.</p>
@@ -99,8 +89,12 @@ export function TeamSwitchChart() {
   }
 
   // 팀 변경으로 승률이 오른 플레이어
-  const improvedPlayers = data.filter((d) => d.diff > 0 && d.switchedGames > 0);
-  const worsenedPlayers = data.filter((d) => d.diff < 0 && d.switchedGames > 0);
+  const improvedPlayers = chartData.filter(
+    (d) => d.diff > 0 && d.switchedGames > 0
+  );
+  const worsenedPlayers = chartData.filter(
+    (d) => d.diff < 0 && d.switchedGames > 0
+  );
 
   return (
     <div className="space-y-8">
@@ -129,9 +123,14 @@ export function TeamSwitchChart() {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           원본 팀 vs 변경 팀 승률 비교
         </h3>
-        <div style={{ width: "100%", height: Math.max(400, data.length * 40) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(400, chartData.length * 40),
+          }}
+        >
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
               <YAxis
@@ -180,9 +179,14 @@ export function TeamSwitchChart() {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           팀 변경 시 승률 변화량
         </h3>
-        <div style={{ width: "100%", height: Math.max(400, data.length * 40) }}>
+        <div
+          style={{
+            width: "100%",
+            height: Math.max(400, chartData.length * 40),
+          }}
+        >
           <ResponsiveContainer>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis
                 type="number"

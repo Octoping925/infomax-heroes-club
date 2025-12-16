@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppQueryProvider } from "./providers";
 
 export const metadata: Metadata = {
   title: "연합인포맥스 히오스 동호회",
@@ -15,7 +16,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="ko" suppressHydrationWarning>
       <head></head>
       <body style={{ margin: 0, padding: 0, minHeight: "100vh" }}>
-        {children}
+        <AppQueryProvider>{children}</AppQueryProvider>
       </body>
     </html>
   );
