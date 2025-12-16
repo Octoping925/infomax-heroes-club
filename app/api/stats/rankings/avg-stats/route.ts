@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import {
-  PlayerAverageKillsDeathsResponse,
+  PlayerAverageStatsResponse,
   calculateAverage,
 } from "@/app/api/stats/types";
 
@@ -12,20 +12,26 @@ type PlayerAccumulator = {
   totalGames: number;
   totalKills: number;
   totalDeaths: number;
+  totalTakedowns: number;
+  totalHeroDamage: number;
+  totalDamageTaken: number;
 };
 
 /**
- * 평균 킬 / 평균 데스 랭킹 조회 (게임 단위)
- * GET /api/stats/rankings/avg-kills-deaths
+ * 평균 스탯 랭킹 조회 (게임 단위)
+ * GET /api/stats/rankings/avg-stats
  */
 export async function GET(): Promise<
-  NextResponse<PlayerAverageKillsDeathsResponse[]>
+  NextResponse<PlayerAverageStatsResponse[]>
 > {
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
       kills: true,
       deaths: true,
+      takedowns: true,
+      heroDamage: true,
+      damageTaken: true,
       player: {
         select: {
           name: true,
@@ -50,11 +56,14 @@ export async function GET(): Promise<
     current.totalGames++;
     current.totalKills += participation.kills ?? 0;
     current.totalDeaths += participation.deaths ?? 0;
+    current.totalTakedowns += participation.takedowns ?? 0;
+    current.totalHeroDamage += participation.heroDamage ?? 0;
+    current.totalDamageTaken += participation.damageTaken ?? 0;
 
     accumulatorMap.set(playerId, current);
   }
 
-  const response: PlayerAverageKillsDeathsResponse[] = Array.from(
+  const response: PlayerAverageStatsResponse[] = Array.from(
     accumulatorMap.values()
   )
     .map((acc) => ({
@@ -64,6 +73,12 @@ export async function GET(): Promise<
       totalGames: acc.totalGames,
       averageKills: calculateAverage(acc.totalKills, acc.totalGames),
       averageDeaths: calculateAverage(acc.totalDeaths, acc.totalGames),
+      averageTakedowns: calculateAverage(acc.totalTakedowns, acc.totalGames),
+      averageHeroDamage: calculateAverage(acc.totalHeroDamage, acc.totalGames),
+      averageDamageTaken: calculateAverage(
+        acc.totalDamageTaken,
+        acc.totalGames
+      ),
     }))
     .filter((item) => item.totalGames > 0);
 
@@ -82,7 +97,8 @@ function createAccumulator(input: {
     totalGames: 0,
     totalKills: 0,
     totalDeaths: 0,
+    totalTakedowns: 0,
+    totalHeroDamage: 0,
+    totalDamageTaken: 0,
   };
 }
-
-

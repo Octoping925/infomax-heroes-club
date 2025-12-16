@@ -53,7 +53,7 @@ export const statsQueryKeys = {
     teamSwitch: () => ["stats", "team-switch"],
     rankings: {
       lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],
-      avgKillsDeaths: () => ["stats", "rankings", "avg-kills-deaths"],
+      avgStats: () => ["stats", "rankings", "avg-stats"],
     },
   },
 } as const;

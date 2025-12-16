@@ -1,9 +1,10 @@
 "use client";
 
-import { useContext } from "react";
+import { Suspense, useContext } from "react";
 import { SelectedPlayerContext } from "../../page";
 import { OverallStats } from "./OverallStats";
 import { HeroStats } from "./HeroStats";
+import { Loading } from "@/components/Loading";
 
 type Props = {
   nickname: string;
@@ -31,8 +32,12 @@ export function PersonalStatTab({ nickname }: Props) {
         </h2>
       </div>
       <div className="w-full flex flex-col gap-12">
-        <OverallStats playerId={selectedPlayer.id} />
-        <HeroStats nickname={nickname} />
+        <Suspense fallback={<Loading />}>
+          <OverallStats playerId={selectedPlayer.id} />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <HeroStats nickname={nickname} />
+        </Suspense>
       </div>
     </section>
   );

@@ -1,9 +1,9 @@
 import { PlayerHeroWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function usePlayerHeroWinRate(nickname: string) {
-  const { data, isPending, error } = useQuery<PlayerHeroWinRateResponse>({
+  const { data, error } = useSuspenseQuery<PlayerHeroWinRateResponse>({
     queryKey: statsQueryKeys.stats.players.heroStats(nickname),
     queryFn: async () => {
       const response = await fetch(
@@ -19,8 +19,7 @@ export function usePlayerHeroWinRate(nickname: string) {
 
       throw new Error("데이터를 불러오는데 실패했습니다.");
     },
-    enabled: Boolean(nickname),
   });
 
-  return { data, isPending, error };
+  return { data, error };
 }

@@ -20,14 +20,17 @@ export interface PlayerLunchDinnerWinRateResponse {
   readonly absWinRateDiff: number;
 }
 
-/** 플레이어 평균 킬/데스 통계 응답(게임 단위) */
-export interface PlayerAverageKillsDeathsResponse {
+/** 플레이어 평균 스탯 통계 응답(게임 단위) */
+export interface PlayerAverageStatsResponse {
   readonly playerId: string;
   readonly playerName: string;
   readonly playerNickname: string;
   readonly totalGames: number;
   readonly averageKills: number;
   readonly averageDeaths: number;
+  readonly averageTakedowns: number;
+  readonly averageHeroDamage: number;
+  readonly averageDamageTaken: number;
 }
 
 /** 플레이어 승률 응답 */

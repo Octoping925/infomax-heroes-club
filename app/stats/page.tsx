@@ -6,7 +6,7 @@ import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
 import { LunchDinnerWinRateChart } from "./components/lunch-dinner-win-rate-chart";
 import { LunchDinnerDiffRankingChart } from "./components/lunch-dinner-diff-ranking-chart";
-import { AvgKillsDeathsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
+import { AvgStatsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
@@ -149,7 +149,7 @@ export default function StatsPage() {
                     <LunchDinnerDiffRankingChart />
                   )}
                   {activeTab === "avgKillsDeathsRanking" && (
-                    <AvgKillsDeathsRankingChart />
+                    <AvgStatsRankingChart />
                   )}
                   {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
                   {activeTab === "heroDuo" && <HeroDuoRankingChart />}

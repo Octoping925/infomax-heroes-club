@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -12,8 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { PlayerAverageKillsDeathsResponse } from "@/app/api/stats/types";
-import { statsQueryKeys } from "@/config/query-keys";
+import { usePlayerAverageStats } from "../hooks/usePlayerAverageStats";
 
 type ChartData = {
   name: string;
@@ -24,19 +22,8 @@ type ChartData = {
 /**
  * 평균 킬/데스 랭킹 차트
  */
-export function AvgKillsDeathsRankingChart() {
-  const { data, isPending, error } = useQuery<
-    PlayerAverageKillsDeathsResponse[]
-  >({
-    queryKey: statsQueryKeys.stats.rankings.avgKillsDeaths(),
-    queryFn: async () => {
-      const response = await fetch("/api/stats/rankings/avg-kills-deaths");
-      if (!response.ok) {
-        throw new Error("데이터를 불러오는데 실패했습니다.");
-      }
-      return (await response.json()) as PlayerAverageKillsDeathsResponse[];
-    },
-  });
+export function AvgStatsRankingChart() {
+  const { data, isPending, error } = usePlayerAverageStats();
 
   const avgKillsData = useMemo<ChartData[]>(() => {
     if (!data) {

@@ -1,13 +1,11 @@
 import { PlayerCombinedWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function useOverallWinRate() {
-  const {
-    data = [],
-    isPending,
-    error,
-  } = useQuery<PlayerCombinedWinRateResponse[]>({
+  const { data = [], error } = useSuspenseQuery<
+    PlayerCombinedWinRateResponse[]
+  >({
     queryKey: statsQueryKeys.stats.players.overallWinRate(),
     queryFn: async () => {
       const response = await fetch("/api/stats/players/overall-win-rate");
@@ -18,5 +16,5 @@ export function useOverallWinRate() {
     },
   });
 
-  return { data, isPending, error };
+  return { data, error };
 }
