@@ -92,12 +92,7 @@ export function MatchHistoryTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <p className="text-gray-400">
-        날짜별로 match가 보이고, <span className="text-white">열기</span>를
-        누르면 해당 match의 game 상세(팀/영웅/킬·데스 등)가 표시됩니다.
-      </p>
-
+    <>
       {groups.map((group) => (
         <section key={group.dateKey} className="space-y-3">
           <div className="space-y-3">
@@ -112,7 +107,7 @@ export function MatchHistoryTab() {
           </div>
         </section>
       ))}
-    </div>
+    </>
   );
 }
 

@@ -39,12 +39,6 @@ export default function Home() {
               통계
             </Link>
             <Link
-              href="/matches"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              전적
-            </Link>
-            <Link
               href="/admin/match"
               className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
             >
@@ -134,7 +128,7 @@ export default function Home() {
             </p>
             <blockquote className="border-l-4 border-cyan-500 pl-6 py-4 bg-white/5 rounded-r-xl">
               <p className="text-lg italic text-gray-300">
-                "승리에 우연은 없습니다."
+                &quot;승리에 우연은 없습니다.&quot;
               </p>
               <footer className="text-sm text-gray-500 mt-2">- 채수관</footer>
             </blockquote>
