@@ -56,6 +56,14 @@ export interface PlayerHeroWinRateResponse {
   readonly heroStats: ReadonlyArray<HeroWinRateResponse>;
 }
 
+export interface PlayerCombinedWinRateResponse {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly matchStats: WinRateStats;
+  readonly gameStats: WinRateStats;
+}
+
 /** 팀 변경 승률 응답 */
 export interface TeamSwitchWinRateResponse {
   readonly playerId: string;
