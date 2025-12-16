@@ -100,7 +100,7 @@ export default function StatsPage() {
       {/* 메인 컨텐츠 */}
       <main className="w-full px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex gap-6">
+          <div className="flex max-lg:flex-col gap-6">
             {/* 플레이어 사이드바 */}
             {SHOW_PLAYER_SIDEBAR_TABS.includes(activeTab) && (
               <PlayerSidebar
