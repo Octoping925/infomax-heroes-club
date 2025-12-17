@@ -70,11 +70,7 @@ export function GameTeamTable({
                   {member.kills} / {member.deaths} / {member.takedowns}
                 </td>
                 <td className="py-2 pr-3">
-                  {(
-                    (((member.kills ?? 0) + (member.takedowns ?? 0)) /
-                      totalKill) *
-                    100
-                  ).toFixed(2)}
+                  {(((member.takedowns ?? 0) / totalKill) * 100).toFixed(2)}
                 </td>
                 <td className="py-2 pr-3">
                   {member.heroDamage ? commarize(member.heroDamage) : "-"}
