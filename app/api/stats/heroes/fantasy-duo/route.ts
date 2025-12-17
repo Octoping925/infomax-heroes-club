@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult, Hero } from "@/generated/prisma/client";
-import { HeroDuoWinRateResponse, calculateWinRate } from "@/app/api/stats/types";
+import { HeroDuoWinRateResponse } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type DuoAccumulator = {
   readonly heroA: Hero;
@@ -75,15 +76,14 @@ export async function GET(
 
   const response: HeroDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
-      const totalGames = acc.wins + acc.losses + acc.draws;
       return {
         heroA: acc.heroA,
         heroB: acc.heroB,
-        totalGames,
+        totalGames: acc.wins + acc.losses + acc.draws,
         wins: acc.wins,
         losses: acc.losses,
         draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, totalGames),
+        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
       };
     })
     .filter((item) => item.totalGames >= minCount)
@@ -95,7 +95,10 @@ export async function GET(
 
 type DuoResult = "WIN" | "LOSE" | "DRAW";
 
-function parseQueryParams(url: string): { readonly limit: number; readonly minCount: number } {
+function parseQueryParams(url: string): {
+  readonly limit: number;
+  readonly minCount: number;
+} {
   const { searchParams } = new URL(url);
   const limitParam = Number(searchParams.get("limit"));
   const minCountParam = Number(searchParams.get("minCount"));
@@ -118,7 +121,10 @@ function buildDuoKey(heroA: Hero, heroB: Hero): string {
   return `${heroA}:${heroB}`;
 }
 
-function createAccumulator(input: { heroA: Hero; heroB: Hero }): DuoAccumulator {
+function createAccumulator(input: {
+  heroA: Hero;
+  heroB: Hero;
+}): DuoAccumulator {
   return {
     heroA: input.heroA,
     heroB: input.heroB,
@@ -145,5 +151,3 @@ function updateResultCounts(acc: DuoAccumulator, result: DuoResult): void {
   }
   acc.draws++;
 }
-
-

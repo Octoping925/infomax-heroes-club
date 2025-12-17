@@ -4,8 +4,8 @@ import { GameResult, Hero } from "@/generated/prisma/client";
 import {
   PlayerHeroWinRateResponse,
   HeroWinRateResponse,
-  calculateWinRate,
 } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -91,14 +91,13 @@ function aggregateHeroStats(
 
   return Array.from(heroMap.entries())
     .map(([hero, stats]) => {
-      const totalGames = stats.wins + stats.losses + stats.draws;
       return {
         hero,
-        totalGames,
+        totalGames: stats.wins + stats.losses + stats.draws,
         wins: stats.wins,
         losses: stats.losses,
         draws: stats.draws,
-        winRate: calculateWinRate(stats.wins, totalGames),
+        winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
       };
     })
     .sort((a, b) => b.totalGames - a.totalGames);

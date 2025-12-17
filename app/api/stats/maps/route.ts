@@ -4,8 +4,8 @@ import { GameMap, GameResult } from "@/generated/prisma/client";
 import {
   MapPlayerWinRateResponse,
   PlayerWinRateResponse,
-  calculateWinRate,
 } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 /**
  * 맵별 플레이어 승률 조회
@@ -117,16 +117,15 @@ function aggregateMapPlayerStats(
     const convertedMap = new Map<string, PlayerWinRateResponse>();
 
     for (const [playerId, stats] of playerMap.entries()) {
-      const totalGames = stats.wins + stats.losses + stats.draws;
       convertedMap.set(playerId, {
         playerId: stats.playerId,
         playerName: stats.playerName,
         playerNickname: stats.playerNickname,
-        totalGames,
+        totalGames: stats.wins + stats.losses + stats.draws,
         wins: stats.wins,
         losses: stats.losses,
         draws: stats.draws,
-        winRate: calculateWinRate(stats.wins, totalGames),
+        winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
       });
     }
 

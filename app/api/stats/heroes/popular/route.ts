@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult, Hero } from "@/generated/prisma/client";
-import {
-  HeroPopularityResponse,
-  calculateWinRate,
-} from "@/app/api/stats/types";
+import { HeroPopularityResponse } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 /**
  * 밴/픽이 많이 된 영웅 통계 조회
@@ -68,14 +66,29 @@ function buildHeroPopularity(
   banCounts: Map<Hero, number>
 ): HeroPopularityResponse[] {
   // 영웅별 픽 통계 집계
-  const heroPickMap = new Map<Hero, { total: number; wins: number }>();
+  const heroPickMap = new Map<
+    Hero,
+    { total: number; wins: number; losses: number; draws: number }
+  >();
 
   for (const pick of pickStats) {
-    const current = heroPickMap.get(pick.hero) ?? { total: 0, wins: 0 };
+    const current = heroPickMap.get(pick.hero) ?? {
+      total: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+    };
+
     current.total++;
+
     if (pick.result === GameResult.WIN) {
       current.wins++;
+    } else if (pick.result === GameResult.LOSE) {
+      current.losses++;
+    } else {
+      current.draws++;
     }
+
     heroPickMap.set(pick.hero, current);
   }
 
@@ -83,15 +96,24 @@ function buildHeroPopularity(
   const allHeroes = new Set<Hero>([...heroPickMap.keys(), ...banCounts.keys()]);
 
   return Array.from(allHeroes).map((hero) => {
-    const pickStat = heroPickMap.get(hero) ?? { total: 0, wins: 0 };
+    const pickStat = heroPickMap.get(hero) ?? {
+      total: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+    };
     const banCount = banCounts.get(hero) ?? 0;
 
     return {
       hero,
-      pickCount: pickStat.total,
+      pickCount: pickStat.wins,
       banCount,
       totalAppearance: pickStat.total + banCount,
-      pickWinRate: calculateWinRate(pickStat.wins, pickStat.total),
+      pickWinRate: calculateWinRate(
+        pickStat.wins,
+        pickStat.losses,
+        pickStat.draws
+      ),
     };
   });
 }

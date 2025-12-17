@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult, Hero } from "@/generated/prisma/client";
-import { HeroWinRateResponse, calculateWinRate } from "@/app/api/stats/types";
+import { HeroWinRateResponse } from "@/app/api/stats/types";
 import { countBy } from "es-toolkit";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type RouteParams = {
   params: Promise<{ hero: string }>;
@@ -51,6 +52,6 @@ function calculateGameStats(results: GameResult[]) {
     wins: counts.WIN,
     losses: counts.LOSE,
     draws: counts.DRAW,
-    winRate: calculateWinRate(counts.WIN, totalGames),
+    winRate: calculateWinRate(counts.WIN, counts.LOSE, counts.DRAW),
   };
 }

@@ -3,8 +3,8 @@ import { GameResult, MatchType } from "@/generated/prisma/client";
 import {
   PlayerLunchDinnerWinRateResponse,
   WinRateStats,
-  calculateWinRate,
 } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 export type LunchDinnerUnit = "game" | "match";
 
@@ -57,7 +57,9 @@ export async function fetchPlayerLunchDinnerWinRate(input: {
   });
 }
 
-async function buildAccumulatorByGame(): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByGame(): Promise<
+  Map<string, PlayerAccumulator>
+> {
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
@@ -111,7 +113,9 @@ async function buildAccumulatorByGame(): Promise<Map<string, PlayerAccumulator>>
   return accumulatorMap;
 }
 
-async function buildAccumulatorByMatch(): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByMatch(): Promise<
+  Map<string, PlayerAccumulator>
+> {
   const memberships = await prisma.matchTeamMember.findMany({
     select: {
       playerId: true,
@@ -204,18 +208,15 @@ function updateResultCounts(counts: ResultCounts, result: GameResult): void {
 }
 
 function buildWinRateStats(counts: ResultCounts): WinRateStats {
-  const totalGames = counts.wins + counts.losses + counts.draws;
   return {
-    totalGames,
+    totalGames: counts.wins + counts.losses + counts.draws,
     wins: counts.wins,
     losses: counts.losses,
     draws: counts.draws,
-    winRate: calculateWinRate(counts.wins, totalGames),
+    winRate: calculateWinRate(counts.wins, counts.losses, counts.draws),
   };
 }
 
 function roundToTwoDecimals(value: number): number {
   return Math.round(value * 100) / 100;
 }
-
-

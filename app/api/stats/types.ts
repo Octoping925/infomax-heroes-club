@@ -107,14 +107,6 @@ export interface FantasyDuoWinRateResponse extends WinRateStats {
 }
 
 /**
- * 승률을 계산하는 유틸리티 함수
- */
-export function calculateWinRate(wins: number, totalGames: number): number {
-  if (totalGames === 0) return 0;
-  return Math.round((wins / totalGames) * 10000) / 100;
-}
-
-/**
  * 평균을 계산하는 유틸리티 함수
  */
 export function calculateAverage(total: number, count: number): number {

@@ -3,9 +3,9 @@ import { prisma } from "@/config/prisma";
 import {
   PlayerCombinedWinRateResponse,
   WinRateStats,
-  calculateWinRate,
 } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type StatAccumulator = {
   wins: number;
@@ -121,13 +121,12 @@ export async function GET(): Promise<
   }
 
   const toResponse = (stats: StatAccumulator): WinRateStats => {
-    const totalGames = stats.wins + stats.losses + stats.draws;
     return {
-      totalGames,
+      totalGames: stats.wins + stats.losses + stats.draws,
       wins: stats.wins,
       losses: stats.losses,
       draws: stats.draws,
-      winRate: calculateWinRate(stats.wins, totalGames),
+      winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
     };
   };
 

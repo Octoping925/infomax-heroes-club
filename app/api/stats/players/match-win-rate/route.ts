@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { PlayerWinRateResponse, calculateWinRate } from "@/app/api/stats/types";
+import { PlayerWinRateResponse } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -68,16 +69,15 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
 
   const response: PlayerWinRateResponse[] = Array.from(accumulatorMap.values())
     .map((acc) => {
-      const totalGames = acc.wins + acc.losses + acc.draws;
       return {
         playerId: acc.playerId,
         playerName: acc.playerName,
         playerNickname: acc.playerNickname,
-        totalGames,
+        totalGames: acc.wins + acc.losses + acc.draws,
         wins: acc.wins,
         losses: acc.losses,
         draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, totalGames),
+        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
       };
     })
     .filter((item) => item.totalGames > 0)
@@ -100,5 +100,3 @@ function createAccumulator(input: {
     draws: 0,
   };
 }
-
-

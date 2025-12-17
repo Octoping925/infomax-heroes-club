@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult } from "@/generated/prisma/client";
-import {
-  TeamSwitchWinRateResponse,
-  WinRateStats,
-  calculateWinRate,
-} from "@/app/api/stats/types";
+import { TeamSwitchWinRateResponse, WinRateStats } from "@/app/api/stats/types";
+import { calculateWinRate } from "@/utils/win-rate";
 
 /**
  * 매치팀과 다른 게임팀에서 승률이 좋은 사람 조회
@@ -129,6 +126,6 @@ function buildWinRateStats(results: GameResult[]): WinRateStats {
     wins,
     losses,
     draws,
-    winRate: calculateWinRate(wins, totalGames),
+    winRate: calculateWinRate(wins, losses, draws),
   };
 }

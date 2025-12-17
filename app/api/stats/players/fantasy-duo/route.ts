@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import {
-  calculateWinRate,
-  FantasyDuoWinRateResponse,
-} from "@/app/api/stats/types";
+import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
+import { calculateWinRate } from "@/utils/win-rate";
 
 type DuoAccumulator = {
   readonly playerA: {
@@ -47,15 +45,14 @@ export async function GET(
 
   const response: FantasyDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
-      const totalGames = acc.wins + acc.losses + acc.draws;
       return {
         playerA: acc.playerA,
         playerB: acc.playerB,
-        totalGames,
+        totalGames: acc.wins + acc.losses + acc.draws,
         wins: acc.wins,
         losses: acc.losses,
         draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, totalGames),
+        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
       };
     })
     .filter((item) => item.totalGames >= minCount)
@@ -131,7 +128,10 @@ function getMatchTeamResult(input: {
   return "LOSE";
 }
 
-function updateResultCounts(acc: DuoAccumulator, result: MatchTeamResult): void {
+function updateResultCounts(
+  acc: DuoAccumulator,
+  result: MatchTeamResult
+): void {
   if (result === "WIN") {
     acc.wins++;
     return;
@@ -143,7 +143,9 @@ function updateResultCounts(acc: DuoAccumulator, result: MatchTeamResult): void 
   acc.draws++;
 }
 
-async function calculateDuoStatsByMatch(): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByMatch(): Promise<
+  Map<string, DuoAccumulator>
+> {
   const matchTeams = await prisma.matchTeam.findMany({
     select: {
       teamNumber: true,
@@ -283,5 +285,3 @@ function mapGameResultToMatchTeamResult(result: GameResult): MatchTeamResult {
   if (result === GameResult.LOSE) return "LOSE";
   return "DRAW";
 }
-
-
