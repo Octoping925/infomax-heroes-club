@@ -21,18 +21,20 @@ type MatchHistoryMatchTeam = {
 };
 
 type MatchHistoryGameTeamMember = {
-  readonly player: MatchHistoryPlayer;
-  readonly hero: string;
-  readonly kills: number | null;
-  readonly deaths: number | null;
-  readonly takedowns: number | null;
+  player: MatchHistoryPlayer;
+  hero: string;
+  kills: number | null;
+  deaths: number | null;
+  takedowns: number | null;
+  heroDamage: number | null;
+  damageTaken: number | null;
 };
 
 type MatchHistoryGameTeam = {
   readonly id: string;
   readonly teamNumber: number;
   readonly result: GameResult;
-  readonly members: ReadonlyArray<MatchHistoryGameTeamMember>;
+  readonly members: MatchHistoryGameTeamMember[];
 };
 
 type MatchHistoryGame = {
@@ -40,7 +42,7 @@ type MatchHistoryGame = {
   readonly gameNumber: number;
   readonly map: string;
   readonly winnerTeamNumber: number | null;
-  readonly teams: ReadonlyArray<MatchHistoryGameTeam>;
+  readonly teams: MatchHistoryGameTeam[];
 };
 
 export type MatchHistoryItem = {
@@ -48,8 +50,8 @@ export type MatchHistoryItem = {
   readonly playedAt: string; // ISO String
   readonly type: MatchType;
   readonly winnerTeamNumber: number | null;
-  readonly teams: ReadonlyArray<MatchHistoryMatchTeam>;
-  readonly games: ReadonlyArray<MatchHistoryGame>;
+  readonly teams: MatchHistoryMatchTeam[];
+  readonly games: MatchHistoryGame[];
 };
 
 /**
@@ -125,6 +127,8 @@ export async function GET(
                     kills: true,
                     deaths: true,
                     takedowns: true,
+                    heroDamage: true,
+                    damageTaken: true,
                     player: {
                       select: {
                         id: true,
@@ -167,6 +171,8 @@ export async function GET(
             kills: member.kills,
             deaths: member.deaths,
             takedowns: member.takedowns,
+            heroDamage: member.heroDamage,
+            damageTaken: member.damageTaken,
           })),
         })),
       })),
