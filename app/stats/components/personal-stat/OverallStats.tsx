@@ -1,13 +1,20 @@
 import { WinRateStats } from "@/app/api/stats/types";
 import { useOverallWinRate } from "../../hooks/useOverallWinRate";
+import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
+import { commarize } from "@/utils/commarize";
 
 type Props = {
   readonly playerId: string;
 };
 
 export function OverallStats({ playerId }: Props) {
-  const { data, error } = useOverallWinRate();
-  const selectedPlayerStat = data.find((stat) => stat.playerId === playerId);
+  const { data: overallData, error } = useOverallWinRate();
+  const { data: kdaData } = usePlayerAverageStats();
+
+  const selectedPlayerStat = overallData.find(
+    (stat) => stat.playerId === playerId
+  );
+  const selectedPlayerKda = kdaData.find((stat) => stat.playerId === playerId);
 
   if (error) {
     return (
@@ -17,7 +24,7 @@ export function OverallStats({ playerId }: Props) {
     );
   }
 
-  if (!selectedPlayerStat) {
+  if (!selectedPlayerStat || !selectedPlayerKda) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-red-400">플레이어 정보를 찾을 수 없습니다.</p>
@@ -37,6 +44,11 @@ export function OverallStats({ playerId }: Props) {
         stats={selectedPlayerStat.gameStats}
         accent="from-purple-500/30 to-purple-700/20"
       />
+      <AverageStatsSummary
+        title="평균 스탯"
+        stats={selectedPlayerKda}
+        accent="from-blue-500/30 to-blue-700/20"
+      />
     </div>
   );
 }
@@ -52,7 +64,7 @@ function WinRateSummary({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-gradient-to-br ${accent} p-4 w-full`}
+      className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}
     >
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
@@ -66,4 +78,46 @@ function WinRateSummary({
       </p>
     </div>
   );
+}
+
+interface AverageStatsSummaryProps {
+  title: string;
+  stats: {
+    playerId: string;
+    playerName: string;
+    playerNickname: string;
+    totalGames: number;
+    averageKills: number;
+    averageDeaths: number;
+    averageTakedowns: number;
+    averageHeroDamage: number;
+    averageDamageTaken: number;
+  };
+  accent: string;
+}
+
+function AverageStatsSummary({
+  title,
+  stats,
+  accent,
+}: AverageStatsSummaryProps) {
+  return (
+    <div
+      className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}
+    >
+      <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
+      <p className="text-3xl font-bold text-white mt-3">
+        {roundToOneDecimal(stats.averageKills)} /{" "}
+        {roundToOneDecimal(stats.averageDeaths)} /{" "}
+        {roundToOneDecimal(stats.averageTakedowns)}
+      </p>
+      <p className="text-md text-gray-400 mt-3">
+        평균 딜량: {commarize(Math.floor(stats.averageHeroDamage))}
+      </p>
+    </div>
+  );
+}
+
+function roundToOneDecimal(value: number): number {
+  return Math.round(value * 10) / 10;
 }

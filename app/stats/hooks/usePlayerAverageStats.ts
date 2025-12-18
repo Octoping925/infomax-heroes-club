@@ -1,9 +1,9 @@
 import { PlayerAverageStatsResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function usePlayerAverageStats() {
-  const { data, isPending, error } = useQuery<PlayerAverageStatsResponse[]>({
+  const { data, error } = useSuspenseQuery<PlayerAverageStatsResponse[]>({
     queryKey: statsQueryKeys.stats.rankings.avgStats(),
     queryFn: async () => {
       const response = await fetch("/api/stats/rankings/avg-stats");
@@ -14,5 +14,5 @@ export function usePlayerAverageStats() {
     },
   });
 
-  return { data, isPending, error };
+  return { data, error };
 }

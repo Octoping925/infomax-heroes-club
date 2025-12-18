@@ -23,14 +23,11 @@ type ChartData = {
  * 평균 킬/데스 랭킹 차트
  */
 export function AvgStatsRankingChart() {
-  const { data, isPending, error } = usePlayerAverageStats();
+  const { data, error } = usePlayerAverageStats();
 
   const avgKillsData = useMemo<ChartData[]>(() => {
-    if (!data) {
-      return [];
-    }
-    return [...data]
-      .sort((a, b) => b.averageKills - a.averageKills)
+    return data
+      .toSorted((a, b) => b.averageKills - a.averageKills)
       .slice(0, 20)
       .map((item) => ({
         name: item.playerNickname,
@@ -40,11 +37,8 @@ export function AvgStatsRankingChart() {
   }, [data]);
 
   const avgDeathsData = useMemo<ChartData[]>(() => {
-    if (!data) {
-      return [];
-    }
-    return [...data]
-      .sort((a, b) => b.averageDeaths - a.averageDeaths)
+    return data
+      .toSorted((a, b) => b.averageDeaths - a.averageDeaths)
       .slice(0, 20)
       .map((item) => ({
         name: item.playerNickname,
@@ -52,17 +46,6 @@ export function AvgStatsRankingChart() {
         totalGames: item.totalGames,
       }));
   }, [data]);
-
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
