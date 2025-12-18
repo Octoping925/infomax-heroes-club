@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -12,10 +11,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { MapPlayerWinRateResponse } from "@/app/api/stats/types";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { GameMap } from "@/generated/prisma/client";
-import { statsQueryKeys } from "@/config/query-keys";
+import { useMapWinRate } from "../hooks/useMapWinRate";
 
 type ChartData = {
   name: string;
@@ -30,16 +28,7 @@ type ChartData = {
  */
 export function MapWinRateChart() {
   const [selectedMap, setSelectedMap] = useState<string>("");
-  const { data, isPending, error } = useQuery<MapPlayerWinRateResponse[]>({
-    queryKey: statsQueryKeys.stats.maps(),
-    queryFn: async () => {
-      const response = await fetch("/api/stats/maps");
-      if (!response.ok) {
-        throw new Error("데이터를 불러오는데 실패했습니다.");
-      }
-      return (await response.json()) as MapPlayerWinRateResponse[];
-    },
-  });
+  const { data, error } = useMapWinRate();
 
   const currentMap = useMemo(() => {
     if (!data || data.length === 0) {
@@ -51,29 +40,10 @@ export function MapWinRateChart() {
     return data[0]?.map ?? "";
   }, [data, selectedMap]);
 
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex justify-center py-12">
         <p className="text-red-400">❌ {error.message}</p>
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <p className="text-gray-500">데이터가 없습니다.</p>
       </div>
     );
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext } from "react";
+import { createContext, Suspense } from "react";
 import { HeroPopularityChart } from "./components/hero-popularity-chart";
 import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
@@ -16,6 +16,7 @@ import { ScrimWinRateTab } from "./components/scrim-win-rate-tab";
 import { PersonalStatTab } from "./components/personal-stat/personal-stat-tab";
 import { usePlayerList } from "./hooks/usePlayerList";
 import { PlayerSidebar } from "./components/PlayerSidebar";
+import { Loading } from "@/components/Loading";
 
 type TabType =
   | "personalStats"
@@ -125,35 +126,37 @@ export default function StatsPage() {
                 </div>
 
                 <SelectedPlayerContext.Provider value={selectedPlayer}>
-                  {/* 각 탭별 차트 */}
-                  {activeTab === "personalStats" && (
-                    <PersonalStatTab
-                      nickname={selectedPlayer?.nickname ?? ""}
-                    />
-                  )}
-                  {activeTab === "heroPopularity" && <HeroPopularityChart />}
-                  {activeTab === "scrimWinRate" && (
-                    <ScrimWinRateTab
-                      selectedPlayerId={selectedPlayer?.id ?? null}
-                      onSelectPlayer={(playerId) =>
-                        setSelectedPlayerId(playerId)
-                      }
-                    />
-                  )}
-                  {activeTab === "mapWinRate" && <MapWinRateChart />}
-                  {activeTab === "teamSwitch" && <TeamSwitchChart />}
-                  {activeTab === "lunchDinnerWinRate" && (
-                    <LunchDinnerWinRateChart />
-                  )}
-                  {activeTab === "lunchDinnerDiffRanking" && (
-                    <LunchDinnerDiffRankingChart />
-                  )}
-                  {activeTab === "avgKillsDeathsRanking" && (
-                    <AvgStatsRankingChart />
-                  )}
-                  {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
-                  {activeTab === "heroDuo" && <HeroDuoRankingChart />}
-                  {activeTab === "matchHistory" && <MatchHistoryTab />}
+                  <Suspense fallback={<Loading />}>
+                    {/* 각 탭별 차트 */}
+                    {activeTab === "personalStats" && (
+                      <PersonalStatTab
+                        nickname={selectedPlayer?.nickname ?? ""}
+                      />
+                    )}
+                    {activeTab === "heroPopularity" && <HeroPopularityChart />}
+                    {activeTab === "scrimWinRate" && (
+                      <ScrimWinRateTab
+                        selectedPlayerId={selectedPlayer?.id ?? null}
+                        onSelectPlayer={(playerId) =>
+                          setSelectedPlayerId(playerId)
+                        }
+                      />
+                    )}
+                    {activeTab === "mapWinRate" && <MapWinRateChart />}
+                    {activeTab === "teamSwitch" && <TeamSwitchChart />}
+                    {activeTab === "lunchDinnerWinRate" && (
+                      <LunchDinnerWinRateChart />
+                    )}
+                    {activeTab === "lunchDinnerDiffRanking" && (
+                      <LunchDinnerDiffRankingChart />
+                    )}
+                    {activeTab === "avgKillsDeathsRanking" && (
+                      <AvgStatsRankingChart />
+                    )}
+                    {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
+                    {activeTab === "heroDuo" && <HeroDuoRankingChart />}
+                    {activeTab === "matchHistory" && <MatchHistoryTab />}
+                  </Suspense>
                 </SelectedPlayerContext.Provider>
               </div>
             </div>

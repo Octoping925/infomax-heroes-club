@@ -5,6 +5,7 @@ import { SelectedPlayerContext } from "../../page";
 import { OverallStats } from "./OverallStats";
 import { HeroStats } from "./HeroStats";
 import { Loading } from "@/components/Loading";
+import { PersonalMapWinRateChart } from "./PersonalMapWinRateChart";
 
 type Props = {
   nickname: string;
@@ -37,6 +38,9 @@ export function PersonalStatTab({ nickname }: Props) {
         </Suspense>
         <Suspense fallback={<Loading />}>
           <HeroStats nickname={nickname} />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <PersonalMapWinRateChart nickname={nickname} />
         </Suspense>
       </div>
     </section>
