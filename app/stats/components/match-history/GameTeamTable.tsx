@@ -46,7 +46,7 @@ export function GameTeamTable({
                 key={member.player.id}
                 className="border-b border-white/5 last:border-b-0"
               >
-                <td className="py-2 flex justify-center">
+              <td className="py-2 text-center">
                   <Image
                     src={HeroImage[member.hero as Hero]}
                     className="rounded-2xl"
@@ -70,7 +70,9 @@ export function GameTeamTable({
                   {member.kills} / {member.deaths} / {member.takedowns}
                 </td>
                 <td className="py-2 pr-3">
-                  {(((member.takedowns ?? 0) / totalKill) * 100).toFixed(2)}
+                {Math.round(((member.takedowns ?? 0) / totalKill) * 10000) /
+                  100}
+                %
                 </td>
                 <td className="py-2 pr-3">
                   {member.heroDamage ? commarize(member.heroDamage) : "-"}
