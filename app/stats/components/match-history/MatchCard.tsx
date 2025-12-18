@@ -28,47 +28,52 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
 
   return (
     <main className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-      <div className="p-5 flex items-start justify-between gap-4">
-        <div className="flex space-y-2 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex flex-col gap-2">
-              <span className="text-center px-3 py-1 rounded-full text-md font-medium border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-                {match.type === "LUNCH" ? "점심" : "저녁"}
-              </span>
-              <span className="text-center px-3 py-1 rounded-full text-md font-medium border bg-white/5 text-gray-300 border-white/10">
-                {winnerLabel}
-              </span>
-              <span className="text-md font-semibold text-gray-400 uppercase tracking-wider">
-                {dayjs(match.playedAt).format("YYYY-MM-DD")}
-              </span>
-            </div>
-          </div>
-          <div className="ml-12 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TeamSummaryCard
-              title={team1Name}
-              leaderNickname={team1.leader.nickname ?? "-"}
-              members={team1.members.map((m) => m.nickname) ?? []}
-              accent="border-cyan-500/30"
-            />
-            <TeamSummaryCard
-              title={team2Name}
-              leaderNickname={team2.leader.nickname ?? "-"}
-              members={team2.members.map((m) => m.nickname) ?? []}
-              accent="border-purple-500/30"
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={onToggle}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-            isExpanded
-              ? "bg-gray-500 text-white shadow-lg shadow-gray-500/25"
-              : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          {isExpanded ? "닫기" : "열기"}
-        </button>
+      <div className="p-5">
+        <table className="w-full table-fixed">
+          <tbody>
+            <tr>
+              <td className="align-top w-26">
+                <span className="block text-center w-22 px-3 py-1 mb-2 rounded-full text-md font-medium border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
+                  {match.type === "LUNCH" ? "점심" : "저녁"}
+                </span>
+                <span className="block text-center w-22 px-3 py-1 mb-2 rounded-full text-md font-medium border bg-white/5 text-gray-300 border-white/10">
+                  {winnerLabel}
+                </span>
+                <span className="block text-md font-semibold text-gray-400 uppercase tracking-wider text-center">
+                  {dayjs(match.playedAt).format("YYYY-MM-DD")}
+                </span>
+              </td>
+              <td className="align-top px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <TeamSummaryCard
+                    title={team1Name}
+                    leaderNickname={team1.leader.nickname ?? "-"}
+                    members={team1.members.map((m) => m.nickname) ?? []}
+                    accent="border-cyan-500/30"
+                  />
+                  <TeamSummaryCard
+                    title={team2Name}
+                    leaderNickname={team2.leader.nickname ?? "-"}
+                    members={team2.members.map((m) => m.nickname) ?? []}
+                    accent="border-purple-500/30"
+                  />
+                </div>
+              </td>
+              <td className="align-top w-28 text-right pl-4">
+                <button
+                  onClick={onToggle}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    isExpanded
+                      ? "bg-gray-500 text-white shadow-lg shadow-gray-500/25"
+                      : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {isExpanded ? "닫기" : "열기"}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {isExpanded && (

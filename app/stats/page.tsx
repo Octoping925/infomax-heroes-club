@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, Suspense } from "react";
-import { HeroPopularityChart } from "./components/hero-popularity-chart";
 import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
 import { LunchDinnerWinRateChart } from "./components/lunch-dinner-win-rate-chart";
@@ -12,17 +11,15 @@ import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
 import { useHashSyncedTab } from "./use-tab-hash";
-import { ScrimWinRateTab } from "./components/scrim-win-rate-tab";
 import { PersonalStatTab } from "./components/personal-stat/personal-stat-tab";
 import { usePlayerList } from "./hooks/usePlayerList";
 import { PlayerSidebar } from "./components/PlayerSidebar";
 import { Loading } from "@/components/Loading";
+import { ScrimStatTab } from "./components/scrim-stat/scrim-stat-tab";
 
 type TabType =
   | "personalStats"
   | "scrimStats"
-  | "scrimWinRate"
-  | "heroPopularity"
   | "mapWinRate"
   | "teamSwitch"
   | "lunchDinnerWinRate"
@@ -35,8 +32,6 @@ type TabType =
 const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "personalStats", label: "개인 통계", icon: "👤" },
   { id: "scrimStats", label: "내전 통계", icon: "🥇" },
-  { id: "scrimWinRate", label: "내전 승률", icon: "🥇" },
-  { id: "heroPopularity", label: "영웅 픽/밴", icon: "🎯" },
   { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
   { id: "lunchDinnerWinRate", label: "점심/저녁 승률", icon: "🍱" },
@@ -133,15 +128,7 @@ export default function StatsPage() {
                         nickname={selectedPlayer?.nickname ?? ""}
                       />
                     )}
-                    {activeTab === "heroPopularity" && <HeroPopularityChart />}
-                    {activeTab === "scrimWinRate" && (
-                      <ScrimWinRateTab
-                        selectedPlayerId={selectedPlayer?.id ?? null}
-                        onSelectPlayer={(playerId) =>
-                          setSelectedPlayerId(playerId)
-                        }
-                      />
-                    )}
+                    {activeTab === "scrimStats" && <ScrimStatTab />}
                     {activeTab === "mapWinRate" && <MapWinRateChart />}
                     {activeTab === "teamSwitch" && <TeamSwitchChart />}
                     {activeTab === "lunchDinnerWinRate" && (
