@@ -40,7 +40,12 @@ export async function GET(): Promise<
 
   // 팀 변경 시 승률 차이가 높은 순으로 정렬
   return NextResponse.json(
-    results.sort((a, b) => b.switchedWinRateDiff - a.switchedWinRateDiff)
+    results.sort((a, b) => b.switchedWinRateDiff - a.switchedWinRateDiff),
+    {
+      headers: {
+        "Cache-Control": "public, max-age=86400",
+      },
+    }
   );
 }
 

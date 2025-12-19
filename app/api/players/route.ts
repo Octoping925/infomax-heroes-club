@@ -23,5 +23,9 @@ export async function GET(): Promise<NextResponse<PlayerListItem[]>> {
     },
   });
 
-  return NextResponse.json(players);
+  return NextResponse.json(players, {
+    headers: {
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 }
