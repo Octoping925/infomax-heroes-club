@@ -11,6 +11,13 @@ export interface HeroDuoParams {
   readonly limit: number;
 }
 
+export interface RivalryParams {
+  readonly minMatches: number;
+  readonly limit: number;
+  readonly takeMatches: number;
+  readonly includeInsufficientSample: boolean;
+}
+
 export const statsQueryKeys = {
   players: () => ["players"],
   matches: {
@@ -55,5 +62,6 @@ export const statsQueryKeys = {
       lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],
       avgStats: () => ["stats", "rankings", "avg-stats"],
     },
+    rivalries: (params: RivalryParams) => ["stats", "rivalries", params],
   },
 } as const;

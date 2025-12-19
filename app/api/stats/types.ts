@@ -106,6 +106,102 @@ export interface FantasyDuoWinRateResponse extends WinRateStats {
   };
 }
 
+// ============================================
+// Rivalry (라이벌리)
+// ============================================
+
+export type RivalryLabelType = "DESTINED_RIVAL" | "NEMESIS";
+
+export interface RivalryLabel {
+  readonly type: RivalryLabelType;
+  /**
+   * UI에 바로 보여줄 라벨 텍스트(한국어)
+   * - 예: "숙명의 라이벌", "천적: B → A"
+   */
+  readonly text: string;
+}
+
+export type RivalryRecentResult = "A" | "B" | "D";
+
+export interface RivalrySide {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  /** 0 ~ 100 */
+  readonly winRate: number;
+}
+
+export interface RivalryHeroPick {
+  readonly hero: Hero;
+  readonly count: number;
+}
+
+export interface RivalryScoreBreakdown {
+  /** 맞대결 횟수(매치 단위) */
+  readonly matchesCount: number;
+  /** 0 ~ 1 */
+  readonly countScore: number;
+  /** 0 ~ 1 (50:50에 가까울수록 1) */
+  readonly balance: number;
+  /** 0 ~ 1 (최근성 + 최근 5경기 가중) */
+  readonly recency: number;
+  /** 0 ~ 1 (퍼포먼스 격차가 작을수록 1) */
+  readonly performanceCloseness: number;
+  /** 0 ~ 1 (가중치 적용 후) */
+  readonly rawScore: number;
+}
+
+export interface RivalryCardResponse {
+  /** pair의 안정적인 키 (playerId 기반, A|B는 정렬된 순서) */
+  readonly id: string;
+  readonly score: number; // 0 ~ 100
+  readonly labels: ReadonlyArray<RivalryLabel>;
+  readonly playerA: RivalrySide;
+  readonly playerB: RivalrySide;
+  readonly recent5: {
+    readonly winsA: number;
+    readonly winsB: number;
+    readonly draws: number;
+    readonly sequence: ReadonlyArray<RivalryRecentResult>;
+  };
+  readonly lunchDinner: {
+    readonly lunch: {
+      readonly winsA: number;
+      readonly winsB: number;
+      readonly draws: number;
+    };
+    readonly dinner: {
+      readonly winsA: number;
+      readonly winsB: number;
+      readonly draws: number;
+    };
+  };
+  readonly topHeroes: {
+    readonly playerA: ReadonlyArray<RivalryHeroPick>;
+    readonly playerB: ReadonlyArray<RivalryHeroPick>;
+  };
+  /** 자동 생성된 한국어 멘트 */
+  readonly comment: string;
+  readonly breakdown: RivalryScoreBreakdown;
+  /** ISO string */
+  readonly lastPlayedAt: string;
+}
+
+export interface RivalryListResponse {
+  readonly generatedAt: string; // ISO string
+  readonly params: {
+    readonly minMatches: number;
+    readonly limit: number;
+    readonly takeMatches: number;
+    readonly includeInsufficientSample: boolean;
+  };
+  readonly hottest: RivalryCardResponse | null;
+  readonly items: ReadonlyArray<RivalryCardResponse>;
+}
+
 /**
  * 평균을 계산하는 유틸리티 함수
  */

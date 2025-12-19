@@ -16,10 +16,12 @@ import { usePlayerList } from "./hooks/usePlayerList";
 import { PlayerSidebar } from "./components/PlayerSidebar";
 import { Loading } from "@/components/Loading";
 import { ScrimStatTab } from "./components/scrim-stat/scrim-stat-tab";
+import { RivalryTab } from "./components/rivalry-tab";
 
 type TabType =
   | "personalStats"
   | "scrimStats"
+  | "rivalry"
   | "mapWinRate"
   | "teamSwitch"
   | "lunchDinnerWinRate"
@@ -32,6 +34,7 @@ type TabType =
 const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "personalStats", label: "개인 통계", icon: "👤" },
   { id: "scrimStats", label: "내전 통계", icon: "🥇" },
+  { id: "rivalry", label: "라이벌리", icon: "🔥" },
   { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
   { id: "lunchDinnerWinRate", label: "점심/저녁 승률", icon: "🍱" },
@@ -51,7 +54,7 @@ export const SelectedPlayerContext = createContext<PlayerListItem | null>(null);
  */
 export default function StatsPage() {
   const [activeTab, handleTabSelect] = useHashSyncedTab(
-    "scrimWinRate",
+    "personalStats",
     TABS.map((tab) => tab.id)
   );
 
@@ -129,6 +132,7 @@ export default function StatsPage() {
                       />
                     )}
                     {activeTab === "scrimStats" && <ScrimStatTab />}
+                    {activeTab === "rivalry" && <RivalryTab />}
                     {activeTab === "mapWinRate" && <MapWinRateChart />}
                     {activeTab === "teamSwitch" && <TeamSwitchChart />}
                     {activeTab === "lunchDinnerWinRate" && (
