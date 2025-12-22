@@ -1,17 +1,24 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
 import dayjs from "dayjs";
-import { TeamSummaryCard } from "./TeamSummaryCard";
 import { GameCard } from "./GameCard";
+import { useMemo } from "react";
 
 interface MatchCardProps {
-  match: MatchHistoryItem;
-  isExpanded: boolean;
-  onToggle: () => void;
+  readonly match: MatchHistoryItem;
+  readonly isExpanded: boolean;
+  readonly onToggle: () => void;
 }
 
 export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const team1 = match.teams.find((t) => t.teamNumber === 1);
   const team2 = match.teams.find((t) => t.teamNumber === 2);
+
+  const { team1Wins, team2Wins } = useMemo(() => {
+    return {
+      team1Wins: match.games.filter((g) => g.winnerTeamNumber === 1).length,
+      team2Wins: match.games.filter((g) => g.winnerTeamNumber === 2).length,
+    };
+  }, [match.games]);
 
   if (!team1 || !team2) {
     return null;
@@ -20,79 +27,156 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const team1Name = team1.leader.name.slice(1) + "팀";
   const team2Name = team2.leader.name.slice(1) + "팀";
 
-  const winnerLabel = getWinnerLabel(
-    match.winnerTeamNumber,
-    team1Name,
-    team2Name
-  );
+  const isTeam1Winner = match.winnerTeamNumber === 1;
+  const isTeam2Winner = match.winnerTeamNumber === 2;
+  const isDraw = match.winnerTeamNumber === null;
 
   return (
-    <main className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-      <div className="p-5">
-        <table className="w-full table-fixed">
-          <tbody>
-            <tr>
-              <td className="align-top w-26">
-                <span className="block text-center w-22 px-3 py-1 mb-2 rounded-full text-md font-medium border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-                  {match.type === "LUNCH" ? "점심" : "저녁"}
-                </span>
-                <span className="block text-center w-22 px-3 py-1 mb-2 rounded-full text-md font-medium border bg-white/5 text-gray-300 border-white/10">
-                  {winnerLabel}
-                </span>
-                <span className="block text-md font-semibold text-gray-400 uppercase tracking-wider text-center">
-                  {dayjs(match.playedAt).format("YYYY-MM-DD")}
-                </span>
-              </td>
-              <td className="align-top px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <TeamSummaryCard
-                    title={team1Name}
-                    leaderNickname={team1.leader.nickname ?? "-"}
-                    members={team1.members.map((m) => m.nickname) ?? []}
-                    accent="border-cyan-500/30"
-                  />
-                  <TeamSummaryCard
-                    title={team2Name}
-                    leaderNickname={team2.leader.nickname ?? "-"}
-                    members={team2.members.map((m) => m.nickname) ?? []}
-                    accent="border-purple-500/30"
-                  />
-                </div>
-              </td>
-              <td className="align-top w-28 text-right pl-4">
-                <button
-                  onClick={onToggle}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    isExpanded
-                      ? "bg-gray-500 text-white shadow-lg shadow-gray-500/25"
-                      : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {isExpanded ? "닫기" : "열기"}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden transition-all hover:border-white/20">
+      {/* Header Info */}
+      <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between bg-white/5">
+        <div className="flex items-center gap-3">
+          <span
+            className={`px-3 py-0.5 rounded-full text-sm font-bold border ${
+              match.type === "LUNCH"
+                ? "bg-orange-500/10 text-orange-400 border-orange-500/30"
+                : "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
+            }`}
+          >
+            {match.type === "LUNCH" ? "점심" : "저녁"}
+          </span>
+          <span className="text-sm font-medium text-gray-400">
+            {dayjs(match.playedAt).format("YYYY년 MM월 DD일")}
+          </span>
+        </div>
       </div>
 
+      {/* Match Content */}
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          {/* Team 1 */}
+          <div
+            className={`flex-1 w-full flex flex-col items-center md:items-end text-center md:text-right transition-opacity ${
+              isTeam2Winner ? "opacity-60" : "opacity-100"
+            }`}
+          >
+            <div className="mb-2">
+              <span className="text-xs font-bold text-cyan-400/80 uppercase tracking-tighter block mb-1">
+                TEAM 1
+              </span>
+              <h3 className="text-2xl font-black text-white">{team1Name}</h3>
+            </div>
+            <div className="flex flex-wrap justify-center md:justify-end gap-1.5 mt-2">
+              {team1.members.map((m) => (
+                <span
+                  key={m.id}
+                  className={`px-2 py-0.5 rounded text-sm font-medium ${
+                    m.id === team1.leader.id
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                      : "bg-white/5 text-gray-400 border border-white/5"
+                  }`}
+                >
+                  {m.nickname}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Score Center */}
+          <div className="flex flex-col items-center shrink-0 px-4">
+            <div className="flex items-center gap-4">
+              <span
+                className={`text-5xl font-black tabular-nums ${
+                  isTeam1Winner ? "text-cyan-400" : "text-gray-600"
+                }`}
+              >
+                {team1Wins}
+              </span>
+              <span className="text-2xl font-bold text-gray-700">:</span>
+              <span
+                className={`text-5xl font-black tabular-nums ${
+                  isTeam2Winner ? "text-purple-400" : "text-gray-600"
+                }`}
+              >
+                {team2Wins}
+              </span>
+            </div>
+            <div className="mt-2 px-4 py-1 rounded-lg bg-white/5 border border-white/10">
+              <span className="text-sm font-bold text-gray-400">
+                {isDraw ? (
+                  "DRAW"
+                ) : (
+                  <span
+                    className={
+                      isTeam1Winner ? "text-cyan-400" : "text-purple-400"
+                    }
+                  >
+                    {isTeam1Winner ? team1Name : team2Name} WIN
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+
+          {/* Team 2 */}
+          <div
+            className={`flex-1 w-full flex flex-col items-center md:items-start text-center md:text-left transition-opacity ${
+              isTeam1Winner ? "opacity-60" : "opacity-100"
+            }`}
+          >
+            <div className="mb-2">
+              <span className="text-xs font-bold text-purple-400/80 uppercase tracking-tighter block mb-1">
+                TEAM 2
+              </span>
+              <h3 className="text-2xl font-black text-white">{team2Name}</h3>
+            </div>
+            <div className="flex flex-wrap justify-center md:justify-start gap-1.5 mt-2">
+              {team2.members.map((m) => (
+                <span
+                  key={m.id}
+                  className={`px-2 py-0.5 rounded text-sm font-medium ${
+                    m.id === team2.leader.id
+                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                      : "bg-white/5 text-gray-400 border border-white/5"
+                  }`}
+                >
+                  {m.nickname}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={onToggle}
+            className={`group relative px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+              isExpanded
+                ? "bg-gray-700 text-gray-300"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              {isExpanded ? "닫기" : "열기"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Games */}
       {isExpanded && (
-        <div className="border-t border-white/10 p-5 space-y-4">
+        <div className="bg-black/20 border-t border-white/10 p-3 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
           {match.games.map((game) => (
-            <GameCard key={game.id} game={game} />
+            <GameCard
+              key={game.id}
+              game={game}
+              team1Name={team1Name}
+              team2Name={team2Name}
+            />
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
-}
-
-function getWinnerLabel(
-  winnerTeamNumber: number | null,
-  team1Name: string,
-  team2Name: string
-) {
-  if (winnerTeamNumber === null) return "무승부";
-  if (winnerTeamNumber === 1) return `${team1Name} 승`;
-  return `${team2Name} 승`;
 }

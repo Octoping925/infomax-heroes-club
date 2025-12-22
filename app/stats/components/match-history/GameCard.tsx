@@ -3,36 +3,55 @@ import { MAPS } from "@/domain/hots/constants/maps";
 import { GameTeamTable } from "./GameTeamTable";
 
 interface GameCardProps {
-  game: MatchHistoryItem["games"][number];
+  readonly game: MatchHistoryItem["games"][number];
+  readonly team1Name: string;
+  readonly team2Name: string;
 }
 
-export function GameCard({ game }: GameCardProps) {
-  const winnerLabel = getWinnerLabel(game.winnerTeamNumber);
+export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   const mapName = MAPS[game.map as keyof typeof MAPS] ?? game.map;
 
   const team1 = game.teams.find((t) => t.teamNumber === 1);
   const team2 = game.teams.find((t) => t.teamNumber === 2);
 
+  const isTeam1Winner = game.winnerTeamNumber === 1;
+
   return (
-    <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
-      <div className="p-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-bold">
+    <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden transition-all">
+      <div className="px-4 py-3 flex items-center justify-between bg-white/5 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <h5 className="flex items-center justify-center h-8 text-sm font-black text-gray-200">
             Game {game.gameNumber} · {mapName}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">{winnerLabel}</p>
+          </h5>
+        </div>
+        <div className="flex items-center gap-2">
+          {game.winnerTeamNumber === null ? (
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 border border-white/5">
+              Draw
+            </span>
+          ) : (
+            <span
+              className={`text-sm font-bold tracking-widest px-2 py-0.5 rounded border ${
+                isTeam1Winner
+                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                  : "bg-purple-500/10 text-purple-400 border-purple-500/30"
+              }`}
+            >
+              {game.winnerTeamNumber === 1 ? team1Name : team2Name} 승
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="border-t border-white/10 grid grid-cols-1 lg:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2">
         <GameTeamTable
-          title="팀 1"
+          title={team1Name}
           result={team1?.result ?? null}
           members={team1?.members ?? []}
           accent="border-cyan-500/30"
         />
         <GameTeamTable
-          title="팀 2"
+          title={team2Name}
           result={team2?.result ?? null}
           members={team2?.members ?? []}
           accent="border-purple-500/30"
@@ -40,9 +59,4 @@ export function GameCard({ game }: GameCardProps) {
       </div>
     </div>
   );
-}
-
-function getWinnerLabel(winnerTeamNumber: number | null): string {
-  if (winnerTeamNumber === null) return "무승부";
-  return `팀 ${winnerTeamNumber} 승`;
 }
