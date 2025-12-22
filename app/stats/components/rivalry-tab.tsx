@@ -10,7 +10,7 @@ import { Title } from "./Title";
 
 const DEFAULT_PARAMS: RivalryParams = {
   minMatches: 3,
-  limit: 30,
+  limit: 6,
   takeMatches: 500,
   includeInsufficientSample: false,
 };
