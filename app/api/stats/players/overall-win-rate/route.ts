@@ -6,6 +6,7 @@ import {
 } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
 import { calculateWinRate } from "@/utils/win-rate";
+import { fetchPlayerMap } from "../../utils/player";
 
 type StatAccumulator = {
   wins: number;
@@ -24,16 +25,12 @@ type PlayerAccumulator = {
 export async function GET(): Promise<
   NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>
 > {
+  const playerMap = await fetchPlayerMap();
+
   const [matchMemberships, gameMemberships] = await Promise.all([
     prisma.matchTeamMember.findMany({
       select: {
         playerId: true,
-        player: {
-          select: {
-            name: true,
-            nickname: true,
-          },
-        },
         matchTeam: {
           select: {
             teamNumber: true,
@@ -49,12 +46,6 @@ export async function GET(): Promise<
     prisma.gameTeamMember.findMany({
       select: {
         playerId: true,
-        player: {
-          select: {
-            name: true,
-            nickname: true,
-          },
-        },
         gameTeam: {
           select: {
             result: true,
@@ -89,8 +80,8 @@ export async function GET(): Promise<
   for (const membership of matchMemberships) {
     const entry = getOrCreate({
       playerId: membership.playerId,
-      playerName: membership.player.name,
-      playerNickname: membership.player.nickname,
+      playerName: playerMap.get(membership.playerId)!.name,
+      playerNickname: playerMap.get(membership.playerId)!.nickname,
     });
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
@@ -106,8 +97,8 @@ export async function GET(): Promise<
   for (const membership of gameMemberships) {
     const entry = getOrCreate({
       playerId: membership.playerId,
-      playerName: membership.player.name,
-      playerNickname: membership.player.nickname,
+      playerName: playerMap.get(membership.playerId)!.name,
+      playerNickname: playerMap.get(membership.playerId)!.nickname,
     });
 
     const result = membership.gameTeam.result as GameResult | null;

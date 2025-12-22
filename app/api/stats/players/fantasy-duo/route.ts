@@ -3,6 +3,7 @@ import { prisma } from "@/config/prisma";
 import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
 import { calculateWinRate } from "@/utils/win-rate";
+import { fetchPlayerMap, PlayerMap } from "../../utils/player";
 
 type DuoAccumulator = {
   readonly playerA: {
@@ -38,10 +39,11 @@ export async function GET(
 ): Promise<NextResponse<FantasyDuoWinRateResponse[]>> {
   const { limit, minCount, unit } = parseQueryParams(req.url);
 
+  const playerMap = await fetchPlayerMap();
   const duoMap =
     unit === "game"
-      ? await calculateDuoStatsByGame()
-      : await calculateDuoStatsByMatch();
+      ? await calculateDuoStatsByGame(playerMap)
+      : await calculateDuoStatsByMatch(playerMap);
 
   const response: FantasyDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
@@ -143,9 +145,9 @@ function updateResultCounts(
   acc.draws++;
 }
 
-async function calculateDuoStatsByMatch(): Promise<
-  Map<string, DuoAccumulator>
-> {
+async function calculateDuoStatsByMatch(
+  playerMap: PlayerMap
+): Promise<Map<string, DuoAccumulator>> {
   const matchTeams = await prisma.matchTeam.findMany({
     select: {
       teamNumber: true,
@@ -156,13 +158,7 @@ async function calculateDuoStatsByMatch(): Promise<
       },
       members: {
         select: {
-          player: {
-            select: {
-              id: true,
-              name: true,
-              nickname: true,
-            },
-          },
+          playerId: true,
         },
       },
     },
@@ -172,7 +168,7 @@ async function calculateDuoStatsByMatch(): Promise<
 
   for (const matchTeam of matchTeams) {
     const players = matchTeam.members
-      .map((m) => m.player)
+      .map((m) => playerMap.get(m.playerId)!)
       .sort((a, b) => a.id.localeCompare(b.id));
 
     if (players.length < 2) {
@@ -216,19 +212,15 @@ async function calculateDuoStatsByMatch(): Promise<
   return duoMap;
 }
 
-async function calculateDuoStatsByGame(): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByGame(
+  playerMap: PlayerMap
+): Promise<Map<string, DuoAccumulator>> {
   const gameTeams = await prisma.gameTeam.findMany({
     select: {
       result: true,
       members: {
         select: {
-          player: {
-            select: {
-              id: true,
-              name: true,
-              nickname: true,
-            },
-          },
+          playerId: true,
         },
       },
     },
@@ -238,7 +230,7 @@ async function calculateDuoStatsByGame(): Promise<Map<string, DuoAccumulator>> {
 
   for (const gameTeam of gameTeams) {
     const players = gameTeam.members
-      .map((m) => m.player)
+      .map((m) => playerMap.get(m.playerId)!)
       .sort((a, b) => a.id.localeCompare(b.id));
 
     if (players.length < 2) {

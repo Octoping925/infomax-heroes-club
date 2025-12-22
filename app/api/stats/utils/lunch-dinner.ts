@@ -5,6 +5,7 @@ import {
   WinRateStats,
 } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
+import { fetchPlayerMap, PlayerMap } from "./player";
 
 export type LunchDinnerUnit = "game" | "match";
 
@@ -35,10 +36,12 @@ export function parseLunchDinnerUnit(input: string | null): LunchDinnerUnit {
 export async function fetchPlayerLunchDinnerWinRate(input: {
   readonly unit: LunchDinnerUnit;
 }): Promise<PlayerLunchDinnerWinRateResponse[]> {
+  const playerMap = await fetchPlayerMap();
+
   const accumulatorMap =
     input.unit === "match"
-      ? await buildAccumulatorByMatch()
-      : await buildAccumulatorByGame();
+      ? await buildAccumulatorByMatch(playerMap)
+      : await buildAccumulatorByGame(playerMap);
 
   return Array.from(accumulatorMap.values()).map((acc) => {
     const lunchStats = buildWinRateStats(acc.lunch);
@@ -57,18 +60,12 @@ export async function fetchPlayerLunchDinnerWinRate(input: {
   });
 }
 
-async function buildAccumulatorByGame(): Promise<
-  Map<string, PlayerAccumulator>
-> {
+async function buildAccumulatorByGame(
+  playerMap: PlayerMap
+): Promise<Map<string, PlayerAccumulator>> {
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
-      player: {
-        select: {
-          name: true,
-          nickname: true,
-        },
-      },
       gameTeam: {
         select: {
           result: true,
@@ -94,8 +91,8 @@ async function buildAccumulatorByGame(): Promise<
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: participation.player.name,
-        playerNickname: participation.player.nickname,
+        playerName: playerMap.get(playerId)!.name,
+        playerNickname: playerMap.get(playerId)!.nickname,
       });
 
     const matchType = participation.gameTeam.game.match.type;
@@ -113,18 +110,12 @@ async function buildAccumulatorByGame(): Promise<
   return accumulatorMap;
 }
 
-async function buildAccumulatorByMatch(): Promise<
-  Map<string, PlayerAccumulator>
-> {
+async function buildAccumulatorByMatch(
+  playerMap: PlayerMap
+): Promise<Map<string, PlayerAccumulator>> {
   const memberships = await prisma.matchTeamMember.findMany({
     select: {
       playerId: true,
-      player: {
-        select: {
-          name: true,
-          nickname: true,
-        },
-      },
       matchTeam: {
         select: {
           teamNumber: true,
@@ -147,8 +138,8 @@ async function buildAccumulatorByMatch(): Promise<
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: membership.player.name,
-        playerNickname: membership.player.nickname,
+        playerName: playerMap.get(playerId)!.name,
+        playerNickname: playerMap.get(playerId)!.nickname,
       });
 
     const matchType = membership.matchTeam.match.type;

@@ -6,6 +6,7 @@ import type {
   RivalryScoreBreakdown,
   RivalrySide,
 } from "@/app/api/stats/types";
+import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Hero, MatchType } from "@/generated/prisma/client";
 
@@ -96,6 +97,7 @@ export async function fetchRivalries(input: {
   readonly params: FetchRivalriesParams;
 }): Promise<RivalryListResponse> {
   const params = normalizeFetchRivalriesParams(input.params);
+  const playerMap = await fetchPlayerMap();
 
   const [matches, overallWinRateByPlayerId] = await Promise.all([
     input.prisma.match.findMany({
@@ -112,7 +114,6 @@ export async function fetchRivalries(input: {
             members: {
               select: {
                 playerId: true,
-                player: { select: { name: true, nickname: true } },
               },
             },
           },
@@ -149,8 +150,8 @@ export async function fetchRivalries(input: {
       for (const member of team.members) {
         teamPlayers[team.teamNumber].push({
           playerId: member.playerId,
-          playerName: member.player.name,
-          playerNickname: member.player.nickname,
+          playerName: playerMap.get(member.playerId)!.name,
+          playerNickname: playerMap.get(member.playerId)!.nickname,
         });
       }
     }

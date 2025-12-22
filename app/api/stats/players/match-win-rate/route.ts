@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
+import { fetchPlayerMap } from "../../utils/player";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -21,15 +22,10 @@ type PlayerAccumulator = {
  * - match.winnerTeamNumber 기준으로 승/패/무를 계산합니다.
  */
 export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
+  const playerMap = await fetchPlayerMap();
   const memberships = await prisma.matchTeamMember.findMany({
     select: {
       playerId: true,
-      player: {
-        select: {
-          name: true,
-          nickname: true,
-        },
-      },
       matchTeam: {
         select: {
           teamNumber: true,
@@ -51,8 +47,8 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: membership.player.name,
-        playerNickname: membership.player.nickname,
+        playerName: playerMap.get(playerId)!.name,
+        playerNickname: playerMap.get(playerId)!.nickname,
       });
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;

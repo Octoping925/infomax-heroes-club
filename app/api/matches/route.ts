@@ -6,6 +6,7 @@ import {
   ParsedGameStats,
 } from "@/domain/hots/utils/game-stats-parser";
 import dayjs from "dayjs";
+import { fetchPlayerMap } from "../stats/utils/player";
 
 type MatchHistoryPlayer = {
   readonly id: string;
@@ -67,6 +68,8 @@ export async function GET(
   try {
     const take = parseTakeParam(request.nextUrl.searchParams.get("take"));
 
+    const playerMap = await fetchPlayerMap();
+
     const matches = await prisma.match.findMany({
       orderBy: {
         playedAt: "desc",
@@ -84,22 +87,10 @@ export async function GET(
           select: {
             id: true,
             teamNumber: true,
-            leader: {
-              select: {
-                id: true,
-                name: true,
-                nickname: true,
-              },
-            },
+            leaderId: true,
             members: {
               select: {
-                player: {
-                  select: {
-                    id: true,
-                    name: true,
-                    nickname: true,
-                  },
-                },
+                playerId: true,
               },
             },
           },
@@ -129,13 +120,7 @@ export async function GET(
                     takedowns: true,
                     heroDamage: true,
                     damageTaken: true,
-                    player: {
-                      select: {
-                        id: true,
-                        name: true,
-                        nickname: true,
-                      },
-                    },
+                    playerId: true,
                   },
                 },
               },
@@ -153,8 +138,8 @@ export async function GET(
       teams: match.teams.map((team) => ({
         id: team.id,
         teamNumber: team.teamNumber,
-        leader: team.leader,
-        members: team.members.map((member) => member.player),
+        leader: playerMap.get(team.leaderId)!,
+        members: team.members.map((member) => playerMap.get(member.playerId)!),
       })),
       games: match.games.map((game) => ({
         id: game.id,
@@ -166,7 +151,7 @@ export async function GET(
           teamNumber: team.teamNumber,
           result: team.result,
           members: team.members.map((member) => ({
-            player: member.player,
+            player: playerMap.get(member.playerId)!,
             hero: member.hero,
             kills: member.kills,
             deaths: member.deaths,
@@ -178,7 +163,11 @@ export async function GET(
       })),
     }));
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "public, max-age=300",
+      },
+    });
   } catch (err) {
     console.error("역대 내전 조회 오류:", err);
     const message = err instanceof Error ? err.message : "알 수 없는 오류";
