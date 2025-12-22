@@ -45,7 +45,7 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
-const SHOW_PLAYER_SIDEBAR_TABS = ["personalStats", "playerHero"];
+const SHOW_PLAYER_SIDEBAR_TABS: TabType[] = ["personalStats"];
 
 export const SelectedPlayerContext = createContext<PlayerListItem | null>(null);
 
@@ -113,43 +113,41 @@ export default function StatsPage() {
 
             {/* 차트 영역 */}
             <div className="flex-1 min-w-0">
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-lg">
-                    {TABS.find((t) => t.id === activeTab)?.icon}
-                  </span>
-                  <h2 className="text-xl font-bold text-white">
-                    {TABS.find((t) => t.id === activeTab)?.label}
-                  </h2>
-                </div>
-
-                <SelectedPlayerContext.Provider value={selectedPlayer}>
-                  <Suspense fallback={<Loading />}>
-                    {/* 각 탭별 차트 */}
-                    {activeTab === "personalStats" && (
-                      <PersonalStatTab
-                        nickname={selectedPlayer?.nickname ?? ""}
-                      />
-                    )}
-                    {activeTab === "scrimStats" && <ScrimStatTab />}
-                    {activeTab === "rivalry" && <RivalryTab />}
-                    {activeTab === "mapWinRate" && <MapWinRateChart />}
-                    {activeTab === "teamSwitch" && <TeamSwitchChart />}
-                    {activeTab === "lunchDinnerWinRate" && (
-                      <LunchDinnerWinRateChart />
-                    )}
-                    {activeTab === "lunchDinnerDiffRanking" && (
-                      <LunchDinnerDiffRankingChart />
-                    )}
-                    {activeTab === "avgKillsDeathsRanking" && (
-                      <AvgStatsRankingChart />
-                    )}
-                    {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
-                    {activeTab === "heroDuo" && <HeroDuoRankingChart />}
-                    {activeTab === "matchHistory" && <MatchHistoryTab />}
-                  </Suspense>
-                </SelectedPlayerContext.Provider>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-lg">
+                  {TABS.find((t) => t.id === activeTab)?.icon}
+                </span>
+                <h2 className="text-xl font-bold text-white">
+                  {TABS.find((t) => t.id === activeTab)?.label}
+                </h2>
               </div>
+
+              <SelectedPlayerContext.Provider value={selectedPlayer}>
+                <Suspense fallback={<Loading />}>
+                  {/* 각 탭별 차트 */}
+                  {activeTab === "personalStats" && (
+                    <PersonalStatTab
+                      nickname={selectedPlayer?.nickname ?? ""}
+                    />
+                  )}
+                  {activeTab === "scrimStats" && <ScrimStatTab />}
+                  {activeTab === "rivalry" && <RivalryTab />}
+                  {activeTab === "mapWinRate" && <MapWinRateChart />}
+                  {activeTab === "teamSwitch" && <TeamSwitchChart />}
+                  {activeTab === "lunchDinnerWinRate" && (
+                    <LunchDinnerWinRateChart />
+                  )}
+                  {activeTab === "lunchDinnerDiffRanking" && (
+                    <LunchDinnerDiffRankingChart />
+                  )}
+                  {activeTab === "avgKillsDeathsRanking" && (
+                    <AvgStatsRankingChart />
+                  )}
+                  {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
+                  {activeTab === "heroDuo" && <HeroDuoRankingChart />}
+                  {activeTab === "matchHistory" && <MatchHistoryTab />}
+                </Suspense>
+              </SelectedPlayerContext.Provider>
             </div>
           </div>
         </div>
