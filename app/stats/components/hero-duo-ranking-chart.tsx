@@ -20,7 +20,7 @@ const DEFAULT_MIN_GAMES: number = 3;
 const DEFAULT_LIMIT: number = 50;
 
 /**
- * 영웅 듀오(같은 팀) 승률 랭킹 (게임 단위)
+ * 영웅 듀오(같은 팀) 승률 랭킹 (경기 단위)
  */
 export function HeroDuoRankingChart() {
   const [minCount, setMinCount] = useState<number>(DEFAULT_MIN_GAMES);
@@ -84,7 +84,7 @@ export function HeroDuoRankingChart() {
     <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-gray-400">
-          <span className="text-white">게임 1판을 1경기</span>로 보고,{" "}
+          <span className="text-white">경기 1판을 1경기</span>로 보고,{" "}
           <span className="text-white">같은 팀</span>이었던 영웅 2개 조합의
           승률을 집계합니다.
         </p>
@@ -96,7 +96,7 @@ export function HeroDuoRankingChart() {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-gray-400">최소 게임 수</span>
+          <span className="text-xs text-gray-400">최소 경기 수</span>
           <input
             type="number"
             min={1}

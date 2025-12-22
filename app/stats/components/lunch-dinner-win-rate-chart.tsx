@@ -24,7 +24,7 @@ type ChartData = {
 };
 
 /**
- * 플레이어별 점심/저녁 내전 승률 차트 (게임/매치 단위 동시 표시)
+ * 플레이어별 점심/저녁 내전 승률 차트 (게임/내전 단위 동시 표시)
  */
 async function fetchUnitData(unit: LunchDinnerUnit): Promise<ChartData[]> {
   const response = await fetch(`/api/stats/players/lunch-dinner?unit=${unit}`);
@@ -157,30 +157,28 @@ export function LunchDinnerWinRateChart() {
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="text-gray-400">
-          점심/저녁 내전 승률을 <span className="text-white">게임 단위</span>와{" "}
-          <span className="text-white">매치 단위</span>로 함께 비교합니다.
+          점심/저녁 내전 승률을 <span className="text-white">경기 단위</span>와{" "}
+          <span className="text-white">내전 단위</span>로 함께 비교합니다.
         </p>
       </div>
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold">매치 단위</h3>
-          <span className="text-xs text-gray-500">1 match = 1내전</span>
+          <h3 className="text-white font-semibold">내전 단위</h3>
         </div>
         {renderChart({
-          title: "매치 단위",
-          unitLabel: "매치",
+          title: "내전 단위",
+          unitLabel: "내전",
           data: matchData,
           error: matchError,
         })}
       </section>
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold">게임 단위</h3>
-          <span className="text-xs text-gray-500">1 game = 1경기</span>
+          <h3 className="text-white font-semibold">경기 단위</h3>
         </div>
         {renderChart({
-          title: "게임 단위",
-          unitLabel: "게임",
+          title: "경기 단위",
+          unitLabel: "경기",
           data: gameData,
           error: gameError,
         })}

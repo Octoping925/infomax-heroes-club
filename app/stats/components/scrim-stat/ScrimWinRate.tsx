@@ -10,10 +10,10 @@ export function ScrimWinRate() {
         <thead className="bg-white/5 text-gray-300">
           <tr>
             <th className="px-4 py-3 text-left">플레이어</th>
-            <th className="px-4 py-3 text-left">매치 승률</th>
-            <th className="px-4 py-3 text-left max-md:hidden">매치 전적</th>
-            <th className="px-4 py-3 text-left">게임 승률</th>
-            <th className="px-4 py-3 text-left max-md:hidden">게임 전적</th>
+            <th className="px-4 py-3 text-left">내전 승률</th>
+            <th className="px-4 py-3 text-left max-md:hidden">내전 전적</th>
+            <th className="px-4 py-3 text-left">경기 승률</th>
+            <th className="px-4 py-3 text-left max-md:hidden">경기 전적</th>
           </tr>
         </thead>
         <tbody>

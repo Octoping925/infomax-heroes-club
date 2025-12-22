@@ -19,7 +19,7 @@ const DEFAULT_MIN_GAMES: number = 5;
 const DEFAULT_LIMIT: number = 50;
 
 /**
- * '환상의 듀오' 랭킹 (매치 단위)
+ * '환상의 듀오' 랭킹 (내전 단위)
  */
 export function FantasyDuoRankingChart() {
   const [unit, setUnit] = useState<LunchDinnerUnit>("game");
@@ -101,7 +101,7 @@ export function FantasyDuoRankingChart() {
         <p className="text-gray-400">
           {unit === "match" ? (
             <>
-              <span className="text-white">매치 1건을 1경기</span>로 보고,{" "}
+              <span className="text-white">내전 1건을 1경기</span>로 보고,{" "}
               <span className="text-white">같은 팀</span>이었던 2인 조합의
               승률을 집계합니다.
             </>
@@ -130,17 +130,17 @@ export function FantasyDuoRankingChart() {
             className="w-40 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
           >
             <option className="text-black" value="game">
-              게임
+              경기
             </option>
             <option className="text-black" value="match">
-              매치
+              내전
             </option>
           </select>
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-xs text-gray-400">
-            {unit === "match" ? "최소 매치 수" : "최소 게임 수"}
+            {unit === "match" ? "최소 내전 수" : "최소 경기 수"}
           </span>
           <input
             type="number"

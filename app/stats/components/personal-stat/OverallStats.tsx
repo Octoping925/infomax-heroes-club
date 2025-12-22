@@ -35,12 +35,12 @@ export function OverallStats({ playerId }: Props) {
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <WinRateSummary
-        title="매치 승률"
+        title="내전 승률"
         stats={selectedPlayerStat.matchStats}
         accent="from-cyan-500/30 to-cyan-700/20"
       />
       <WinRateSummary
-        title="게임 승률"
+        title="경기 승률"
         stats={selectedPlayerStat.gameStats}
         accent="from-purple-500/30 to-purple-700/20"
       />

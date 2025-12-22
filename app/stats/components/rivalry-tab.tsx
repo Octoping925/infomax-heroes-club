@@ -26,11 +26,11 @@ export function RivalryTab() {
     return (
       <>
         <p className="text-gray-400">
-          <span className="text-white">매치 1건</span>을 1회 맞대결로 보고,{" "}
+          <span className="text-white">내전 1건</span>을 1회 맞대결로 보고,{" "}
           <span className="text-white">승률 균형(50:50)</span> +{" "}
           <span className="text-white">최근 경기 가중</span> +{" "}
-          <span className="text-white">퍼포먼스 격차(작을수록 가산)</span>로 점수를
-          계산합니다.
+          <span className="text-white">퍼포먼스 격차(작을수록 가산)</span>로
+          점수를 계산합니다.
         </p>
         <p className="text-xs text-gray-500">
           표본이 적은 페어는 기본적으로 제외되며(최소 {params.minMatches}회),
@@ -73,7 +73,10 @@ export function RivalryTab() {
 
   return (
     <section className="space-y-6">
-      <Title title="라이벌리" description="가장 뜨거운 1:1 구도를 찾아봅니다." />
+      <Title
+        title="라이벌리"
+        description="가장 뜨거운 1:1 구도를 찾아봅니다."
+      />
       <div className="space-y-2">{note}</div>
       <RivalryControls params={params} setParams={setParams} />
 
@@ -104,14 +107,17 @@ function RivalryControls(input: {
   return (
     <div className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-gray-400">최소 맞대결(매치) 수</span>
+        <span className="text-xs text-gray-400">최소 맞대결(내전) 수</span>
         <input
           type="number"
           min={1}
           max={50}
           value={params.minMatches}
           onChange={(e) =>
-            setParams((prev) => ({ ...prev, minMatches: Number(e.target.value) }))
+            setParams((prev) => ({
+              ...prev,
+              minMatches: Number(e.target.value),
+            }))
           }
           className="w-40 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
         />
@@ -132,14 +138,17 @@ function RivalryControls(input: {
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-gray-400">분석 대상 최신 매치 수</span>
+        <span className="text-xs text-gray-400">분석 대상 최신 내전 수</span>
         <input
           type="number"
           min={50}
           max={2000}
           value={params.takeMatches}
           onChange={(e) =>
-            setParams((prev) => ({ ...prev, takeMatches: Number(e.target.value) }))
+            setParams((prev) => ({
+              ...prev,
+              takeMatches: Number(e.target.value),
+            }))
           }
           className="w-44 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
         />
@@ -150,7 +159,10 @@ function RivalryControls(input: {
           type="checkbox"
           checked={params.includeInsufficientSample}
           onChange={(e) =>
-            setParams((prev) => ({ ...prev, includeInsufficientSample: e.target.checked }))
+            setParams((prev) => ({
+              ...prev,
+              includeInsufficientSample: e.target.checked,
+            }))
           }
           className="accent-cyan-500"
         />
@@ -169,8 +181,7 @@ function RivalryCard(input: {
   const a = card.playerA;
   const b = card.playerB;
   const total = card.breakdown.matchesCount;
-  const lead =
-    a.wins === b.wins ? "tie" : a.wins > b.wins ? "A" : "B";
+  const lead = a.wins === b.wins ? "tie" : a.wins > b.wins ? "A" : "B";
 
   const heroNamesA = card.topHeroes.playerA
     .map((h) => `${HeroMap[h.hero] ?? String(h.hero)}(${h.count})`)
@@ -236,7 +247,8 @@ function RivalryCard(input: {
             </p>
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            승률 {a.playerNickname} {a.winRate}% · {b.playerNickname} {b.winRate}%
+            승률 {a.playerNickname} {a.winRate}% · {b.playerNickname}{" "}
+            {b.winRate}%
           </p>
         </section>
 
@@ -251,14 +263,20 @@ function RivalryCard(input: {
               {card.recent5.sequence.map((r, idx) => (
                 <span
                   key={`${card.id}-r5-${idx}`}
-                  title={r === "A" ? a.playerNickname : r === "B" ? b.playerNickname : "무승부"}
+                  title={
+                    r === "A"
+                      ? a.playerNickname
+                      : r === "B"
+                      ? b.playerNickname
+                      : "무승부"
+                  }
                   className={[
                     "w-3 h-3 rounded-full border border-white/10",
                     r === "A"
                       ? "bg-cyan-400/90"
                       : r === "B"
-                        ? "bg-purple-400/90"
-                        : "bg-gray-500/80",
+                      ? "bg-purple-400/90"
+                      : "bg-gray-500/80",
                   ].join(" ")}
                 />
               ))}
@@ -334,5 +352,3 @@ function ScorePill(input: { readonly label: string; readonly value: number }) {
     </div>
   );
 }
-
-
