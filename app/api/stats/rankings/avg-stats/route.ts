@@ -63,24 +63,19 @@ export async function GET(): Promise<
     accumulatorMap.set(playerId, current);
   }
 
-  const response: PlayerAverageStatsResponse[] = Array.from(
-    accumulatorMap.values()
-  )
-    .map((acc) => ({
-      playerId: acc.playerId,
-      playerName: acc.playerName,
-      playerNickname: acc.playerNickname,
-      totalGames: acc.totalGames,
-      averageKills: calculateAverage(acc.totalKills, acc.totalGames),
-      averageDeaths: calculateAverage(acc.totalDeaths, acc.totalGames),
-      averageTakedowns: calculateAverage(acc.totalTakedowns, acc.totalGames),
-      averageHeroDamage: calculateAverage(acc.totalHeroDamage, acc.totalGames),
-      averageDamageTaken: calculateAverage(
-        acc.totalDamageTaken,
-        acc.totalGames
-      ),
-    }))
-    .filter((item) => item.totalGames > 0);
+  const response = Array.from(accumulatorMap.values())
+    .filter((it) => it.totalGames > 0)
+    .map((it) => ({
+      playerId: it.playerId,
+      playerName: it.playerName,
+      playerNickname: it.playerNickname,
+      totalGames: it.totalGames,
+      averageKills: calculateAverage(it.totalKills, it.totalGames),
+      averageDeaths: calculateAverage(it.totalDeaths, it.totalGames),
+      averageTakedowns: calculateAverage(it.totalTakedowns, it.totalGames),
+      averageHeroDamage: calculateAverage(it.totalHeroDamage, it.totalGames),
+      averageDamageTaken: calculateAverage(it.totalDamageTaken, it.totalGames),
+    }));
 
   return NextResponse.json(response);
 }

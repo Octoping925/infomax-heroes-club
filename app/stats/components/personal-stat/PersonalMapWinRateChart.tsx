@@ -1,6 +1,4 @@
-import { countBy } from "es-toolkit";
 import { useMapWinRate } from "../../hooks/useMapWinRate";
-import { Loading } from "@/components/Loading";
 import {
   Bar,
   BarChart,

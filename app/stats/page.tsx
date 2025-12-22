@@ -4,7 +4,6 @@ import { createContext, Suspense } from "react";
 import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
 import { LunchDinnerWinRateChart } from "./components/lunch-dinner-win-rate-chart";
-import { LunchDinnerDiffRankingChart } from "./components/lunch-dinner-diff-ranking-chart";
 import { AvgStatsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
@@ -25,7 +24,6 @@ type TabType =
   | "mapWinRate"
   | "teamSwitch"
   | "lunchDinnerWinRate"
-  | "lunchDinnerDiffRanking"
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
   | "heroDuo"
@@ -38,7 +36,6 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
   { id: "lunchDinnerWinRate", label: "점심/저녁 승률", icon: "🍱" },
-  { id: "lunchDinnerDiffRanking", label: "점심/저녁 차이", icon: "📈" },
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
   { id: "heroDuo", label: "영웅 듀오", icon: "🧩" },
@@ -136,9 +133,6 @@ export default function StatsPage() {
                   {activeTab === "teamSwitch" && <TeamSwitchChart />}
                   {activeTab === "lunchDinnerWinRate" && (
                     <LunchDinnerWinRateChart />
-                  )}
-                  {activeTab === "lunchDinnerDiffRanking" && (
-                    <LunchDinnerDiffRankingChart />
                   )}
                   {activeTab === "avgKillsDeathsRanking" && (
                     <AvgStatsRankingChart />
