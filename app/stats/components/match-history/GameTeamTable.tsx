@@ -32,8 +32,7 @@ export function GameTeamTable({
           <tr className="text-left text-gray-500 border-b border-white/10">
             <th className="py-2 font-medium"></th>
             <th className="py-2 pr-3 font-medium">플레이어</th>
-            <th className="py-2 pr-3 font-medium">킬 / 데스 / 테이크다운</th>
-            <th className="py-2 pr-3 font-medium">킬 관여율</th>
+            <th className="py-2 pr-3 font-medium">Kill / Death / Takedown</th>
             <th className="py-2 pr-3 font-medium">가한 데미지</th>
           </tr>
         </thead>
@@ -43,7 +42,7 @@ export function GameTeamTable({
               key={member.player.id}
               className="border-b border-white/5 last:border-b-0 overflow-x-scroll"
             >
-              <td className="py-2 text-center">
+              <td className="py-2 text-center max-md:pr-3">
                 <Image
                   src={HeroImage[member.hero as Hero]}
                   className="rounded-2xl"
@@ -61,12 +60,17 @@ export function GameTeamTable({
                 </div>
               </td>
               <td className="py-2 pr-3">
-                {member.kills} / {member.deaths} / {member.takedowns}
-              </td>
-              <td className="py-2 pr-3">
-                {Math.round(((member.takedowns ?? 0) / totalKill) * 10000) /
-                  100}
-                %
+                <p className="flex max-md:flex-col">
+                  <span className="text-sm font-medium mr-2">
+                    {member.kills} / {member.deaths} / {member.takedowns}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    (
+                    {Math.round(((member.takedowns ?? 0) / totalKill) * 10000) /
+                      100}
+                    %)
+                  </span>
+                </p>
               </td>
               <td className="py-2 pr-3">
                 {member.heroDamage ? commarize(member.heroDamage) : "-"}

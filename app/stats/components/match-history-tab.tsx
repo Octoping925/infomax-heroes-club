@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
 import { statsQueryKeys } from "@/config/query-keys";
@@ -17,11 +17,7 @@ type MatchGroup = {
  */
 export function MatchHistoryTab() {
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
-  const {
-    data: matches = [],
-    isPending,
-    error,
-  } = useQuery<MatchHistoryItem[]>({
+  const { data: matches = [], error } = useSuspenseQuery<MatchHistoryItem[]>({
     queryKey: statsQueryKeys.matches.latest(200),
     queryFn: async () => {
       const response = await fetch("/api/matches?take=200");
@@ -53,17 +49,6 @@ export function MatchHistoryTab() {
     }));
   };
 
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex justify-center py-12">
@@ -81,21 +66,17 @@ export function MatchHistoryTab() {
   }
 
   return (
-    <>
-      {groups.map((group) => (
-        <section key={group.dateKey} className="space-y-3">
-          <div className="space-y-3">
-            {group.matches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                isExpanded={Boolean(expandedMap[match.id])}
-                onToggle={() => toggleMatch(match.id)}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
-    </>
+    <div className="flex flex-col gap-4">
+      {groups.map((group) =>
+        group.matches.map((match) => (
+          <MatchCard
+            key={match.id}
+            match={match}
+            isExpanded={Boolean(expandedMap[match.id])}
+            onToggle={() => toggleMatch(match.id)}
+          />
+        ))
+      )}
+    </div>
   );
 }
