@@ -94,7 +94,7 @@ export default function StatsPage() {
       </nav>
 
       {/* 메인 컨텐츠 */}
-      <main className="w-full px-6 py-8">
+      <main className="w-full px-2 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex max-lg:flex-col gap-6">
             {/* 플레이어 사이드바 */}

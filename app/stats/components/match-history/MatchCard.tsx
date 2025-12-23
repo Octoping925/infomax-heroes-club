@@ -166,7 +166,7 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
 
       {/* Expanded Games */}
       {isExpanded && (
-        <div className="bg-black/20 border-t border-white/10 p-3 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-black/20 border-t border-white/10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
           {match.games.map((game) => (
             <GameCard
               key={game.id}

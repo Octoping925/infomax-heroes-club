@@ -17,7 +17,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   const isTeam1Winner = game.winnerTeamNumber === 1;
 
   return (
-    <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden transition-all">
+    <div className="bg-white/5 border border-white/10 overflow-hidden transition-all">
       <div className="px-4 py-3 flex items-center justify-between bg-white/5 border-b border-white/5">
         <div className="flex items-center gap-3">
           <h5 className="flex items-center justify-center h-8 text-sm font-black text-gray-200">
