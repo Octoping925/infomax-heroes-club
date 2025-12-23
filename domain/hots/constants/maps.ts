@@ -3,7 +3,7 @@ import { GameMap } from "../models/map";
 export const MAPS: Record<GameMap, string> = {
   SkyTemple: "하늘 사원",
   TowersOfDoom: "파멸의 탑",
-  HauntedMines: "공포의 광산",
+  HauntedMines: "죽음의 광산",
   BattlefieldOfEternity: "영원의 전쟁터",
   BlackheartsBay: "블랙하트 항만",
   CursedHollow: "저주받은 골짜기",
@@ -49,4 +49,34 @@ export const MAPS_IMAGE: Record<GameMap, string> = {
     "https://nexuscompendium.com/images/battlegrounds/hanamura/main.jpg",
   AlteracPass:
     "https://nexuscompendium.com/images/battlegrounds/alterac-pass/main.jpg",
+};
+
+export const MAPS_NAMUWIKI_URL: Record<GameMap, string> = {
+  SkyTemple: "https://namu.wiki/w/%ED%95%98%EB%8A%98%20%EC%82%AC%EC%9B%90",
+  TowersOfDoom: "https://namu.wiki/w/%ED%8C%8C%EB%A9%B8%EC%9D%98%20%ED%83%91",
+  HauntedMines:
+    "https://namu.wiki/w/%EC%A3%BD%EC%9D%8C%EC%9D%98%20%EA%B4%91%EC%82%B0",
+  BattlefieldOfEternity:
+    "https://namu.wiki/w/%EC%98%81%EC%9B%90%EC%9D%98%20%EC%A0%84%EC%9F%81%ED%84%B0",
+  BlackheartsBay:
+    "https://namu.wiki/w/%EB%B8%94%EB%9E%99%ED%95%98%ED%8A%B8%20%ED%95%AD%EB%A7%8C",
+  CursedHollow:
+    "https://namu.wiki/w/%EC%A0%80%EC%A3%BC%EB%B0%9B%EC%9D%80%20%EA%B3%A8%EC%A7%9C%EA%B8%B0",
+  DragonShire: "https://namu.wiki/w/%EC%9A%A9%EC%9D%98%20%EB%91%A5%EC%A7%80",
+  HauntedWoods:
+    "https://namu.wiki/w/%EA%B3%B5%ED%8F%AC%EC%9D%98%20%EC%A0%95%EC%9B%90",
+  InfernalShrines:
+    "https://namu.wiki/w/%EB%B6%88%EC%A7%80%EC%98%A5%20%EC%8B%A0%EB%8B%A8",
+  TombOfTheSpiderQueen:
+    "https://namu.wiki/w/%EA%B1%B0%EB%AF%B8%20%EC%97%AC%EC%99%95%EC%9D%98%20%EB%AC%B4%EB%8D%A4",
+  VolskayaFoundry:
+    "https://namu.wiki/w/%EB%B3%BC%EC%8A%A4%EC%B9%B4%EC%95%BC%20%EA%B3%B5%EC%9E%A5",
+  WarheadJunction:
+    "https://namu.wiki/w/%ED%95%B5%ED%83%84%EB%91%90%20%EA%B2%A9%EC%A0%84%EC%A7%80",
+  BraxisHoldout:
+    "https://namu.wiki/w/%EB%B8%8C%EB%9D%BD%EC%8B%9C%EC%8A%A4%20%ED%95%AD%EC%A0%84",
+  Hanamura:
+    "https://namu.wiki/w/%ED%95%98%EB%82%98%EB%AC%B4%EB%9D%BC%20%EC%82%AC%EC%9B%90",
+  AlteracPass:
+    "https://namu.wiki/w/%EC%95%8C%ED%84%B0%EB%9E%99%20%EA%B3%A0%EA%B0%9C",
 };
