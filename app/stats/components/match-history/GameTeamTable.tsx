@@ -4,6 +4,7 @@ import { Hero } from "@/domain/hots/models/hero";
 import { commarize } from "@/utils/commarize";
 import { sumBy } from "es-toolkit";
 import Image from "next/image";
+import { Kda } from "./Kda";
 
 interface GameTeamTableProps {
   readonly title: string;
@@ -20,6 +21,7 @@ export function GameTeamTable({
 }: GameTeamTableProps) {
   const totalKill = sumBy(members, (m) => m.kills ?? 0);
   const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage || 0));
+  const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken || 0));
 
   return (
     <div
@@ -27,20 +29,20 @@ export function GameTeamTable({
         result
       )}`}
     >
-      <div className="text-sm mb-3 gap-3 text-gray-300 font-bold">
-        팀 킬: {totalKill}
+      <div className="flex items-center justify-between text-sm mb-3 gap-3 text-gray-300 font-bold">
+        <span>{title}</span>
+        <span>팀 킬: {totalKill}</span>
       </div>
 
       <div className="overflow-x-auto overflow-y-hidden">
         <table className="w-full text-md min-w-[360px]">
           <thead>
-            <tr className="text-xs text-gray-400 tracking-tighter border-b border-white/5">
-              <th className="pb-2 text-left font-bold w-10">{title}</th>
+            <tr className="text-sm text-gray-300 tracking-tighter border-b border-white/5">
+              <th className="pb-2 text-left font-bold w-8"></th>
               <th className="pb-2 text-left font-bold"></th>
-              <th className="pb-2 text-center font-bold">
-                Kill / Death / Takedown
-              </th>
-              <th className="pb-2 text-right font-bold w-24">피해량</th>
+              <th className="pb-2 text-center font-bold w-30">K/D/T</th>
+              <th className="pb-2 text-center font-bold w-20">피해량</th>
+              <th className="pb-2 text-center font-bold w-20">받은 피해량</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -51,7 +53,8 @@ export function GameTeamTable({
                     <Image
                       src={HeroImage[member.hero as Hero]}
                       alt={member.hero}
-                      fill
+                      width={30}
+                      height={30}
                       className="object-cover"
                     />
                   </div>
@@ -64,24 +67,31 @@ export function GameTeamTable({
                     {member.player.name}
                   </div>
                 </td>
-                <td className="py-2.5 px-2 text-center">
+
+                <td className="py-2.5 text-center">
                   <div className="flex flex-col items-center">
-                    <span className="text-sm font-bold text-gray-300 tabular-nums">
-                      {member.kills} / {member.deaths} / {member.takedowns}
-                    </span>
-                    <span className="text-xs text-gray-500 font-bold">
-                      (
-                      {totalKill > 0
-                        ? `${Math.round(
-                            ((member.takedowns ?? 0) / totalKill) * 100
-                          )}%`
-                        : "0%"}
-                      )
-                    </span>
+                    <div>
+                      <span className="text-sm font-bold text-gray-300 tabular-nums">
+                        {member.kills} / {member.deaths} / {member.takedowns}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-500 font-bold">
+                        (
+                        {totalKill > 0
+                          ? `${Math.round(
+                              (member.takedowns! / totalKill) * 100
+                            )}%`
+                          : "0%"}
+                        )
+                      </span>
+                    </div>
+                    <Kda
+                      deaths={member.deaths ?? 0}
+                      takedowns={member.takedowns ?? 0}
+                    />
                   </div>
                 </td>
-                <td className="py-2.5 pl-2 text-right">
-                  <div className="flex flex-col items-end gap-1">
+                <td className="py-2.5 text-right">
+                  <div className="flex flex-col items-center gap-1">
                     <span className="tabular-nums text-sm font-bold text-gray-300">
                       {member.heroDamage ? commarize(member.heroDamage) : "-"}
                     </span>
@@ -90,6 +100,24 @@ export function GameTeamTable({
                       <DamageBar
                         damage={member.heroDamage}
                         maxDamage={maxHeroDamage}
+                        color="bg-red-500/50"
+                      />
+                    ) : (
+                      <div className="w-16 h-1 bg-white/5 rounded" />
+                    )}
+                  </div>
+                </td>
+                <td className="py-2.5 text-right">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="tabular-nums text-sm font-bold text-gray-300">
+                      {member.damageTaken ? commarize(member.damageTaken) : "-"}
+                    </span>
+                    {typeof member.damageTaken === "number" &&
+                    maxDamageTaken > 0 ? (
+                      <DamageBar
+                        damage={member.damageTaken}
+                        maxDamage={maxDamageTaken}
+                        color="bg-gray-100/50"
                       />
                     ) : (
                       <div className="w-16 h-1 bg-white/5 rounded" />
@@ -108,13 +136,14 @@ export function GameTeamTable({
 interface DamageBarProps {
   readonly damage: number;
   readonly maxDamage: number;
+  readonly color: string;
 }
 
-function DamageBar({ damage, maxDamage }: DamageBarProps) {
+function DamageBar({ damage, maxDamage, color }: DamageBarProps) {
   return (
     <div className="w-16 h-1 bg-white/5 rounded overflow-hidden">
       <div
-        className="h-full bg-red-500/50 transition-colors"
+        className={`h-full ${color} transition-colors`}
         style={{
           width: `${Math.max(3, Math.round((damage / maxDamage) * 100))}%`,
         }}
