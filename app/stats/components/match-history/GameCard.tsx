@@ -47,12 +47,14 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
         <GameTeamTable
           title={team1Name}
           result={team1?.result ?? null}
+          bans={team1?.bans ?? []}
           members={team1?.members ?? []}
           accent="border-cyan-500/30"
         />
         <GameTeamTable
           title={team2Name}
           result={team2?.result ?? null}
+          bans={team2?.bans ?? []}
           members={team2?.members ?? []}
           accent="border-purple-500/30"
         />

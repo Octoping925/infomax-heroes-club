@@ -21,7 +21,7 @@ export function ScrimWinRate() {
             return (
               <tr
                 key={row.playerId}
-                className="border-t border-white/10 cursor-pointer transition-colors hover:bg-white/6"
+                className="border-t border-white/10 transition-colors hover:bg-white/6"
               >
                 <td className="px-4 py-2 font-medium text-white">
                   <div>{row.playerName}</div>

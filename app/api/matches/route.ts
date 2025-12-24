@@ -31,11 +31,17 @@ type MatchHistoryGameTeamMember = {
   damageTaken: number | null;
 };
 
+type MatchHistoryGameTeamBan = {
+  readonly banOrder: number;
+  readonly hero: string;
+};
+
 type MatchHistoryGameTeam = {
   readonly id: string;
   readonly teamNumber: number;
   readonly result: GameResult;
   readonly members: MatchHistoryGameTeamMember[];
+  readonly bans: MatchHistoryGameTeamBan[];
 };
 
 type MatchHistoryGame = {
@@ -112,6 +118,15 @@ export async function GET(
                 id: true,
                 teamNumber: true,
                 result: true,
+                bans: {
+                  orderBy: {
+                    banOrder: "asc",
+                  },
+                  select: {
+                    banOrder: true,
+                    hero: true,
+                  },
+                },
                 members: {
                   select: {
                     hero: true,
@@ -150,6 +165,10 @@ export async function GET(
           id: team.id,
           teamNumber: team.teamNumber,
           result: team.result,
+          bans: team.bans.map((ban) => ({
+            banOrder: ban.banOrder,
+            hero: ban.hero,
+          })),
           members: team.members.map((member) => ({
             player: playerMap.get(member.playerId)!,
             hero: member.hero,

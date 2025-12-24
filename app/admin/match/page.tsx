@@ -132,6 +132,12 @@ export default function MatchInputPage() {
           >
             ← 홈으로
           </Link>
+          <Link
+            href="/admin/match/bans"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
+          >
+            밴 입력 →
+          </Link>
         </div>
       </header>
 

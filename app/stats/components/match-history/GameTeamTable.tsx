@@ -5,10 +5,16 @@ import { commarize } from "@/utils/commarize";
 import { sumBy } from "es-toolkit";
 import Image from "next/image";
 import { Kda } from "./Kda";
+import { Ban } from "./Ban";
+import { DamageBar } from "@/components/DamageBar";
+
+type GameTeamBan =
+  MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
 
 interface GameTeamTableProps {
   readonly title: string;
   readonly result: string | null;
+  readonly bans: ReadonlyArray<GameTeamBan>;
   readonly members: MatchHistoryItem["games"][number]["teams"][number]["members"][number][];
   readonly accent: string;
 }
@@ -16,6 +22,7 @@ interface GameTeamTableProps {
 export function GameTeamTable({
   title,
   result,
+  bans,
   members,
   accent,
 }: GameTeamTableProps) {
@@ -32,6 +39,10 @@ export function GameTeamTable({
       <div className="flex items-center justify-between text-sm mb-3 gap-3 text-gray-300 font-bold">
         <span>{title}</span>
         <span>팀 킬: {totalKill}</span>
+      </div>
+
+      <div className="flex items-start gap-2 mb-3">
+        <Ban bans={bans} />
       </div>
 
       <div className="overflow-x-auto overflow-y-hidden">
@@ -129,25 +140,6 @@ export function GameTeamTable({
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-interface DamageBarProps {
-  readonly damage: number;
-  readonly maxDamage: number;
-  readonly color: string;
-}
-
-function DamageBar({ damage, maxDamage, color }: DamageBarProps) {
-  return (
-    <div className="w-16 h-1 bg-white/5 rounded overflow-hidden">
-      <div
-        className={`h-full ${color} transition-colors`}
-        style={{
-          width: `${Math.max(3, Math.round((damage / maxDamage) * 100))}%`,
-        }}
-      />
     </div>
   );
 }

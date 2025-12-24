@@ -44,6 +44,12 @@ export default function Home() {
             >
               경기입력
             </Link>
+            <Link
+              href="/admin/match/bans"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              밴입력
+            </Link>
           </nav>
         </div>
       </header>
