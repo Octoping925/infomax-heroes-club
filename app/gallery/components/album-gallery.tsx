@@ -142,7 +142,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
                 onClick={closeCarousel}
                 className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-100 transition hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-cyan-400/70"
               >
-                닫기 (ESC)
+                닫기
               </button>
             </div>
 

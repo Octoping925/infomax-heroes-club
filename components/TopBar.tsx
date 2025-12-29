@@ -8,7 +8,7 @@ interface TopBarProps {
 
 export function TopBar({
   value = "home",
-  title = "연합인포맥스 히어로즈 동호회",
+  title = "연합인포맥스 히오스 동호회",
   description = "Infomax Heroes Club",
 }: TopBarProps) {
   const selectedStyle = "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25";
@@ -54,7 +54,7 @@ export function TopBar({
           </Link>
           <Link
             href="/admin/match"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium max-lg:hidden ${
               value === "match" ? selectedStyle : unselectedStyle
             }`}
           >
@@ -62,7 +62,7 @@ export function TopBar({
           </Link>
           <Link
             href="/admin/match/bans"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium max-lg:hidden ${
               value === "bans" ? selectedStyle : unselectedStyle
             }`}
           >
