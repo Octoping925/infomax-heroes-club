@@ -8,13 +8,14 @@ import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./components/hero-duo-ranking-chart";
 import type { PlayerListItem } from "../api/players/route";
-import { useHashSyncedTab } from "./use-tab-hash";
+import { useHashSyncedTab } from "./hooks/use-tab-hash";
 import { PersonalStatTab } from "./components/personal-stat/personal-stat-tab";
 import { usePlayerList } from "./hooks/usePlayerList";
 import { PlayerSidebar } from "./components/PlayerSidebar";
 import { Loading } from "@/components/Loading";
 import { ScrimStatTab } from "./components/scrim-stat/scrim-stat-tab";
 import { RivalryTab } from "./components/rivalry-tab";
+import { TopBar } from "@/components/TopBar";
 
 type TabType =
   | "personalStats"
@@ -62,14 +63,7 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white">
-      {/* 헤더 */}
-      <header className="w-full px-6 py-4 border-b border-white/10 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold bg-linear-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
-            📊 내전 통계 대시보드
-          </h1>
-        </div>
-      </header>
+      <TopBar title="📊 내전 통계 대시보드" value="stats" />
 
       {/* 탭 네비게이션 */}
       <nav className="w-full px-6 py-3 border-b border-white/10 overflow-x-auto">

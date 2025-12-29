@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TopBar } from "@/components/TopBar";
 
 /**
  * 히어로즈 오브 더 스톰 동호회 메인 페이지 컴포넌트
@@ -11,59 +12,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white">
-      {/* 헤더 네비게이션 */}
-      <header className="w-full px-6 py-4 border-b border-white/10 backdrop-blur-xl sticky top-0 z-50 bg-[#0a0a12]/90">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-2xl font-bold shadow-lg shadow-cyan-500/25">
-              H
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">
-                연합인포맥스 히어로즈 동호회
-              </h1>
-              <p className="text-xs text-gray-500">Infomax Heroes Club</p>
-            </div>
-          </div>
-          <nav className="flex gap-2">
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-            >
-              홈
-            </Link>
-            <Link
-              href="/stats"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              통계
-            </Link>
-            <Link
-              href="/admin/match"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              경기입력
-            </Link>
-            <Link
-              href="/admin/match/bans"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              밴입력
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <TopBar value="home" />
 
       {/* 히어로 섹션 */}
       <section className="w-full px-6 py-16">
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-6">
-            <div className="inline-flex px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 backdrop-blur-xl">
+            <div className="inline-flex px-6 py-2 rounded-full bg-linear-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 backdrop-blur-xl">
               <span className="text-sm font-medium">
                 🎮 Heroes of the Storm Community
               </span>
             </div>
-            <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+            <h2 className="text-5xl md:text-6xl font-bold bg-linear-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
               함께 만드는 승리의 역사
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
@@ -97,7 +57,7 @@ export default function Home() {
               onClick={() => setActiveTab("about")}
               className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === "about"
-                  ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
+                  ? "bg-linear-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
                   : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
               }`}
             >
@@ -107,7 +67,7 @@ export default function Home() {
               onClick={() => setActiveTab("activities")}
               className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === "activities"
-                  ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
+                  ? "bg-linear-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25"
                   : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
               }`}
             >
@@ -126,7 +86,7 @@ export default function Home() {
       {/* CTA 섹션 */}
       <section className="w-full px-6 py-16">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-12 border border-cyan-500/30 text-center space-y-6">
+          <div className="bg-linear-to-r from-cyan-500/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-12 border border-cyan-500/30 text-center space-y-6">
             <h3 className="text-4xl font-bold">함께 플레이하고 싶으신가요?</h3>
             <p className="text-xl text-gray-400">
               연합인포맥스 히오스 동호회에 가입하여 즐거운 게임 문화를

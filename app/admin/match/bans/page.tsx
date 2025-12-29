@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { HeroMap } from "@/domain/hots/constants/hero";
+import { TopBar } from "@/components/TopBar";
 
 type MatchType = "LUNCH" | "DINNER";
 
@@ -112,8 +113,12 @@ function formatPlayedAt(iso: string): string {
 function getMatchLabel(match: MatchHistoryItem): string {
   const typeLabel = match.type === "LUNCH" ? "점심" : "저녁";
   const winnerLabel =
-    match.winnerTeamNumber === null ? "무승부" : `${match.winnerTeamNumber}팀 승`;
-  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
+    match.winnerTeamNumber === null
+      ? "무승부"
+      : `${match.winnerTeamNumber}팀 승`;
+  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${
+    match.games.length
+  }경기 · ${winnerLabel}`;
 }
 
 function getTeamMembersLabel(team: MatchHistoryGameTeam): string {
@@ -160,7 +165,9 @@ export default function MatchBansPage() {
     const run = async (): Promise<void> => {
       setIsLoadingMatches(true);
       try {
-        const response = await fetch("/api/matches?take=80", { cache: "no-store" });
+        const response = await fetch("/api/matches?take=80", {
+          cache: "no-store",
+        });
         const data: MatchHistoryItem[] = await response.json();
         if (!response.ok) {
           throw new Error("내전 목록 조회에 실패했습니다.");
@@ -194,7 +201,8 @@ export default function MatchBansPage() {
         const response = await fetch(`/api/matches/${selectedMatchId}/bans`, {
           cache: "no-store",
         });
-        const data: MatchBansResponse | { error: string } = await response.json();
+        const data: MatchBansResponse | { error: string } =
+          await response.json();
         if (!response.ok) {
           const message =
             "error" in data ? data.error : "밴 조회에 실패했습니다.";
@@ -232,7 +240,10 @@ export default function MatchBansPage() {
   };
 
   const handleClearTeamBans = (gameTeamId: string): void => {
-    setBanSlotsByGameTeamId((prev) => ({ ...prev, [gameTeamId]: DEFAULT_BAN_SLOTS }));
+    setBanSlotsByGameTeamId((prev) => ({
+      ...prev,
+      [gameTeamId]: DEFAULT_BAN_SLOTS,
+    }));
   };
 
   const handleSave = async (): Promise<void> => {
@@ -282,7 +293,10 @@ export default function MatchBansPage() {
         throw new Error(message);
       }
 
-      setSaveResult({ status: "success", message: "밴 정보가 저장되었습니다." });
+      setSaveResult({
+        status: "success",
+        message: "밴 정보가 저장되었습니다.",
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "알 수 없는 오류";
       setSaveResult({ status: "error", message });
@@ -291,27 +305,7 @@ export default function MatchBansPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white">
-      <header className="w-full px-6 py-4 border-b border-white/10 backdrop-blur-xl sticky top-0 z-50 bg-[#0a0a12]/90">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
-            🚫 내전 밴 입력/수정
-          </h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/admin/match"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              ← 경기입력
-            </Link>
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all"
-            >
-              ← 홈
-            </Link>
-          </div>
-        </div>
-      </header>
+      <TopBar title="🚫 내전 밴 입력/수정" value="bans" />
 
       <main className="w-full px-6 py-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -353,8 +347,13 @@ export default function MatchBansPage() {
 
             {selectedMatch && (
               <div className="text-sm text-gray-400">
-                선택됨: <span className="text-gray-200">{getMatchLabel(selectedMatch)}</span>{" "}
-                <span className="text-gray-600">(matchId: {selectedMatch.id})</span>
+                선택됨:{" "}
+                <span className="text-gray-200">
+                  {getMatchLabel(selectedMatch)}
+                </span>{" "}
+                <span className="text-gray-600">
+                  (matchId: {selectedMatch.id})
+                </span>
               </div>
             )}
 
@@ -393,7 +392,8 @@ export default function MatchBansPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {game.teams.map((team) => {
-                    const slots = banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
+                    const slots =
+                      banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
                     const teamError = validateTeamSlots(slots);
 
                     return (
@@ -480,20 +480,21 @@ export default function MatchBansPage() {
 
           {selectedMatch && (
             <div className="space-y-4">
-              {saveResult.status !== "idle" && saveResult.status !== "saving" && (
-                <div
-                  className={`p-4 rounded-xl border ${
-                    saveResult.status === "success"
-                      ? "bg-green-500/10 border-green-500/30 text-green-400"
-                      : "bg-red-500/10 border-red-500/30 text-red-400"
-                  }`}
-                >
-                  <p className="font-medium">
-                    {saveResult.status === "success" ? "✅ " : "❌ "}
-                    {saveResult.message}
-                  </p>
-                </div>
-              )}
+              {saveResult.status !== "idle" &&
+                saveResult.status !== "saving" && (
+                  <div
+                    className={`p-4 rounded-xl border ${
+                      saveResult.status === "success"
+                        ? "bg-green-500/10 border-green-500/30 text-green-400"
+                        : "bg-red-500/10 border-red-500/30 text-red-400"
+                    }`}
+                  >
+                    <p className="font-medium">
+                      {saveResult.status === "success" ? "✅ " : "❌ "}
+                      {saveResult.message}
+                    </p>
+                  </div>
+                )}
 
               <button
                 onClick={() => void handleSave()}
@@ -521,5 +522,3 @@ export default function MatchBansPage() {
     </div>
   );
 }
-
-
