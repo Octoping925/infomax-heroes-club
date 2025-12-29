@@ -1,11 +1,50 @@
+"use client";
 import { WinRateStats } from "@/app/api/stats/types";
 import { usePlayerCombinedWinRate } from "../../hooks/usePlayerCombinedWinRate";
+import { useLunchDinnerWinRate } from "../../hooks/useLunchDinnerWinRate";
+import { useMemo, useState } from "react";
+import { LunchDinnerOption } from "@/components/LunchDinnerOption";
 
 export function ScrimWinRate() {
   const { data } = usePlayerCombinedWinRate();
+  const { matchData, gameData } = useLunchDinnerWinRate();
+  const [unit, setUnit] = useState<"all" | "lunch" | "dinner">("all");
+
+  const stats = useMemo(() => {
+    if (unit === "all") {
+      return data;
+    }
+
+    return data
+      .map((row) => {
+        const matchStat = matchData.find(
+          (it) => it.playerNickname === row.playerNickname
+        );
+        const gameStat = gameData.find(
+          (it) => it.playerNickname === row.playerNickname
+        );
+
+        if (unit === "lunch") {
+          return {
+            ...row,
+            matchStats: matchStat?.lunchStats ?? EMPTY_STATS,
+            gameStats: gameStat?.lunchStats ?? EMPTY_STATS,
+          };
+        } else {
+          return {
+            ...row,
+            matchStats: matchStat?.dinnerStats ?? EMPTY_STATS,
+            gameStats: gameStat?.dinnerStats ?? EMPTY_STATS,
+          };
+        }
+      })
+      .filter((it) => it.matchStats.totalGames > 0)
+      .toSorted((a, b) => b.matchStats.winRate - a.matchStats.winRate);
+  }, [unit, matchData, gameData, data]);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-white/10 p-4 bg-black/20">
+      <LunchDinnerOption unit={unit} setUnit={setUnit} />
       <table className="min-w-full text-sm overflow-x-scroll">
         <thead className="bg-white/5 text-gray-300">
           <tr>
@@ -17,7 +56,7 @@ export function ScrimWinRate() {
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => {
+          {stats.map((row) => {
             return (
               <tr
                 key={row.playerId}
@@ -66,7 +105,7 @@ function WinRatePill({
     <span
       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${color} ${bgColor} ${borderColor} border`}
     >
-      {stats.winRate}%
+      {stats.winRate ?? 0}%
     </span>
   );
 }
@@ -74,3 +113,11 @@ function WinRatePill({
 function formatRecord(stats: WinRateStats): string {
   return `${stats.wins}승 ${stats.losses}패 ${stats.draws}무 (${stats.totalGames}경기)`;
 }
+
+const EMPTY_STATS: WinRateStats = {
+  totalGames: 0,
+  wins: 0,
+  losses: 0,
+  draws: 0,
+  winRate: 0,
+};

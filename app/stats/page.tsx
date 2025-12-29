@@ -3,7 +3,6 @@
 import { createContext, Suspense } from "react";
 import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
-import { LunchDinnerWinRateChart } from "./components/lunch-dinner-win-rate-chart";
 import { AvgStatsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
 import { FantasyDuoRankingChart } from "./components/fantasy-duo-ranking-chart";
@@ -23,7 +22,6 @@ type TabType =
   | "rivalry"
   | "mapWinRate"
   | "teamSwitch"
-  | "lunchDinnerWinRate"
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
   | "heroDuo"
@@ -35,14 +33,13 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "rivalry", label: "라이벌리", icon: "🔥" },
   { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
-  { id: "lunchDinnerWinRate", label: "점심/저녁 승률", icon: "🍱" },
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
   { id: "heroDuo", label: "영웅 듀오", icon: "🧩" },
   { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
-const SHOW_PLAYER_SIDEBAR_TABS: TabType[] = ["personalStats"];
+const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats"]);
 
 export const SelectedPlayerContext = createContext<PlayerListItem | null>(null);
 
@@ -98,7 +95,7 @@ export default function StatsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex max-lg:flex-col gap-6">
             {/* 플레이어 사이드바 */}
-            {SHOW_PLAYER_SIDEBAR_TABS.includes(activeTab) && (
+            {SHOW_PLAYER_SIDEBAR_TABS.has(activeTab) && (
               <PlayerSidebar
                 isLoading={isLoadingPlayers}
                 error={playersError}
@@ -131,9 +128,6 @@ export default function StatsPage() {
                   {activeTab === "rivalry" && <RivalryTab />}
                   {activeTab === "mapWinRate" && <MapWinRateChart />}
                   {activeTab === "teamSwitch" && <TeamSwitchChart />}
-                  {activeTab === "lunchDinnerWinRate" && (
-                    <LunchDinnerWinRateChart />
-                  )}
                   {activeTab === "avgKillsDeathsRanking" && (
                     <AvgStatsRankingChart />
                   )}
