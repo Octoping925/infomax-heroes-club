@@ -1,21 +1,19 @@
 "use client";
 import { WinRateStats } from "@/app/api/stats/types";
 import { usePlayerCombinedWinRate } from "../../hooks/usePlayerCombinedWinRate";
-import { useLunchDinnerWinRate } from "../../hooks/useLunchDinnerWinRate";
 import { useMemo, useState } from "react";
 import { LunchDinnerOption } from "@/components/LunchDinnerOption";
 
 export function ScrimWinRate() {
-  const { data } = usePlayerCombinedWinRate();
-  const { matchData, gameData } = useLunchDinnerWinRate();
+  const { overallData, matchData, gameData } = usePlayerCombinedWinRate();
   const [unit, setUnit] = useState<"all" | "lunch" | "dinner">("all");
 
   const stats = useMemo(() => {
     if (unit === "all") {
-      return data;
+      return overallData;
     }
 
-    return data
+    return overallData
       .map((row) => {
         const matchStat = matchData.find(
           (it) => it.playerNickname === row.playerNickname
@@ -40,7 +38,7 @@ export function ScrimWinRate() {
       })
       .filter((it) => it.matchStats.totalGames > 0)
       .toSorted((a, b) => b.matchStats.winRate - a.matchStats.winRate);
-  }, [unit, matchData, gameData, data]);
+  }, [unit, matchData, gameData, overallData]);
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/10 p-4 bg-black/20">
