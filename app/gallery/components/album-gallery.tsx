@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactElement, SyntheticEvent } from "react";
 
 import type { AlbumImage } from "@/app/gallery/utils/get-album-images";
+import { useSwipeGesture } from "@/app/gallery/hooks/use-swipe-gesture";
 
 interface AlbumGalleryProps {
   readonly images: readonly AlbumImage[];
@@ -14,13 +16,13 @@ interface CarouselState {
   readonly activeIndex: number;
 }
 
-function getWrappedIndex(nextIndex: number, total: number) {
+function getWrappedIndex(nextIndex: number, total: number): number {
   if (total <= 0) return 0;
   return ((nextIndex % total) + total) % total;
 }
 
-export function AlbumGallery({ images }: AlbumGalleryProps) {
-  const totalImages = images.length;
+export function AlbumGallery({ images }: AlbumGalleryProps): ReactElement {
+  const totalImages: number = images.length;
 
   const [carouselState, setCarouselState] = useState<CarouselState>({
     isOpen: false,
@@ -34,27 +36,33 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
     return images[getWrappedIndex(carouselState.activeIndex, totalImages)];
   }, [carouselState.activeIndex, carouselState.isOpen, images, totalImages]);
 
-  const openCarousel = useCallback((index: number) => {
+  const openCarousel = useCallback((index: number): void => {
     setCarouselState({ isOpen: true, activeIndex: index });
   }, []);
 
-  const closeCarousel = useCallback(() => {
-    setCarouselState((prev) => ({ ...prev, isOpen: false }));
+  const closeCarousel = useCallback((): void => {
+    setCarouselState((prev: CarouselState) => ({ ...prev, isOpen: false }));
   }, []);
 
-  const moveToPrevious = useCallback(() => {
-    setCarouselState((prev) => ({
+  const moveToPrevious = useCallback((): void => {
+    setCarouselState((prev: CarouselState) => ({
       ...prev,
       activeIndex: Math.max(0, prev.activeIndex - 1),
     }));
   }, []);
 
-  const moveToNext = useCallback(() => {
-    setCarouselState((prev) => ({
+  const moveToNext = useCallback((): void => {
+    setCarouselState((prev: CarouselState) => ({
       ...prev,
       activeIndex: Math.min(totalImages - 1, prev.activeIndex + 1),
     }));
   }, [totalImages]);
+
+  const swipeHandlers = useSwipeGesture<HTMLDivElement>({
+    isEnabled: carouselState.isOpen,
+    onSwipeLeft: moveToNext,
+    onSwipeRight: moveToPrevious,
+  });
 
   useEffect(() => {
     if (!carouselState.isOpen) return;
@@ -62,7 +70,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
     const previousOverflow: string = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    return () => {
+    return (): void => {
       document.body.style.overflow = previousOverflow;
     };
   }, [carouselState.isOpen]);
@@ -70,7 +78,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
   useEffect(() => {
     if (!carouselState.isOpen) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         closeCarousel();
         return;
@@ -87,7 +95,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
     };
 
     globalThis.addEventListener("keydown", handleKeyDown);
-    return () => {
+    return (): void => {
       globalThis.removeEventListener("keydown", handleKeyDown);
     };
   }, [carouselState.isOpen, closeCarousel, moveToNext, moveToPrevious]);
@@ -120,16 +128,22 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
       </section>
 
       {carouselState.isOpen && activeImage && (
-        <div
-          role="dialog"
-          aria-modal="true"
+        <dialog
+          open
           aria-label="사진 크게 보기"
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) closeCarousel();
+          className="fixed inset-0 z-60 m-0 flex h-full w-full items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm"
+          onCancel={(event: SyntheticEvent<HTMLDialogElement>): void => {
+            event.preventDefault();
+            closeCarousel();
           }}
         >
-          <div className="w-full max-w-6xl">
+          <button
+            type="button"
+            aria-label="닫기"
+            onClick={closeCarousel}
+            className="absolute inset-0 z-0 cursor-default"
+          />
+          <div className="relative z-10 w-full max-w-6xl">
             <div className="mb-3 flex items-center justify-between">
               <div className="text-sm text-gray-200">
                 <span className="font-semibold">
@@ -146,7 +160,13 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
               </button>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+            <div
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+              onTouchStart={swipeHandlers.onTouchStart}
+              onTouchMove={swipeHandlers.onTouchMove}
+              onTouchEnd={swipeHandlers.onTouchEnd}
+              onTouchCancel={swipeHandlers.onTouchCancel}
+            >
               <div className="relative h-[72vh] w-full">
                 <Image
                   src={activeImage.src}
@@ -180,7 +200,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
               키보드: ←/→ 이동, ESC 닫기. 바깥 영역 클릭으로도 닫을 수 있어요.
             </p>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );
