@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, Suspense } from "react";
-import { MapWinRateChart } from "./components/map-win-rate-chart";
 import { TeamSwitchChart } from "./components/team-switch-chart";
 import { AvgStatsRankingChart } from "./components/avg-kills-deaths-ranking-chart";
 import { MatchHistoryTab } from "./components/match-history-tab";
@@ -16,12 +15,13 @@ import { Loading } from "@/components/Loading";
 import { ScrimStatTab } from "./components/scrim-stat/scrim-stat-tab";
 import { RivalryTab } from "./components/rivalry-tab";
 import { TopBar } from "@/components/TopBar";
+import { MapStatTab } from "./components/map-stat/map-stat-tab";
 
 type TabType =
   | "personalStats"
   | "scrimStats"
   | "rivalry"
-  | "mapWinRate"
+  | "mapStats"
   | "teamSwitch"
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
@@ -31,8 +31,8 @@ type TabType =
 const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "personalStats", label: "개인 통계", icon: "👤" },
   { id: "scrimStats", label: "내전 통계", icon: "🥇" },
+  { id: "mapStats", label: "맵 통계", icon: "🗺️" },
   { id: "rivalry", label: "라이벌리", icon: "🔥" },
-  { id: "mapWinRate", label: "맵별 승률", icon: "🗺️" },
   { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
@@ -120,7 +120,7 @@ export default function StatsPage() {
                   )}
                   {activeTab === "scrimStats" && <ScrimStatTab />}
                   {activeTab === "rivalry" && <RivalryTab />}
-                  {activeTab === "mapWinRate" && <MapWinRateChart />}
+                  {activeTab === "mapStats" && <MapStatTab />}
                   {activeTab === "teamSwitch" && <TeamSwitchChart />}
                   {activeTab === "avgKillsDeathsRanking" && (
                     <AvgStatsRankingChart />

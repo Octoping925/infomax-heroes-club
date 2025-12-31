@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-export interface CarouselState {
+interface CarouselState {
   readonly isOpen: boolean;
   readonly activeIndex: number;
 }
 
-export interface CarouselApi {
+interface CarouselApi {
   readonly isOpen: boolean;
   readonly activeIndex: number;
   readonly total: number;

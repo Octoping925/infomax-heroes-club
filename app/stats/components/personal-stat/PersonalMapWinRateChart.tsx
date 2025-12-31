@@ -1,4 +1,4 @@
-import { useMapWinRate } from "../../hooks/useMapWinRate";
+import { useMapPlayerWinRate } from "../../hooks/useMapPlayerWinRate";
 import {
   Bar,
   BarChart,
@@ -8,6 +8,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  TooltipContentProps,
 } from "recharts";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { GameMap } from "@/domain/hots/models/map";
@@ -16,22 +17,35 @@ interface Props {
   nickname: string;
 }
 
+type ChartData = {
+  name: string;
+  winRate: number;
+  totalGames: number;
+  wins: number;
+  draws: number;
+  losses: number;
+};
+
 export function PersonalMapWinRateChart({ nickname }: Props) {
-  const { data } = useMapWinRate();
+  const { data } = useMapPlayerWinRate();
 
-  const winRates = data.reduce((acc, curr) => {
-    const player = curr.playerStats.find((p) => p.playerNickname === nickname);
-    if (player) {
-      acc[curr.map] = player.winRate;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  const chartData: ChartData[] = data
+    .map((curr) => {
+      const player = curr.playerStats.find((p) => p.playerNickname === nickname);
+      if (!player) {
+        return null;
+      }
 
-  const chartData = Object.entries(winRates)
-    .map(([map, winRate]) => ({
-      name: MAPS[map as GameMap],
-      winRate,
-    }))
+      return {
+        name: MAPS[curr.map as GameMap],
+        winRate: player.winRate,
+        totalGames: player.totalGames,
+        wins: player.wins,
+        draws: player.draws,
+        losses: player.losses,
+      };
+    })
+    .filter((item): item is ChartData => item !== null)
     .toSorted((a, b) => b.winRate - a.winRate);
 
   return (
@@ -42,7 +56,7 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
       <div
         style={{
           width: "100%",
-          height: Math.max(300, data.length * 35),
+          height: Math.max(300, chartData.length * 35),
         }}
       >
         <ResponsiveContainer>
@@ -56,24 +70,53 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
               stroke="#888"
               tick={{ fontSize: 12 }}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1a1a2e",
-                border: "1px solid #333",
-                borderRadius: 8,
-              }}
-              formatter={(value: number) => [`${value}%`, "승률"]}
-            />
+            <Tooltip content={WinRateTooltip} />
             <Bar dataKey="winRate" name="승률" fill="#22c55e">
-              {chartData.map((entry, index) => (
+              {chartData.map((entry) => (
                 <Cell
-                  key={`cell-${index}`}
+                  key={`cell-${entry.name}`}
                   fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"}
                 />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function WinRateTooltip({
+  active,
+  payload,
+  label,
+}: TooltipContentProps<number, string>) {
+  if (!active || !payload || !payload.length || !payload[0].payload) {
+    return null;
+  }
+
+  const data: ChartData = payload[0].payload as ChartData;
+
+  return (
+    <div
+      style={{
+        backgroundColor: "#1a1a2e",
+        border: "1px solid #333",
+        borderRadius: 8,
+        padding: "10px",
+        color: "#e0e0e0",
+        fontSize: 14,
+        minWidth: 150,
+        lineHeight: 1.7,
+      }}
+    >
+      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
+      <div>
+        승률: <b>{data.winRate}%</b>
+      </div>
+      <div>경기 수: {data.totalGames}경기</div>
+      <div>
+        승: {data.wins} / 무: {data.draws} / 패: {data.losses}
       </div>
     </div>
   );

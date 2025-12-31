@@ -92,6 +92,12 @@ export interface MapPlayerWinRateResponse {
   readonly playerStats: ReadonlyArray<PlayerWinRateResponse>;
 }
 
+/** 맵별 영웅 승률 응답 */
+export interface MapHeroWinRateResponse {
+  readonly map: GameMap;
+  readonly heroStats: HeroWinRateResponse[];
+}
+
 /** 2인 조합(듀오) 승률 응답 (매치 단위) */
 export interface FantasyDuoWinRateResponse extends WinRateStats {
   readonly playerA: {

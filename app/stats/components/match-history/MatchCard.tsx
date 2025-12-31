@@ -49,6 +49,20 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
             {dayjs(match.playedAt).format("YYYY년 MM월 DD일")}
           </span>
         </div>
+
+        {/* Action Button */}
+        <button
+          onClick={onToggle}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+            isExpanded
+              ? "bg-gray-700 text-gray-300"
+              : "bg-white/10 text-white hover:bg-white/20"
+          }`}
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            {isExpanded ? "닫기" : "열기"}
+          </span>
+        </button>
       </div>
 
       {/* Match Content */}
@@ -145,22 +159,6 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={onToggle}
-            className={`group relative px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
-              isExpanded
-                ? "bg-gray-700 text-gray-300"
-                : "bg-white/10 text-white hover:bg-white/20"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              {isExpanded ? "닫기" : "열기"}
-            </span>
-          </button>
         </div>
       </div>
 

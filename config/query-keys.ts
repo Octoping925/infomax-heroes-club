@@ -57,6 +57,7 @@ export const statsQueryKeys = {
       overallWinRate: () => ["stats", "players", "overall-win-rate"],
     },
     maps: () => ["stats", "maps"],
+    mapsHero: () => ["stats", "maps", "hero"],
     teamSwitch: () => ["stats", "team-switch"],
     rankings: {
       lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],

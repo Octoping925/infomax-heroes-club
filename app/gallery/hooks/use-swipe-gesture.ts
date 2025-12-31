@@ -47,7 +47,7 @@ export function useSwipeGesture<TElement extends HTMLElement>({
   const swipeTrackingStateRef = useRef<SwipeTrackingState | null>(null);
 
   const onTouchStart = useCallback<TouchEventHandler<TElement>>(
-    (event: TouchEvent<TElement>): void => {
+    (event: TouchEvent<TElement>) => {
       if (!isEnabled) return;
 
       const touch = extractPrimaryTouch(event);
