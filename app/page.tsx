@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { TopBar } from "@/components/TopBar";
 
 /**
@@ -122,14 +121,14 @@ function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`bg-gradient-to-br ${gradient} backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-white/20 transition-all hover:scale-105 duration-300`}
+      className={`bg-linear-to-br ${gradient} backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-white/20 transition-all hover:scale-105 duration-300`}
     >
       <div className="space-y-4">
         <div className="text-5xl">{icon}</div>
         <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
           {title}
         </div>
-        <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+        <div className="text-4xl font-bold bg-linear-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
           {value}
         </div>
         <p className="text-gray-400">{description}</p>

@@ -75,10 +75,8 @@ export function AvgStatsRankingChart() {
           평균 킬 TOP 20
         </h3>
         <div
-          style={{
-            width: "100%",
-            height: Math.max(420, avgKillsData.length * 34),
-          }}
+          className="w-full max-h-[420px]"
+          style={{ height: avgKillsData.length * 34 }}
         >
           <ResponsiveContainer>
             <BarChart data={avgKillsData} layout="vertical">
@@ -97,8 +95,8 @@ export function AvgStatsRankingChart() {
                   border: "1px solid #333",
                   borderRadius: 8,
                 }}
-                formatter={(value: number, _key: string, ctx) => {
-                  const payload = ctx?.payload as ChartData | undefined;
+                formatter={(value, _key, ctx) => {
+                  const payload = ctx.payload as ChartData | undefined;
                   return [
                     `${value} (총 ${payload?.totalGames ?? 0}게임)`,
                     "평균 킬",
@@ -117,10 +115,8 @@ export function AvgStatsRankingChart() {
           평균 데스 TOP 20
         </h3>
         <div
-          style={{
-            width: "100%",
-            height: Math.max(420, avgDeathsData.length * 34),
-          }}
+          className="w-full max-h-[420px]"
+          style={{ height: avgDeathsData.length * 34 }}
         >
           <ResponsiveContainer>
             <BarChart data={avgDeathsData} layout="vertical">
@@ -139,7 +135,7 @@ export function AvgStatsRankingChart() {
                   border: "1px solid #333",
                   borderRadius: 8,
                 }}
-                formatter={(value: number, _key: string, ctx) => {
+                formatter={(value, _key, ctx) => {
                   const payload = ctx?.payload as ChartData | undefined;
                   return [
                     `${value} (총 ${payload?.totalGames ?? 0}게임)`,

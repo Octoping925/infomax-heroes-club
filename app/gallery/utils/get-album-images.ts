@@ -6,7 +6,7 @@ export interface AlbumImage {
   readonly alt: string;
 }
 
-const ALLOWED_EXTENSIONS: ReadonlySet<string> = new Set<string>([
+const ALLOWED_EXTENSIONS = new Set<string>([
   ".jpg",
   ".jpeg",
   ".png",
@@ -15,12 +15,12 @@ const ALLOWED_EXTENSIONS: ReadonlySet<string> = new Set<string>([
 ]);
 
 function isAllowedImageExtension(fileName: string): boolean {
-  const extension: string = path.extname(fileName).toLowerCase();
+  const extension = path.extname(fileName).toLowerCase();
   return ALLOWED_EXTENSIONS.has(extension);
 }
 
 function convertFileNameToAltText(fileName: string): string {
-  const baseName: string = fileName.replace(path.extname(fileName), "");
+  const baseName = fileName.replace(path.extname(fileName), "");
   return baseName.replace(/[-_]+/g, " ").trim() || "album image";
 }
 
@@ -28,32 +28,22 @@ function convertFileNameToAltText(fileName: string): string {
  * `public/album` 폴더의 이미지 목록을 읽어 갤러리에서 사용할 형태로 반환합니다.
  * 서버 컴포넌트(또는 Route Handler)에서만 호출하세요.
  */
-export async function getAlbumImages(): Promise<readonly AlbumImage[]> {
-  const albumDirectoryPath: string = path.join(process.cwd(), "public", "album");
+export async function getAlbumImages(): Promise<AlbumImage[]> {
+  const albumDirectoryPath = path.join(process.cwd(), "public", "album");
 
-  let directoryEntries: readonly string[] = [];
   try {
-    directoryEntries = await readdir(albumDirectoryPath);
+    const directoryEntries = await readdir(albumDirectoryPath);
+
+    return directoryEntries
+      .filter((fileName) => isAllowedImageExtension(fileName))
+      .toSorted((a, b) => a.localeCompare(b, "kr"))
+      .map(
+        (fileName): AlbumImage => ({
+          src: `/album/${encodeURIComponent(fileName)}`,
+          alt: convertFileNameToAltText(fileName),
+        })
+      );
   } catch {
     return [];
   }
-
-  const fileNames: readonly string[] = directoryEntries.filter((fileName: string) =>
-    isAllowedImageExtension(fileName),
-  );
-
-  const sortedFileNames: readonly string[] = [...fileNames].sort((a: string, b: string) =>
-    a.localeCompare(b, "en"),
-  );
-
-  const images: readonly AlbumImage[] = sortedFileNames.map(
-    (fileName: string): AlbumImage => ({
-      src: `/album/${encodeURIComponent(fileName)}`,
-      alt: convertFileNameToAltText(fileName),
-    }),
-  );
-
-  return images;
 }
-
-

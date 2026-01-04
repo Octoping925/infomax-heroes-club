@@ -8,9 +8,9 @@ export function useHashSyncedTab<T extends string>(
 
   const setValueAndHash = useCallback((nextValue: T) => {
     setValue(nextValue);
-    if (typeof window !== "undefined") {
-      const nextUrl = `${window.location.pathname}${window.location.search}#${nextValue}`;
-      window.history.replaceState(null, "", nextUrl);
+    if (globalThis.window !== undefined) {
+      const nextUrl = `${globalThis.window.location.pathname}${globalThis.window.location.search}#${nextValue}`;
+      globalThis.window.history.replaceState(null, "", nextUrl);
     }
   }, []);
 
@@ -22,10 +22,10 @@ export function useHashSyncedTab<T extends string>(
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
 
     const syncFromHash = () => {
-      const rawHash = window.location.hash?.replace("#", "") ?? "";
+      const rawHash = globalThis.window.location.hash?.replace("#", "") ?? "";
       if (rawHash && isValid(rawHash)) {
         setValue(rawHash);
         return;
@@ -39,10 +39,10 @@ export function useHashSyncedTab<T extends string>(
 
     syncFromHash();
 
-    window.addEventListener("hashchange", syncFromHash);
+    globalThis.window.addEventListener("hashchange", syncFromHash);
 
     return () => {
-      window.removeEventListener("hashchange", syncFromHash);
+      globalThis.window.removeEventListener("hashchange", syncFromHash);
     };
   }, [defaultValue, isValid, setValueAndHash]);
 

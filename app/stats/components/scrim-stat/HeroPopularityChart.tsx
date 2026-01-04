@@ -11,18 +11,21 @@ import {
   Cell,
 } from "recharts";
 import { HeroMap } from "@/domain/hots/constants/hero";
-import { Hero } from "@/generated/prisma/client";
 import { Title } from "../Title";
 
 export function HeroPopularityChart() {
   const { data } = useHeroPopularity();
 
   const chartData = data.slice(0, 15).map((item) => ({
-    name: HeroMap[item.hero as Hero] || item.hero,
+    name: HeroMap[item.hero] || item.hero,
     pickCount: item.pickCount,
     banCount: item.banCount,
     pickWinRate: item.pickWinRate,
   }));
+
+  const pickWinRateSortedData = chartData.toSorted(
+    (a, b) => b.pickWinRate - a.pickWinRate
+  );
 
   return (
     <div className="space-y-8">
@@ -56,10 +59,7 @@ export function HeroPopularityChart() {
       <Title title="픽 승률" />
       <div className="w-full h-[400px]">
         <ResponsiveContainer>
-          <BarChart
-            data={chartData.toSorted((a, b) => b.pickWinRate - a.pickWinRate)}
-            layout="vertical"
-          >
+          <BarChart data={pickWinRateSortedData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
             <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
             <YAxis
@@ -78,14 +78,12 @@ export function HeroPopularityChart() {
               formatter={(value: number) => [`${value}%`, "승률"]}
             />
             <Bar dataKey="pickWinRate" name="승률" fill="#22c55e">
-              {chartData
-                .toSorted((a, b) => b.pickWinRate - a.pickWinRate)
-                .map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}
-                  />
-                ))}
+              {pickWinRateSortedData.map((it) => (
+                <Cell
+                  key={it.name}
+                  fill={it.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}
+                />
+              ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
