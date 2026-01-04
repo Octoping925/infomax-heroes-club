@@ -1,19 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
-import type { SyntheticEvent } from "react";
+import { use, useEffect, useMemo } from "react";
 
 import type { AlbumImage } from "@/app/gallery/utils/get-album-images";
 import { useCarousel } from "@/app/gallery/hooks/use-carousel";
 import { useSwipeGesture } from "@/app/gallery/hooks/use-swipe-gesture";
 
 interface AlbumGalleryProps {
-  readonly images: readonly AlbumImage[];
+  readonly images: Promise<AlbumImage[]>;
 }
 
 export function AlbumGallery({ images }: AlbumGalleryProps) {
-  const totalImages = images.length;
+  const loadedImages = use(images);
+  const totalImages = loadedImages.length;
 
   const carousel = useCarousel(totalImages);
 
@@ -21,8 +21,8 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
     if (!carousel.isOpen) return null;
     if (totalImages <= 0) return null;
 
-    return images[carousel.activeIndex] ?? null;
-  }, [carousel, images, totalImages]);
+    return loadedImages[carousel.activeIndex] ?? null;
+  }, [carousel, loadedImages, totalImages]);
 
   const swipeHandlers = useSwipeGesture<HTMLDivElement>({
     isEnabled: carousel.isOpen,
@@ -33,10 +33,10 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
   useEffect(() => {
     if (!carousel.isOpen) return;
 
-    const previousOverflow: string = document.body.style.overflow;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    return (): void => {
+    return () => {
       document.body.style.overflow = previousOverflow;
     };
   }, [carousel.isOpen]);
@@ -47,7 +47,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
         aria-label="앨범 이미지 목록"
         className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
       >
-        {images.map((image: AlbumImage, index: number) => (
+        {loadedImages.map((image, index) => (
           <button
             key={image.src}
             type="button"
@@ -73,7 +73,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
           open
           aria-label="사진 크게 보기"
           className="fixed inset-0 z-60 m-0 flex h-full w-full items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm"
-          onCancel={(event: SyntheticEvent<HTMLDialogElement>): void => {
+          onCancel={(event) => {
             event.preventDefault();
             carousel.close();
           }}

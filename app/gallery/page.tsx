@@ -1,10 +1,17 @@
 import { TopBar } from "@/components/TopBar";
 import { AlbumGallery } from "@/app/gallery/components/album-gallery";
 import { getAlbumImages } from "@/app/gallery/utils/get-album-images";
-import type { ReactElement } from "react";
+import { Suspense, type ReactElement } from "react";
+import { Metadata } from "next";
+import { Loading } from "@/components/Loading";
+
+export const metadata: Metadata = {
+  title: "갤러리",
+  description: "연합인포맥스 히오스 동호회 갤러리",
+};
 
 export default async function GalleryPage(): Promise<ReactElement> {
-  const images = await getAlbumImages();
+  const images = getAlbumImages();
 
   return (
     <div className="min-h-screen">
@@ -16,8 +23,9 @@ export default async function GalleryPage(): Promise<ReactElement> {
             클릭하면 크게 보기(캐러셀)로 열립니다.
           </p>
         </div>
-
-        <AlbumGallery images={images} />
+        <Suspense fallback={<Loading />}>
+          <AlbumGallery images={images} />
+        </Suspense>
       </main>
     </div>
   );
