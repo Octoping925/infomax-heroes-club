@@ -1,6 +1,6 @@
 interface TitleProps {
-  title: string;
-  description?: string;
+  readonly title: string;
+  readonly description?: string;
 }
 
 export function Title({ title, description }: TitleProps) {

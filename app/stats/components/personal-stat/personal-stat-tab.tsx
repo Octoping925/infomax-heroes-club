@@ -1,20 +1,16 @@
 "use client";
 
 import { Suspense, useContext } from "react";
-import { SelectedPlayerContext } from "../../page";
+import { SelectedPlayerContext } from "../StatsPage";
 import { OverallStats } from "./OverallStats";
 import { HeroStats } from "./HeroStats";
 import { Loading } from "@/components/Loading";
 import { PersonalMapWinRateChart } from "./PersonalMapWinRateChart";
 
-type Props = {
-  nickname: string;
-};
-
 /**
  * 플레이어 승률 차트
  */
-export function PersonalStatTab({ nickname }: Props) {
+export function PersonalStatTab() {
   const selectedPlayer = useContext(SelectedPlayerContext);
 
   if (!selectedPlayer) {
@@ -29,7 +25,7 @@ export function PersonalStatTab({ nickname }: Props) {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg text-white font-semibold">
-          {selectedPlayer.name} ({nickname}) 상세
+          {selectedPlayer.name} ({selectedPlayer.nickname}) 상세
         </h2>
       </div>
       <div className="w-full flex flex-col gap-12">
@@ -37,10 +33,10 @@ export function PersonalStatTab({ nickname }: Props) {
           <OverallStats playerId={selectedPlayer.id} />
         </Suspense>
         <Suspense fallback={<Loading />}>
-          <HeroStats nickname={nickname} />
+          <HeroStats nickname={selectedPlayer.nickname} />
         </Suspense>
         <Suspense fallback={<Loading />}>
-          <PersonalMapWinRateChart nickname={nickname} />
+          <PersonalMapWinRateChart nickname={selectedPlayer.nickname} />
         </Suspense>
       </div>
     </section>

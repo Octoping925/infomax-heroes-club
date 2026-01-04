@@ -1,12 +1,13 @@
 import { MapPlayerWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
+import { SITE_URL } from "@/config/url";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function useMapPlayerWinRate() {
   const { data, error } = useSuspenseQuery<MapPlayerWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.maps(),
     queryFn: async () => {
-      const response = await fetch("/api/stats/maps");
+      const response = await fetch(`${SITE_URL}/api/stats/maps`);
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }

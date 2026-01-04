@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants/hero";
-import { Hero } from "@/generated/prisma/client";
 import { statsQueryKeys } from "@/config/query-keys";
+import { SITE_URL } from "@/config/url";
 
 type DuoRow = {
   readonly duoName: string;
@@ -25,7 +25,8 @@ const DEFAULT_LIMIT: number = 50;
 export function HeroDuoRankingChart() {
   const [minCount, setMinCount] = useState<number>(DEFAULT_MIN_GAMES);
   const [limit, setLimit] = useState<number>(DEFAULT_LIMIT);
-  const { data, isPending, error } = useQuery<HeroDuoWinRateResponse[]>({
+
+  const { data, error } = useSuspenseQuery<HeroDuoWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit }),
     queryFn: async () => {
       const searchParams = new URLSearchParams({
@@ -33,23 +34,19 @@ export function HeroDuoRankingChart() {
         limit: String(limit),
       });
       const response = await fetch(
-        `/api/stats/heroes/fantasy-duo?${searchParams.toString()}`
+        `${SITE_URL}/api/stats/heroes/fantasy-duo?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
       return (await response.json()) as HeroDuoWinRateResponse[];
     },
-    placeholderData: keepPreviousData,
   });
 
   const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
-    if (!data) {
-      return [];
-    }
     return data.map((item) => {
-      const heroAName = HeroMap[item.heroA as Hero] ?? String(item.heroA);
-      const heroBName = HeroMap[item.heroB as Hero] ?? String(item.heroB);
+      const heroAName = HeroMap[item.heroA] ?? String(item.heroA);
+      const heroBName = HeroMap[item.heroB] ?? String(item.heroB);
       return {
         duoName: `${heroAName} × ${heroBName}`,
         winRate: item.winRate,
@@ -60,17 +57,6 @@ export function HeroDuoRankingChart() {
       };
     });
   }, [data]);
-
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -143,7 +129,7 @@ export function HeroDuoRankingChart() {
               {rows.map((row, index) => (
                 <tr
                   key={`${row.duoName}-${index}`}
-                  className="border-t border-white/10 hover:bg-white/[0.06] transition-colors"
+                  className="border-t border-white/10 hover:bg-white/6 transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-400">{index + 1}</td>
                   <td className="px-4 py-3 font-medium text-white">

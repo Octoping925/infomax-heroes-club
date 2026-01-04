@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -57,7 +56,7 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
   });
 
   const chartData: ChartData[] = selectedMapData.heroStats
-    .filter((it) => it.hero !== "Gall")
+    .filter((it) => it.hero !== "Gall") // 갈은 승률이 초와 같으니 초갈로 합쳐서 처리
     .toSorted((a, b) => scores[b.hero].score - scores[a.hero].score)
     .map((stat) => ({
       name: stat.hero === "Cho" ? "초 갈" : HeroMap[stat.hero],
@@ -70,10 +69,8 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
 
   return (
     <div
-      style={{
-        width: "100%",
-        height: Math.max(300, chartData.length * 35),
-      }}
+      className="w-full max-h-[300px]"
+      style={{ height: chartData.length * 35 }}
     >
       <ResponsiveContainer>
         <BarChart data={chartData} layout="vertical">
@@ -88,10 +85,10 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
           />
           <Tooltip content={WinRateTooltip} />
           <Bar dataKey="winRate" name="승률" fill="#22c55e">
-            {chartData.map((entry) => (
+            {chartData.map((it) => (
               <Cell
-                key={`cell-${entry.name}`}
-                fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"}
+                key={it.name}
+                fill={it.winRate >= 50 ? "#22c55e" : "#ef4444"}
               />
             ))}
           </Bar>

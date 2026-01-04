@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
 import { statsQueryKeys } from "@/config/query-keys";
 import { MatchCard } from "./match-history/MatchCard";
+import { SITE_URL } from "@/config/url";
 
 type MatchGroup = {
   readonly dateKey: string; // YYYY-MM-DD
@@ -20,7 +21,7 @@ export function MatchHistoryTab() {
   const { data: matches = [], error } = useSuspenseQuery<MatchHistoryItem[]>({
     queryKey: statsQueryKeys.matches.latest(200),
     queryFn: async () => {
-      const response = await fetch("/api/matches?take=200");
+      const response = await fetch(`${SITE_URL}/api/matches?take=200`);
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }

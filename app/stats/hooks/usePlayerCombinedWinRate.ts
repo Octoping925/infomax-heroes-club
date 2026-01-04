@@ -5,9 +5,12 @@ import {
 import { LunchDinnerUnit } from "@/app/api/stats/utils/lunch-dinner";
 import { statsQueryKeys } from "@/config/query-keys";
 import { useSuspenseQueries } from "@tanstack/react-query";
+import { SITE_URL } from "@/config/url";
 
 async function fetchOverallWinRate() {
-  const response = await fetch("/api/stats/players/overall-win-rate");
+  const response = await fetch(
+    `${SITE_URL}/api/stats/players/overall-win-rate`
+  );
   if (!response.ok) {
     throw new Error("승률 데이터를 불러오는데 실패했습니다.");
   }
@@ -15,7 +18,9 @@ async function fetchOverallWinRate() {
 }
 
 async function fetchLunchDinnerWinRate(unit: LunchDinnerUnit) {
-  const response = await fetch(`/api/stats/players/lunch-dinner?unit=${unit}`);
+  const response = await fetch(
+    `${SITE_URL}/api/stats/players/lunch-dinner?unit=${unit}`
+  );
   if (!response.ok) {
     throw new Error("데이터를 불러오는데 실패했습니다.");
   }

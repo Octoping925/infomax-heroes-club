@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
+import { SITE_URL } from "@/config/url";
 
 type DuoRow = {
   readonly duoName: string;
@@ -14,9 +15,9 @@ type DuoRow = {
   readonly draws: number;
 };
 
-const DEFAULT_MIN_MATCHES: number = 2;
-const DEFAULT_MIN_GAMES: number = 5;
-const DEFAULT_LIMIT: number = 50;
+const DEFAULT_MIN_MATCHES = 2;
+const DEFAULT_MIN_GAMES = 5;
+const DEFAULT_LIMIT = 50;
 
 /**
  * '환상의 듀오' 랭킹 (내전 단위)
@@ -39,7 +40,7 @@ export function FantasyDuoRankingChart() {
     }));
   };
 
-  const { data, isPending, error } = useQuery<FantasyDuoWinRateResponse[]>({
+  const { data, error } = useSuspenseQuery<FantasyDuoWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.players.fantasyDuo({
       unit,
       minCount,
@@ -52,21 +53,17 @@ export function FantasyDuoRankingChart() {
         limit: String(limit),
       });
       const response = await fetch(
-        `/api/stats/players/fantasy-duo?${searchParams.toString()}`
+        `${SITE_URL}/api/stats/players/fantasy-duo?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
       return (await response.json()) as FantasyDuoWinRateResponse[];
     },
-    placeholderData: keepPreviousData,
   });
 
-  const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
-    if (!data) {
-      return [];
-    }
-    return [...data].map((item) => ({
+  const rows = useMemo<DuoRow[]>(() => {
+    return data.map((item) => ({
       duoName: `${item.playerA.playerNickname} × ${item.playerB.playerNickname}`,
       winRate: item.winRate,
       totalGames: item.totalGames,
@@ -75,17 +72,6 @@ export function FantasyDuoRankingChart() {
       draws: item.draws,
     }));
   }, [data]);
-
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (

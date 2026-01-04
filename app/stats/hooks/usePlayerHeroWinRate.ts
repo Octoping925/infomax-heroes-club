@@ -1,5 +1,6 @@
 import { PlayerHeroWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
+import { SITE_URL } from "@/config/url";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function usePlayerHeroWinRate(nickname: string) {
@@ -7,7 +8,7 @@ export function usePlayerHeroWinRate(nickname: string) {
     queryKey: statsQueryKeys.stats.players.heroStats(nickname),
     queryFn: async () => {
       const response = await fetch(
-        `/api/stats/players/${encodeURIComponent(nickname)}/heroes`
+        `${SITE_URL}/api/stats/players/${encodeURIComponent(nickname)}/heroes`
       );
 
       if (response.ok)

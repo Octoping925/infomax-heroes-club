@@ -14,7 +14,7 @@ type GameTeamBan =
 interface GameTeamTableProps {
   readonly title: string;
   readonly result: string | null;
-  readonly bans: ReadonlyArray<GameTeamBan>;
+  readonly bans: GameTeamBan[];
   readonly members: MatchHistoryItem["games"][number]["teams"][number]["members"][number][];
   readonly accent: string;
 }

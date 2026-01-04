@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useContext } from "react";
-import { SelectedPlayerContext } from "../../page";
+import { SelectedPlayerContext } from "../StatsPage";
 import { Loading } from "@/components/Loading";
 import { ScrimWinRate } from "./ScrimWinRate";
 import { Title } from "../Title";

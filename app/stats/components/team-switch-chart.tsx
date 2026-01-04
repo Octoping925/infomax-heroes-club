@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { TeamSwitchWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
+import { SITE_URL } from "@/config/url";
 
 type ChartData = {
   name: string;
@@ -30,10 +31,10 @@ type ChartData = {
  * 팀 변경 효과 차트
  */
 export function TeamSwitchChart() {
-  const { data, isPending, error } = useQuery<TeamSwitchWinRateResponse[]>({
+  const { data, error } = useSuspenseQuery<TeamSwitchWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.teamSwitch(),
     queryFn: async () => {
-      const response = await fetch("/api/stats/team-switch");
+      const response = await fetch(`${SITE_URL}/api/stats/team-switch`);
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
@@ -42,9 +43,6 @@ export function TeamSwitchChart() {
   });
 
   const chartData = useMemo<ChartData[]>(() => {
-    if (!data) {
-      return [];
-    }
     return data
       .filter(
         (item) =>
@@ -60,17 +58,6 @@ export function TeamSwitchChart() {
         switchedGames: item.switchedTeamStats.totalGames,
       }));
   }, [data]);
-
-  if (isPending) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -214,10 +201,10 @@ export function TeamSwitchChart() {
               />
               <ReferenceLine x={0} stroke="#666" />
               <Bar dataKey="diff" name="승률 변화" fill="#22c55e">
-                {chartData.map((entry, index) => (
+                {chartData.map((it) => (
                   <Cell
-                    key={`cell-${index}`}
-                    fill={entry.diff >= 0 ? "#22c55e" : "#ef4444"}
+                    key={it.name}
+                    fill={it.diff >= 0 ? "#22c55e" : "#ef4444"}
                   />
                 ))}
               </Bar>
