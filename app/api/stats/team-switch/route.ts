@@ -57,7 +57,7 @@ export async function GET(): Promise<
 
   const results: TeamSwitchWinRateResponse[] = [];
 
-  for (const player of Object.values(players)) {
+  for (const [, player] of players) {
     const playerStat = playerStats.get(player.id) ?? {
       original: createResultCounts(),
       switched: createResultCounts(),
