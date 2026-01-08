@@ -1,5 +1,5 @@
 import { prisma } from "@/config/prisma";
-import { Hero } from "@/generated/prisma/enums";
+import { Hero } from "@/domain/hots/models/hero";
 import { NextRequest, NextResponse } from "next/server";
 
 type BanSlotInput = {

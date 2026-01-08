@@ -1,4 +1,4 @@
-import { GameMap, Hero } from "@/generated/prisma/client";
+import { GameMap, Hero } from "@domain/hots/models";
 
 /** 승률 통계 기본 타입 */
 export interface WinRateStats {

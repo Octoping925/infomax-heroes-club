@@ -1,6 +1,5 @@
-import { Hero, GameMap } from "@/generated/prisma/client";
-import { HeroMap } from "../constants/hero";
-import { MAPS } from "../constants/maps";
+import { HeroMap, MAPS } from "@domain/hots/constants";
+import { Hero, GameMap } from "@domain/hots/models";
 
 /** 파싱된 플레이어 스탯 */
 export type ParsedPlayerStat = {

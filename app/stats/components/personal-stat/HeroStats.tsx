@@ -1,7 +1,7 @@
 import { Loading } from "@/components/Loading";
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
-import { HeroMap } from "@/domain/hots/constants/hero";
-import { Hero } from "@/domain/hots/models/hero";
+import { HeroMap } from "@/domain/hots/constants";
+import { Hero } from "@/domain/hots/models";
 import { Suspense } from "react";
 import {
   BarChart,

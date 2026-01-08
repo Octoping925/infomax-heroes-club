@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
-import { HeroMap } from "@/domain/hots/constants/hero";
+import { HeroMap } from "@/domain/hots/constants";
 import { statsQueryKeys } from "@/config/query-keys";
 import { SITE_URL } from "@/config/url";
 

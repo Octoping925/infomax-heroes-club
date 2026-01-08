@@ -1,6 +1,6 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
-import { HeroImage, HeroMap } from "@/domain/hots/constants/hero";
-import { Hero } from "@/domain/hots/models/hero";
+import { HeroImage, HeroMap } from "@/domain/hots/constants";
+import { Hero } from "@/domain/hots/models";
 import Image from "next/image";
 
 type GameTeamBan =

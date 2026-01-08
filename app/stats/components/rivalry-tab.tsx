@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import type { RivalryCardResponse } from "@/app/api/stats/types";
-import { HeroMap } from "@/domain/hots/constants/hero";
+import { HeroMap } from "@/domain/hots/constants";
 import { type RivalryParams } from "@/config/query-keys";
 import { useRivalries } from "../hooks/useRivalries";
 import { Title } from "./Title";

@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { HeroMap } from "@/domain/hots/constants/hero";
+import { HeroMap } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
 
 type MatchType = "LUNCH" | "DINNER";
@@ -97,7 +96,7 @@ function createBanSlotsFromResponse(
 }
 
 function isValidHeroKey(input: string): input is HeroKey {
-  return Object.prototype.hasOwnProperty.call(HeroMap, input);
+  return Object.hasOwn(HeroMap, input);
 }
 
 function formatPlayedAt(iso: string): string {

@@ -1,6 +1,6 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
-import { HeroImage } from "@/domain/hots/constants/hero";
-import { Hero } from "@/domain/hots/models/hero";
+import { HeroImage } from "@/domain/hots/constants";
+import { Hero } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
 import { sumBy } from "es-toolkit";
 import Image from "next/image";
