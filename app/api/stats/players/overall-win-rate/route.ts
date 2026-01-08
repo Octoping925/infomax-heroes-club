@@ -5,21 +5,20 @@ import {
   WinRateStats,
 } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
-import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap } from "../../utils/player";
-
-type StatAccumulator = {
-  wins: number;
-  losses: number;
-  draws: number;
-};
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 
 type PlayerAccumulator = {
   readonly playerId: string;
   readonly playerName: string;
   readonly playerNickname: string;
-  readonly matchStats: StatAccumulator;
-  readonly gameStats: StatAccumulator;
+  readonly matchStats: ResultCounts;
+  readonly gameStats: ResultCounts;
 };
 
 export async function GET(): Promise<
@@ -70,18 +69,22 @@ export async function GET(): Promise<
       playerId: input.playerId,
       playerName: input.playerName,
       playerNickname: input.playerNickname,
-      matchStats: { wins: 0, losses: 0, draws: 0 },
-      gameStats: { wins: 0, losses: 0, draws: 0 },
+      matchStats: createResultCounts(),
+      gameStats: createResultCounts(),
     };
     accumulator.set(input.playerId, created);
     return created;
   };
 
   for (const membership of matchMemberships) {
+    const playerInfo = playerMap.get(membership.playerId);
+    if (!playerInfo) {
+      continue;
+    }
     const entry = getOrCreate({
       playerId: membership.playerId,
-      playerName: playerMap.get(membership.playerId)!.name,
-      playerNickname: playerMap.get(membership.playerId)!.nickname,
+      playerName: playerInfo.name,
+      playerNickname: playerInfo.nickname,
     });
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
@@ -95,31 +98,24 @@ export async function GET(): Promise<
   }
 
   for (const membership of gameMemberships) {
+    const playerInfo = playerMap.get(membership.playerId);
+    if (!playerInfo) {
+      continue;
+    }
     const entry = getOrCreate({
       playerId: membership.playerId,
-      playerName: playerMap.get(membership.playerId)!.name,
-      playerNickname: playerMap.get(membership.playerId)!.nickname,
+      playerName: playerInfo.name,
+      playerNickname: playerInfo.nickname,
     });
 
     const result = membership.gameTeam.result as GameResult | null;
-    if (result === "WIN") {
-      entry.gameStats.wins += 1;
-    } else if (result === "LOSE") {
-      entry.gameStats.losses += 1;
-    } else {
-      entry.gameStats.draws += 1;
+    if (result) {
+      updateCountsByResult(entry.gameStats, result);
     }
   }
 
-  const toResponse = (stats: StatAccumulator): WinRateStats => {
-    return {
-      totalGames: stats.wins + stats.losses + stats.draws,
-      wins: stats.wins,
-      losses: stats.losses,
-      draws: stats.draws,
-      winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
-    };
-  };
+  const toResponse = (stats: ResultCounts): WinRateStats =>
+    buildWinRateStatsFromCounts(stats);
 
   const response: PlayerCombinedWinRateResponse[] = Array.from(
     accumulator.values()

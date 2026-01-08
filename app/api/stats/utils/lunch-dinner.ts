@@ -1,15 +1,15 @@
 import { prisma } from "@/config/prisma";
 import { GameResult, MatchType } from "@/generated/prisma/client";
-import {
-  PlayerLunchDinnerWinRateResponse,
-  WinRateStats,
-} from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
+import { PlayerLunchDinnerWinRateResponse } from "@/app/api/stats/types";
 import { fetchPlayerMap, PlayerMap } from "./player";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 
 export type LunchDinnerUnit = "game" | "match";
-
-type ResultCounts = { wins: number; losses: number; draws: number };
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -44,8 +44,8 @@ export async function fetchPlayerLunchDinnerWinRate(input: {
       : await buildAccumulatorByGame(playerMap);
 
   return Array.from(accumulatorMap.values()).map((acc) => {
-    const lunchStats = buildWinRateStats(acc.lunch);
-    const dinnerStats = buildWinRateStats(acc.dinner);
+    const lunchStats = buildWinRateStatsFromCounts(acc.lunch);
+    const dinnerStats = buildWinRateStatsFromCounts(acc.dinner);
     const dinnerWinRateDiff = dinnerStats.winRate - lunchStats.winRate;
 
     return {
@@ -87,21 +87,25 @@ async function buildAccumulatorByGame(
 
   for (const participation of participations) {
     const playerId = participation.playerId;
+    const playerInfo = playerMap.get(playerId);
+    if (!playerInfo) {
+      continue;
+    }
     const current =
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: playerMap.get(playerId)!.name,
-        playerNickname: playerMap.get(playerId)!.nickname,
+        playerName: playerInfo.name,
+        playerNickname: playerInfo.nickname,
       });
 
     const matchType = participation.gameTeam.game.match.type;
     const result = participation.gameTeam.result;
 
     if (matchType === MatchType.LUNCH) {
-      updateResultCounts(current.lunch, result);
+      updateCountsByResult(current.lunch, result);
     } else {
-      updateResultCounts(current.dinner, result);
+      updateCountsByResult(current.dinner, result);
     }
 
     accumulatorMap.set(playerId, current);
@@ -134,12 +138,16 @@ async function buildAccumulatorByMatch(
 
   for (const membership of memberships) {
     const playerId = membership.playerId;
+    const playerInfo = playerMap.get(playerId);
+    if (!playerInfo) {
+      continue;
+    }
     const current =
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: playerMap.get(playerId)!.name,
-        playerNickname: playerMap.get(playerId)!.nickname,
+        playerName: playerInfo.name,
+        playerNickname: playerInfo.nickname,
       });
 
     const matchType = membership.matchTeam.match.type;
@@ -152,9 +160,9 @@ async function buildAccumulatorByMatch(
     });
 
     if (matchType === MatchType.LUNCH) {
-      updateResultCounts(current.lunch, result);
+      updateCountsByResult(current.lunch, result);
     } else {
-      updateResultCounts(current.dinner, result);
+      updateCountsByResult(current.dinner, result);
     }
 
     accumulatorMap.set(playerId, current);
@@ -172,8 +180,8 @@ function createAccumulator(input: {
     playerId: input.playerId,
     playerName: input.playerName,
     playerNickname: input.playerNickname,
-    lunch: { wins: 0, losses: 0, draws: 0 },
-    dinner: { wins: 0, losses: 0, draws: 0 },
+    lunch: createResultCounts(),
+    dinner: createResultCounts(),
   };
 }
 
@@ -184,28 +192,6 @@ function toResultByWinnerTeamNumber(input: {
   if (input.winnerTeamNumber === null) return GameResult.DRAW;
   if (input.winnerTeamNumber === input.teamNumber) return GameResult.WIN;
   return GameResult.LOSE;
-}
-
-function updateResultCounts(counts: ResultCounts, result: GameResult): void {
-  if (result === GameResult.WIN) {
-    counts.wins++;
-    return;
-  }
-  if (result === GameResult.LOSE) {
-    counts.losses++;
-    return;
-  }
-  counts.draws++;
-}
-
-function buildWinRateStats(counts: ResultCounts): WinRateStats {
-  return {
-    totalGames: counts.wins + counts.losses + counts.draws,
-    wins: counts.wins,
-    losses: counts.losses,
-    draws: counts.draws,
-    winRate: calculateWinRate(counts.wins, counts.losses, counts.draws),
-  };
 }
 
 function roundToTwoDecimals(value: number): number {

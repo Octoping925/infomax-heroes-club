@@ -5,6 +5,7 @@ import {
   fetchRivalries,
   normalizeFetchRivalriesParams,
 } from "@/domain/hots/service/rivalry-service";
+import { parseBoolean, parseNumber } from "@/app/api/stats/utils/query";
 
 /**
  * 라이벌리 (A vs B) 카드 목록
@@ -19,7 +20,9 @@ export async function GET(
       minMatches: parseNumber(search.get("minMatches")),
       limit: parseNumber(search.get("limit")),
       takeMatches: parseNumber(search.get("takeMatches")),
-      includeInsufficientSample: parseBoolean(search.get("includeInsufficientSample")),
+      includeInsufficientSample: parseBoolean(
+        search.get("includeInsufficientSample")
+      ),
     });
 
     const response = await fetchRivalries({ prisma, params });
@@ -30,19 +33,4 @@ export async function GET(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-function parseNumber(input: string | null): number | undefined {
-  if (input === null) return undefined;
-  const parsed = Number(input);
-  if (!Number.isFinite(parsed)) return undefined;
-  return parsed;
-}
-
-function parseBoolean(input: string | null): boolean | undefined {
-  if (input === null) return undefined;
-  if (input === "true") return true;
-  if (input === "false") return false;
-  return undefined;
-}
-
 

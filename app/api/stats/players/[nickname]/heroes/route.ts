@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult, Hero } from "@/generated/prisma/client";
+import { GameResult } from "@/generated/prisma/client";
 import {
   PlayerHeroWinRateResponse,
   HeroWinRateResponse,
 } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
+import { Hero } from "@/domain/hots/models";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -66,39 +72,18 @@ type GameResultWithHero = {
 function aggregateHeroStats(
   results: GameResultWithHero[]
 ): HeroWinRateResponse[] {
-  const heroMap = new Map<
-    Hero,
-    { wins: number; losses: number; draws: number }
-  >();
+  const heroMap = new Map<Hero, ResultCounts>();
 
   for (const result of results) {
-    const current = heroMap.get(result.hero) ?? {
-      wins: 0,
-      losses: 0,
-      draws: 0,
-    };
-
-    if (result.gameTeam.result === GameResult.WIN) {
-      current.wins++;
-    } else if (result.gameTeam.result === GameResult.LOSE) {
-      current.losses++;
-    } else {
-      current.draws++;
-    }
-
+    const current = heroMap.get(result.hero) ?? createResultCounts();
+    updateCountsByResult(current, result.gameTeam.result);
     heroMap.set(result.hero, current);
   }
 
   return Array.from(heroMap.entries())
-    .map(([hero, stats]) => {
-      return {
-        hero,
-        totalGames: stats.wins + stats.losses + stats.draws,
-        wins: stats.wins,
-        losses: stats.losses,
-        draws: stats.draws,
-        winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
-      };
-    })
+    .map(([hero, stats]) => ({
+      hero,
+      ...buildWinRateStatsFromCounts(stats),
+    }))
     .sort((a, b) => b.totalGames - a.totalGames);
 }

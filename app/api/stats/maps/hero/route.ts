@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameMap, GameResult, Hero } from "@/generated/prisma/client";
+import { GameResult } from "@/generated/prisma/client";
 import {
   HeroWinRateResponse,
   MapHeroWinRateResponse,
 } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
+import { GameMap, Hero } from "@/domain/hots/models";
 
 /**
  * 맵별 영웅 승률 조회
@@ -54,9 +60,7 @@ type GameParticipation = {
 
 type HeroStatsAccumulator = {
   hero: Hero;
-  wins: number;
-  losses: number;
-  draws: number;
+  stats: ResultCounts;
 };
 
 function aggregateMapHeroStats(
@@ -77,26 +81,12 @@ function aggregateMapHeroStats(
     if (!heroMap.has(hero)) {
       heroMap.set(hero, {
         hero,
-        wins: 0,
-        losses: 0,
-        draws: 0,
+        stats: createResultCounts(),
       });
     }
 
     const heroStats = heroMap.get(hero)!;
-    const result: GameResult = participation.gameTeam.result;
-
-    if (result === GameResult.WIN) {
-      heroStats.wins++;
-      continue;
-    }
-
-    if (result === GameResult.LOSE) {
-      heroStats.losses++;
-      continue;
-    }
-
-    heroStats.draws++;
+    updateCountsByResult(heroStats.stats, participation.gameTeam.result);
   }
 
   const result = new Map<GameMap, Map<Hero, HeroWinRateResponse>>();
@@ -105,13 +95,10 @@ function aggregateMapHeroStats(
     const convertedMap = new Map<Hero, HeroWinRateResponse>();
 
     for (const [hero, stats] of heroMap.entries()) {
+      const winRateStats = buildWinRateStatsFromCounts(stats.stats);
       convertedMap.set(hero, {
         hero: stats.hero,
-        totalGames: stats.wins + stats.losses + stats.draws,
-        wins: stats.wins,
-        losses: stats.losses,
-        draws: stats.draws,
-        winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
+        ...winRateStats,
       });
     }
 

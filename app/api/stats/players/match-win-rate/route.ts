@@ -3,14 +3,16 @@ import { prisma } from "@/config/prisma";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap } from "../../utils/player";
+import {
+  createResultCounts,
+  ResultCounts,
+} from "@/app/api/stats/utils/stats";
 
 type PlayerAccumulator = {
   readonly playerId: string;
   readonly playerName: string;
   readonly playerNickname: string;
-  wins: number;
-  losses: number;
-  draws: number;
+  stats: ResultCounts;
 };
 
 /**
@@ -43,21 +45,25 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
 
   for (const membership of memberships) {
     const playerId = membership.playerId;
+    const playerInfo = playerMap.get(playerId);
+    if (!playerInfo) {
+      continue;
+    }
     const current =
       accumulatorMap.get(playerId) ??
       createAccumulator({
         playerId,
-        playerName: playerMap.get(playerId)!.name,
-        playerNickname: playerMap.get(playerId)!.nickname,
+        playerName: playerInfo.name,
+        playerNickname: playerInfo.nickname,
       });
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
     if (winnerTeamNumber === null) {
-      current.draws++;
+      current.stats.draws++;
     } else if (winnerTeamNumber === membership.matchTeam.teamNumber) {
-      current.wins++;
+      current.stats.wins++;
     } else {
-      current.losses++;
+      current.stats.losses++;
     }
 
     accumulatorMap.set(playerId, current);
@@ -69,11 +75,15 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
         playerId: acc.playerId,
         playerName: acc.playerName,
         playerNickname: acc.playerNickname,
-        totalGames: acc.wins + acc.losses + acc.draws,
-        wins: acc.wins,
-        losses: acc.losses,
-        draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
+        totalGames: acc.stats.wins + acc.stats.losses + acc.stats.draws,
+        wins: acc.stats.wins,
+        losses: acc.stats.losses,
+        draws: acc.stats.draws,
+        winRate: calculateWinRate(
+          acc.stats.wins,
+          acc.stats.losses,
+          acc.stats.draws
+        ),
       };
     })
     .filter((item) => item.totalGames > 0)
@@ -91,8 +101,6 @@ function createAccumulator(input: {
     playerId: input.playerId,
     playerName: input.playerName,
     playerNickname: input.playerNickname,
-    wins: 0,
-    losses: 0,
-    draws: 0,
+    stats: createResultCounts(),
   };
 }

@@ -4,6 +4,8 @@ import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
 import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap, PlayerMap } from "../../utils/player";
+import { parseNumber } from "@/app/api/stats/utils/query";
+import { clamp } from "es-toolkit";
 
 type DuoAccumulator = {
   readonly playerA: {
@@ -21,10 +23,10 @@ type DuoAccumulator = {
   draws: number;
 };
 
-const DEFAULT_LIMIT: number = 50;
-const DEFAULT_MIN_MATCHES: number = 3;
-const DEFAULT_MIN_GAMES: number = 5;
-const MAX_LIMIT: number = 200;
+const DEFAULT_LIMIT = 50;
+const DEFAULT_MIN_MATCHES = 3;
+const DEFAULT_MIN_GAMES = 5;
+const MAX_LIMIT = 200;
 
 /**
  * '환상의 듀오' - 같은 팀이 되었을 때 승률이 좋은 두 플레이어 쌍 랭킹 조회 (매치 단위)
@@ -74,30 +76,28 @@ function parseQueryParams(url: string): {
   readonly unit: UnitType;
 } {
   const { searchParams } = new URL(url);
-  const limitParam = Number(searchParams.get("limit"));
+  const limitParam = parseNumber(searchParams.get("limit"));
   const unitParam = searchParams.get("unit");
-  const minCountParam = Number(
+  const minCountParam = parseNumber(
     searchParams.get("minCount") ?? searchParams.get("minGames")
   );
 
   const unit: UnitType = unitParam === "game" ? "game" : "match";
 
-  const limit = Number.isFinite(limitParam)
-    ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
-    : DEFAULT_LIMIT;
+  const limit =
+    typeof limitParam === "number"
+      ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
+      : DEFAULT_LIMIT;
 
   const defaultMinCount =
     unit === "match" ? DEFAULT_MIN_MATCHES : DEFAULT_MIN_GAMES;
 
-  const minCount = Number.isFinite(minCountParam)
-    ? clamp(Math.floor(minCountParam), 1, 10_000)
-    : defaultMinCount;
+  const minCount =
+    typeof minCountParam === "number"
+      ? clamp(Math.floor(minCountParam), 1, 10_000)
+      : defaultMinCount;
 
   return { limit, minCount, unit };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 function buildDuoKey(playerIdA: string, playerIdB: string): string {
@@ -168,7 +168,8 @@ async function calculateDuoStatsByMatch(
 
   for (const matchTeam of matchTeams) {
     const players = matchTeam.members
-      .map((m) => playerMap.get(m.playerId)!)
+      .map((m) => playerMap.get(m.playerId))
+      .filter((player): player is NonNullable<typeof player> => Boolean(player))
       .sort((a, b) => a.id.localeCompare(b.id));
 
     if (players.length < 2) {
@@ -230,7 +231,8 @@ async function calculateDuoStatsByGame(
 
   for (const gameTeam of gameTeams) {
     const players = gameTeam.members
-      .map((m) => playerMap.get(m.playerId)!)
+      .map((m) => playerMap.get(m.playerId))
+      .filter((player): player is NonNullable<typeof player> => Boolean(player))
       .sort((a, b) => a.id.localeCompare(b.id));
 
     if (players.length < 2) {

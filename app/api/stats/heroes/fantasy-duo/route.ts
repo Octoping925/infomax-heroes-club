@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult, Hero } from "@/generated/prisma/client";
+import { GameResult } from "@/generated/prisma/client";
 import { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
+import { parseNumber } from "@/app/api/stats/utils/query";
+import { clamp } from "es-toolkit";
+import { Hero } from "@/domain/hots/models";
 
 type DuoAccumulator = {
   readonly heroA: Hero;
@@ -12,9 +15,9 @@ type DuoAccumulator = {
   draws: number;
 };
 
-const DEFAULT_LIMIT: number = 50;
-const DEFAULT_MIN_GAMES: number = 5;
-const MAX_LIMIT: number = 200;
+const DEFAULT_LIMIT = 50;
+const DEFAULT_MIN_GAMES = 5;
+const MAX_LIMIT = 200;
 
 /**
  * 같이 플레이했을 때 승률이 좋은 영웅 쌍(같은 팀) 랭킹 조회 (게임 단위)
@@ -100,21 +103,19 @@ function parseQueryParams(url: string): {
   readonly minCount: number;
 } {
   const { searchParams } = new URL(url);
-  const limitParam = Number(searchParams.get("limit"));
-  const minCountParam = Number(searchParams.get("minCount"));
+  const limitParam = parseNumber(searchParams.get("limit"));
+  const minCountParam = parseNumber(searchParams.get("minCount"));
 
-  const limit = Number.isFinite(limitParam)
-    ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
-    : DEFAULT_LIMIT;
-  const minCount = Number.isFinite(minCountParam)
-    ? clamp(Math.floor(minCountParam), 1, 10_000)
-    : DEFAULT_MIN_GAMES;
+  const limit =
+    typeof limitParam === "number"
+      ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
+      : DEFAULT_LIMIT;
+  const minCount =
+    typeof minCountParam === "number"
+      ? clamp(Math.floor(minCountParam), 1, 10_000)
+      : DEFAULT_MIN_GAMES;
 
   return { limit, minCount };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 function buildDuoKey(heroA: Hero, heroB: Hero): string {

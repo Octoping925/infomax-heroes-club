@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult } from "@/generated/prisma/client";
-import { TeamSwitchWinRateResponse, WinRateStats } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
+import { TeamSwitchWinRateResponse } from "@/app/api/stats/types";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
+import { GameResult } from "@/generated/prisma/enums";
+import { fetchPlayerMap } from "../utils/player";
 
 /**
  * 매치팀과 다른 게임팀에서 승률이 좋은 사람 조회
@@ -13,34 +19,69 @@ import { calculateWinRate } from "@/utils/win-rate";
 export async function GET(): Promise<
   NextResponse<TeamSwitchWinRateResponse[]>
 > {
-  const players = await prisma.player.findMany({
-    select: {
-      id: true,
-      name: true,
-      nickname: true,
-    },
-  });
+  const [players, participations, matchTeamMemberships] = await Promise.all([
+    fetchPlayerMap(),
+    prisma.gameTeamMember.findMany({
+      select: {
+        playerId: true,
+        gameTeam: {
+          select: {
+            result: true,
+            sourceMatchTeamId: true,
+            game: {
+              select: {
+                matchId: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.matchTeamMember.findMany({
+      select: {
+        playerId: true,
+        matchTeam: {
+          select: {
+            id: true,
+            matchId: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const originalTeamMapByPlayer =
+    getOriginalTeamMapByPlayer(matchTeamMemberships);
+
+  const playerStats = getPlayerStats(participations, originalTeamMapByPlayer);
 
   const results: TeamSwitchWinRateResponse[] = [];
 
-  for (const player of players) {
-    const playerStats = await calculatePlayerTeamSwitchStats(player.id);
-
-    if (playerStats.originalTeamStats.totalGames === 0) {
+  for (const player of Object.values(players)) {
+    const playerStat = playerStats.get(player.id) ?? {
+      original: createResultCounts(),
+      switched: createResultCounts(),
+    };
+    const originalTeamStats = buildWinRateStatsFromCounts(playerStat.original);
+    if (originalTeamStats.totalGames === 0) {
       continue;
     }
+    const switchedTeamStats = buildWinRateStatsFromCounts(playerStat.switched);
 
     results.push({
       playerId: player.id,
       playerName: player.name,
       playerNickname: player.nickname,
-      ...playerStats,
+      originalTeamStats,
+      switchedTeamStats,
+      switchedWinRateDiff:
+        switchedTeamStats.winRate - originalTeamStats.winRate,
     });
   }
 
   // 팀 변경 시 승률 차이가 높은 순으로 정렬
   return NextResponse.json(
-    results.sort((a, b) => b.switchedWinRateDiff - a.switchedWinRateDiff),
+    results.toSorted((a, b) => b.switchedWinRateDiff - a.switchedWinRateDiff),
     {
       headers: {
         "Cache-Control": "public, max-age=86400",
@@ -49,88 +90,61 @@ export async function GET(): Promise<
   );
 }
 
-type PlayerTeamSwitchStats = {
-  originalTeamStats: WinRateStats;
-  switchedTeamStats: WinRateStats;
-  switchedWinRateDiff: number;
-};
+function getOriginalTeamMapByPlayer(
+  matchTeamMemberships: {
+    playerId: string;
+    matchTeam: { id: string; matchId: string };
+  }[]
+) {
+  return matchTeamMemberships.reduce((acc, m) => {
+    const perPlayer = acc.get(m.playerId) ?? new Map();
 
-async function calculatePlayerTeamSwitchStats(
-  playerId: string
-): Promise<PlayerTeamSwitchStats> {
-  // 플레이어가 참여한 모든 게임 정보 조회
-  const gameParticipations = await prisma.gameTeamMember.findMany({
-    where: { playerId },
-    select: {
-      gameTeam: {
-        select: {
-          result: true,
-          sourceMatchTeamId: true,
-          game: {
-            select: {
-              matchId: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  // 플레이어가 소속된 매치팀 정보 조회
-  const matchTeamMemberships = await prisma.matchTeamMember.findMany({
-    where: { playerId },
-    select: {
-      matchTeam: {
-        select: {
-          id: true,
-          matchId: true,
-        },
-      },
-    },
-  });
-
-  // matchId -> 플레이어의 원래 matchTeamId 매핑
-  const originalTeamMap = new Map<string, string>();
-  for (const membership of matchTeamMemberships) {
-    originalTeamMap.set(membership.matchTeam.matchId, membership.matchTeam.id);
-  }
-
-  const originalTeamResults: GameResult[] = [];
-  const switchedTeamResults: GameResult[] = [];
-
-  for (const participation of gameParticipations) {
-    const matchId = participation.gameTeam.game.matchId;
-    const originalMatchTeamId = originalTeamMap.get(matchId);
-    const currentMatchTeamId = participation.gameTeam.sourceMatchTeamId;
-
-    if (originalMatchTeamId === currentMatchTeamId) {
-      originalTeamResults.push(participation.gameTeam.result);
-    } else {
-      switchedTeamResults.push(participation.gameTeam.result);
-    }
-  }
-
-  const originalTeamStats = buildWinRateStats(originalTeamResults);
-  const switchedTeamStats = buildWinRateStats(switchedTeamResults);
-
-  return {
-    originalTeamStats,
-    switchedTeamStats,
-    switchedWinRateDiff: switchedTeamStats.winRate - originalTeamStats.winRate,
-  };
+    perPlayer.set(m.matchTeam.matchId, m.matchTeam.id);
+    acc.set(m.playerId, perPlayer);
+    return acc;
+  }, new Map<string, Map<string, string>>());
 }
 
-function buildWinRateStats(results: GameResult[]): WinRateStats {
-  const totalGames = results.length;
-  const wins = results.filter((r) => r === GameResult.WIN).length;
-  const losses = results.filter((r) => r === GameResult.LOSE).length;
-  const draws = results.filter((r) => r === GameResult.DRAW).length;
+function getPlayerStats(
+  participations: {
+    playerId: string;
+    gameTeam: {
+      result: GameResult;
+      sourceMatchTeamId: string;
+      game: {
+        matchId: string;
+      };
+    };
+  }[],
+  originalTeamMapByPlayer: Map<string, Map<string, string>>
+) {
+  const statsByPlayer = new Map<
+    string,
+    { original: ResultCounts; switched: ResultCounts }
+  >();
 
-  return {
-    totalGames,
-    wins,
-    losses,
-    draws,
-    winRate: calculateWinRate(wins, losses, draws),
-  };
+  for (const p of participations) {
+    const playerId = p.playerId;
+    const matchId = p.gameTeam.game.matchId;
+    const currentMatchTeamId = p.gameTeam.sourceMatchTeamId;
+
+    const originalMatchTeamId = originalTeamMapByPlayer
+      .get(playerId)
+      ?.get(matchId);
+
+    const playerStats = statsByPlayer.get(playerId) ?? {
+      original: createResultCounts(),
+      switched: createResultCounts(),
+    };
+
+    if (originalMatchTeamId === currentMatchTeamId) {
+      updateCountsByResult(playerStats.original, p.gameTeam.result);
+    } else {
+      updateCountsByResult(playerStats.switched, p.gameTeam.result);
+    }
+
+    statsByPlayer.set(playerId, playerStats);
+  }
+
+  return statsByPlayer;
 }

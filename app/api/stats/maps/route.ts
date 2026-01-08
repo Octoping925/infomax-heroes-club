@@ -5,7 +5,12 @@ import {
   MapPlayerWinRateResponse,
   PlayerWinRateResponse,
 } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 
 /**
  * 맵별 플레이어 승률 조회
@@ -67,9 +72,7 @@ type PlayerStatsAccumulator = {
   playerId: string;
   playerName: string;
   playerNickname: string;
-  wins: number;
-  losses: number;
-  draws: number;
+  stats: ResultCounts;
 };
 
 function aggregateMapPlayerStats(
@@ -92,22 +95,12 @@ function aggregateMapPlayerStats(
         playerId,
         playerName: participation.player.name,
         playerNickname: participation.player.nickname,
-        wins: 0,
-        losses: 0,
-        draws: 0,
+        stats: createResultCounts(),
       });
     }
 
     const playerStats = playerMap.get(playerId)!;
-    const result = participation.gameTeam.result;
-
-    if (result === GameResult.WIN) {
-      playerStats.wins++;
-    } else if (result === GameResult.LOSE) {
-      playerStats.losses++;
-    } else {
-      playerStats.draws++;
-    }
+    updateCountsByResult(playerStats.stats, participation.gameTeam.result);
   }
 
   // 최종 WinRateResponse로 변환
@@ -117,15 +110,12 @@ function aggregateMapPlayerStats(
     const convertedMap = new Map<string, PlayerWinRateResponse>();
 
     for (const [playerId, stats] of playerMap.entries()) {
+      const winRateStats = buildWinRateStatsFromCounts(stats.stats);
       convertedMap.set(playerId, {
         playerId: stats.playerId,
         playerName: stats.playerName,
         playerNickname: stats.playerNickname,
-        totalGames: stats.wins + stats.losses + stats.draws,
-        wins: stats.wins,
-        losses: stats.losses,
-        draws: stats.draws,
-        winRate: calculateWinRate(stats.wins, stats.losses, stats.draws),
+        ...winRateStats,
       });
     }
 

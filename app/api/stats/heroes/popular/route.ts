@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult, Hero } from "@/generated/prisma/client";
+import { GameResult } from "@/generated/prisma/client";
 import { HeroPopularityResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
+import { Hero } from "@/domain/hots/models";
 
 /**
  * 밴/픽이 많이 된 영웅 통계 조회
@@ -18,7 +19,7 @@ export async function GET(): Promise<NextResponse<HeroPopularityResponse[]>> {
 
   // 총 등장 횟수(픽 + 밴) 순으로 정렬
   return NextResponse.json(
-    heroPopularity.sort((a, b) => b.totalAppearance - a.totalAppearance)
+    heroPopularity.toSorted((a, b) => b.totalAppearance - a.totalAppearance)
   );
 }
 
@@ -106,7 +107,7 @@ function buildHeroPopularity(
 
     return {
       hero,
-      pickCount: pickStat.wins,
+      pickCount: pickStat.total,
       banCount,
       totalAppearance: pickStat.total + banCount,
       pickWinRate: calculateWinRate(
