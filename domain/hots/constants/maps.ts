@@ -51,6 +51,24 @@ export const MAPS_IMAGE: Record<GameMap, string> = {
     "https://nexuscompendium.com/images/battlegrounds/alterac-pass/main.jpg",
 };
 
+export const MAPS_IMAGE_LOCAL: Record<GameMap, string> = {
+  SkyTemple: "/maps/SkyTemple.jpg",
+  TowersOfDoom: "/maps/TowersOfDoom.jpg",
+  HauntedMines: "/maps/HauntedMines.jpg",
+  BattlefieldOfEternity: "/maps/BattlefieldOfEternity.jpg",
+  BlackheartsBay: "/maps/BlackheartsBay.jpg",
+  CursedHollow: "/maps/CursedHollow.jpg",
+  DragonShire: "/maps/DragonShire.jpg",
+  HauntedWoods: "/maps/HauntedWoods.jpg",
+  InfernalShrines: "/maps/InfernalShrines.jpg",
+  TombOfTheSpiderQueen: "/maps/TombOfTheSpiderQueen.jpg",
+  VolskayaFoundry: "/maps/VolskayaFoundry.jpg",
+  WarheadJunction: "/maps/WarheadJunction.jpg",
+  BraxisHoldout: "/maps/BraxisHoldout.jpg",
+  Hanamura: "/maps/Hanamura.jpg",
+  AlteracPass: "/maps/AlteracPass.jpg",
+};
+
 export const MAPS_NAMUWIKI_URL: Record<GameMap, string> = {
   SkyTemple: "https://namu.wiki/w/%ED%95%98%EB%8A%98%20%EC%82%AC%EC%9B%90",
   TowersOfDoom: "https://namu.wiki/w/%ED%8C%8C%EB%A9%B8%EC%9D%98%20%ED%83%91",
