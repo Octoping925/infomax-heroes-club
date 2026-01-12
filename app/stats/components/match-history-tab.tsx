@@ -37,7 +37,7 @@ export function MatchHistoryTab() {
       list.push(match);
       map.set(dateKey, list);
     }
-    return Array.from(map.entries()).map(([dateKey, list]) => ({
+    return Array.from(map.entries(), ([dateKey, list]) => ({
       dateKey,
       matches: list,
     }));

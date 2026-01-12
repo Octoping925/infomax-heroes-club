@@ -33,17 +33,17 @@ export function parseLunchDinnerUnit(input: string | null): LunchDinnerUnit {
  * - unit=game: gameTeamMember 기준(게임 단위)
  * - unit=match: matchTeamMember + match.winnerTeamNumber 기준(매치 단위)
  */
-export async function fetchPlayerLunchDinnerWinRate(input: {
-  readonly unit: LunchDinnerUnit;
-}): Promise<PlayerLunchDinnerWinRateResponse[]> {
+export async function fetchPlayerLunchDinnerWinRate(
+  unit: LunchDinnerUnit
+): Promise<PlayerLunchDinnerWinRateResponse[]> {
   const playerMap = await fetchPlayerMap();
 
   const accumulatorMap =
-    input.unit === "match"
+    unit === "match"
       ? await buildAccumulatorByMatch(playerMap)
       : await buildAccumulatorByGame(playerMap);
 
-  return Array.from(accumulatorMap.values()).map((acc) => {
+  return Array.from(accumulatorMap.values(), (acc) => {
     const lunchStats = buildWinRateStatsFromCounts(acc.lunch);
     const dinnerStats = buildWinRateStatsFromCounts(acc.dinner);
     const dinnerWinRateDiff = dinnerStats.winRate - lunchStats.winRate;

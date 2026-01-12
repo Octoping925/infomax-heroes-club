@@ -37,14 +37,12 @@ export async function GET(): Promise<NextResponse<MapHeroWinRateResponse[]>> {
   const mapStats = aggregateMapHeroStats(gameParticipations);
 
   return NextResponse.json(
-    Array.from(mapStats.entries())
-      .map(([map, heroStats]) => ({
-        map,
-        heroStats: Array.from(heroStats.values()).sort(
-          (a, b) => b.totalGames - a.totalGames
-        ),
-      }))
-      .sort((a, b) => a.map.localeCompare(b.map))
+    Array.from(mapStats.entries(), ([map, heroStats]) => ({
+      map,
+      heroStats: Array.from(heroStats.values()).sort(
+        (a, b) => b.totalGames - a.totalGames
+      ),
+    })).sort((a, b) => a.map.localeCompare(b.map))
   );
 }
 

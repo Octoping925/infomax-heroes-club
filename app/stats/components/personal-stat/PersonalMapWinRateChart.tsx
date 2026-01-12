@@ -11,8 +11,6 @@ import {
   TooltipContentProps,
 } from "recharts";
 import { MAPS } from "@/domain/hots/constants/maps";
-import { GameMap } from "@/domain/hots/models/map";
-
 interface Props {
   nickname: string;
 }
@@ -31,13 +29,15 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
 
   const chartData: ChartData[] = data
     .map((curr) => {
-      const player = curr.playerStats.find((p) => p.playerNickname === nickname);
+      const player = curr.playerStats.find(
+        (p) => p.playerNickname === nickname
+      );
       if (!player) {
         return null;
       }
 
       return {
-        name: MAPS[curr.map as GameMap],
+        name: MAPS[curr.map],
         winRate: player.winRate,
         totalGames: player.totalGames,
         wins: player.wins,

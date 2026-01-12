@@ -96,7 +96,7 @@ function buildHeroPopularity(
   // 모든 영웅 목록 (픽 또는 밴된 영웅)
   const allHeroes = new Set<Hero>([...heroPickMap.keys(), ...banCounts.keys()]);
 
-  return Array.from(allHeroes).map((hero) => {
+  return Array.from(allHeroes, (hero) => {
     const pickStat = heroPickMap.get(hero) ?? {
       total: 0,
       wins: 0,

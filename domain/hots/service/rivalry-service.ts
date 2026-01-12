@@ -9,6 +9,7 @@ import type {
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Hero, MatchType } from "@/generated/prisma/client";
+import { clamp } from "es-toolkit";
 
 type PlayerInfo = {
   readonly playerId: string;
@@ -69,13 +70,13 @@ const MAX_LIMIT = 200;
 export function normalizeFetchRivalriesParams(
   input: Partial<FetchRivalriesParams>
 ): FetchRivalriesParams {
-  const minMatches = clampInt(
+  const minMatches = clamp(
     input.minMatches ?? DEFAULT_PARAMS.minMatches,
     1,
     50
   );
-  const limit = clampInt(input.limit ?? DEFAULT_PARAMS.limit, 1, MAX_LIMIT);
-  const takeMatches = clampInt(
+  const limit = clamp(input.limit ?? DEFAULT_PARAMS.limit, 1, MAX_LIMIT);
+  const takeMatches = clamp(
     input.takeMatches ?? DEFAULT_PARAMS.takeMatches,
     1,
     MAX_TAKE_MATCHES
@@ -92,17 +93,17 @@ export function normalizeFetchRivalriesParams(
  * - 같은 match에서 A와 B가 서로 다른 GameTeam(실제론 MatchTeam teamNumber로 충분) 이면 A vs B 맞대결 1회
  * - 집계 단위는 match(내전 1건) 입니다.
  */
-export async function fetchRivalries(input: {
-  readonly prisma: PrismaClient;
-  readonly params: FetchRivalriesParams;
-}): Promise<RivalryListResponse> {
-  const params = normalizeFetchRivalriesParams(input.params);
+export async function fetchRivalries(
+  prisma: PrismaClient,
+  params: FetchRivalriesParams
+): Promise<RivalryListResponse> {
+  const normalizedParams = normalizeFetchRivalriesParams(params);
   const playerMap = await fetchPlayerMap();
 
   const [matches, overallWinRateByPlayerId] = await Promise.all([
-    input.prisma.match.findMany({
+    prisma.match.findMany({
       orderBy: { playedAt: "desc" },
-      take: params.takeMatches,
+      take: normalizedParams.takeMatches,
       select: {
         id: true,
         playedAt: true,
@@ -139,7 +140,7 @@ export async function fetchRivalries(input: {
         },
       },
     }),
-    fetchOverallMatchWinRateByPlayerId(input.prisma),
+    fetchOverallMatchWinRateByPlayerId(prisma),
   ]);
 
   const pairMap = new Map<string, PairAccumulator>();
@@ -170,13 +171,7 @@ export async function fetchRivalries(input: {
       for (const p2 of teamPlayers[2]) {
         const { a, b } = sortPair(p1, p2);
         const pairId = `${a.playerId}:${b.playerId}`;
-        const acc =
-          pairMap.get(pairId) ??
-          createPairAccumulator({
-            id: pairId,
-            a,
-            b,
-          });
+        const acc = pairMap.get(pairId) ?? createPairAccumulator(pairId, a, b);
 
         const resultForA = toResultForA({
           winnerTeamNumber: match.winnerTeamNumber,
@@ -203,41 +198,40 @@ export async function fetchRivalries(input: {
     }
   }
 
-  const cards: RivalryCardResponse[] = Array.from(pairMap.values())
-    .map((acc) =>
-      buildRivalryCard({
-        acc,
-        overallWinRateByPlayerId,
-        minMatches: params.minMatches,
-      })
-    )
+  const cards: RivalryCardResponse[] = Array.from(pairMap.values(), (acc) =>
+    buildRivalryCard({
+      acc,
+      overallWinRateByPlayerId,
+      minMatches: normalizedParams.minMatches,
+    })
+  )
     .filter((card) => {
-      if (params.includeInsufficientSample) return true;
-      return card.breakdown.matchesCount >= params.minMatches;
+      if (normalizedParams.includeInsufficientSample) return true;
+      return card.breakdown.matchesCount >= normalizedParams.minMatches;
     })
     .sort(
       (a, b) =>
         b.score - a.score || b.breakdown.matchesCount - a.breakdown.matchesCount
     )
-    .slice(0, params.limit);
+    .slice(0, normalizedParams.limit);
 
   return {
     generatedAt: new Date().toISOString(),
-    params,
+    params: normalizedParams,
     hottest: cards.length > 0 ? cards[0] : null,
     items: cards,
   };
 }
 
-function createPairAccumulator(input: {
-  readonly id: string;
-  readonly a: PlayerInfo;
-  readonly b: PlayerInfo;
-}): PairAccumulator {
+function createPairAccumulator(
+  id: string,
+  a: PlayerInfo,
+  b: PlayerInfo
+): PairAccumulator {
   return {
-    id: input.id,
-    a: input.a,
-    b: input.b,
+    id,
+    a,
+    b,
     matches: [],
     winsA: 0,
     winsB: 0,
@@ -254,7 +248,7 @@ function updateWinLossCounts(
   acc: PairAccumulator,
   resultForA: "WIN" | "LOSE" | "DRAW",
   matchType: MatchType
-): void {
+) {
   const bucket = matchType === MatchType.LUNCH ? acc.lunch : acc.dinner;
   if (resultForA === "DRAW") {
     acc.draws += 1;
@@ -418,9 +412,7 @@ function buildRivalryCard(input: {
 
   const balance = 1 - Math.abs(winRateA - winRateB); // 0~1
   const countScore = clamp01((input.acc.matches.length - 3) / 9); // 3~12 구간
-  const recency = computeRecency({
-    matchesSorted,
-  });
+  const recency = computeRecency(matchesSorted);
 
   const performanceCloseness = computePerformanceCloseness(
     input.acc.perfSamples
@@ -602,18 +594,16 @@ function buildComment(input: {
   return `초반엔 ${leader}가 앞서지만 ${chaser}도 따라붙는 중`;
 }
 
-function computeRecency(input: {
-  readonly matchesSorted: ReadonlyArray<H2HMatch>;
-}): number {
-  if (input.matchesSorted.length === 0) return 0;
+function computeRecency(matchesSorted: ReadonlyArray<H2HMatch>): number {
+  if (matchesSorted.length === 0) return 0;
 
-  const last = input.matchesSorted[0];
+  const last = matchesSorted[0];
   const daysSinceLast =
     (Date.now() - last.playedAt.getTime()) / (1000 * 60 * 60 * 24);
   const recentByTime = Math.exp(-daysSinceLast / 60); // 60일 반감 느낌
 
   // 최근 10경기 내에서 "최근 5경기"를 더 크게 가중
-  const capped = input.matchesSorted.slice(0, 10);
+  const capped = matchesSorted.slice(0, 10);
   const maxWeightSum = 5 * 1 + 5 * 0.5; // 7.5
   const weightSum = capped.reduce(
     (sum, _m, idx) => sum + (idx < 5 ? 1 : 0.5),
@@ -704,17 +694,8 @@ async function fetchOverallMatchWinRateByPlayerId(
   return out;
 }
 
-function clamp01(v: number): number {
-  if (v < 0) return 0;
-  if (v > 1) return 1;
-  return v;
-}
-
-function clampInt(v: number, min: number, max: number): number {
-  const n = Number.isFinite(v) ? Math.floor(v) : min;
-  if (n < min) return min;
-  if (n > max) return max;
-  return n;
+function clamp01(v: number) {
+  return clamp(v, 0, 1);
 }
 
 function round3(v: number): number {

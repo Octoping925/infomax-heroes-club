@@ -1,3 +1,5 @@
+import { clamp } from "es-toolkit";
+
 type HeroStat = {
   hero: string;
   wins: number;
@@ -29,8 +31,8 @@ type ScoredHero = HeroStat & {
   score: number; // 정렬용 점수 (3+4 혼합)
 };
 
-function clamp01(x: number): number {
-  return Math.max(0, Math.min(1, x));
+function clamp01(x: number) {
+  return clamp(x, 0, 1);
 }
 
 /**

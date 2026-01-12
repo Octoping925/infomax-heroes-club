@@ -25,7 +25,7 @@ export async function GET(
       ),
     });
 
-    const response = await fetchRivalries({ prisma, params });
+    const response = await fetchRivalries(prisma, params);
     return NextResponse.json(response);
   } catch (err) {
     console.error("라이벌리 조회 오류:", err);
@@ -33,4 +33,3 @@ export async function GET(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
