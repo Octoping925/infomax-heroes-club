@@ -1,7 +1,6 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
 import dayjs from "dayjs";
 import { GameCard } from "./GameCard";
-import { useMemo } from "react";
 
 interface MatchCardProps {
   readonly match: MatchHistoryItem;
@@ -13,16 +12,12 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const team1 = match.teams.find((t) => t.teamNumber === 1);
   const team2 = match.teams.find((t) => t.teamNumber === 2);
 
-  const { team1Wins, team2Wins } = useMemo(() => {
-    return {
-      team1Wins: match.games.filter((g) => g.winnerTeamNumber === 1).length,
-      team2Wins: match.games.filter((g) => g.winnerTeamNumber === 2).length,
-    };
-  }, [match.games]);
-
   if (!team1 || !team2) {
     return null;
   }
+
+  const team1Wins = match.games.filter((g) => g.winnerTeamNumber === 1).length;
+  const team2Wins = match.games.filter((g) => g.winnerTeamNumber === 2).length;
 
   const team1Name = team1.leader.name.slice(1) + "팀";
   const team2Name = team2.leader.name.slice(1) + "팀";

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [new URL("https://nexuscompendium.com/images/portraits/*")],
   },
+  reactCompiler: true,
 };
 
 export default nextConfig;

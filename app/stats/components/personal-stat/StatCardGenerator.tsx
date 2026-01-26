@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
@@ -50,7 +50,7 @@ export function StatCardGenerator({
   const { data: heroData, error: heroError } =
     usePlayerHeroWinRate(playerNickname);
 
-  const cardData = useMemo<CardData | null>(() => {
+  const cardData: CardData | null = (() => {
     const selectedPlayerStat = overallData.find(
       (stat) => stat.playerId === playerId
     );
@@ -62,16 +62,15 @@ export function StatCardGenerator({
       return null;
     }
 
-    const topHeroes =
-      heroData?.heroStats
-        .toSorted((a, b) => b.totalGames - a.totalGames)
-        .slice(0, 3)
-        .map((stat) => ({
-          name: HeroMap[stat.hero] || stat.hero,
-          totalGames: stat.totalGames,
-          heroKey: stat.hero,
-          imageUrl: HeroImage[stat.hero] ?? null,
-        })) ?? [];
+    const topHeroes = heroData.heroStats
+      .toSorted((a, b) => b.totalGames - a.totalGames)
+      .slice(0, 3)
+      .map((stat) => ({
+        name: HeroMap[stat.hero] || stat.hero,
+        totalGames: stat.totalGames,
+        heroKey: stat.hero,
+        imageUrl: HeroImage[stat.hero] ?? null,
+      }));
 
     return {
       playerName,
@@ -87,7 +86,7 @@ export function StatCardGenerator({
       averageHeroDamage: selectedPlayerKda.averageHeroDamage,
       topHeroes,
     };
-  }, [heroData, kdaData, overallData, playerId, playerName, playerNickname]);
+  })();
 
   useEffect(() => {
     if (!cardData) {

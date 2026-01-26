@@ -14,6 +14,7 @@
     "@prisma/client": "^7.1.0",
     "@tanstack/react-query": "^5.90.12",
     "@vercel/functions": "^3.3.4",
+    "babel-plugin-react-compiler": "^1.0.0",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "es-toolkit": "^1.42.0",

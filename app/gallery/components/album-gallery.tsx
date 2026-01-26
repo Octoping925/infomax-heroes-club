@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { use, useEffect, useMemo } from "react";
+import { use, useEffect } from "react";
 
 import type { AlbumImage } from "@/app/gallery/utils/get-album-images";
 import { useCarousel } from "@/app/gallery/hooks/use-carousel";
@@ -17,12 +17,12 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
 
   const carousel = useCarousel(totalImages);
 
-  const activeImage: AlbumImage | null = useMemo(() => {
+  const activeImage: AlbumImage | null = (() => {
     if (!carousel.isOpen) return null;
     if (totalImages <= 0) return null;
 
     return loadedImages[carousel.activeIndex] ?? null;
-  }, [carousel, loadedImages, totalImages]);
+  })();
 
   const swipeHandlers = useSwipeGesture<HTMLDivElement>({
     isEnabled: carousel.isOpen,

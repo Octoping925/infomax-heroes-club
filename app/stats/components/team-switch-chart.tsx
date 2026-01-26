@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   BarChart,
@@ -42,22 +41,20 @@ export function TeamSwitchChart() {
     },
   });
 
-  const chartData = useMemo<ChartData[]>(() => {
-    return data
-      .filter(
-        (item) =>
-          item.originalTeamStats.totalGames > 0 &&
-          item.switchedTeamStats.totalGames > 0
-      )
-      .map((item) => ({
-        name: item.playerNickname,
-        originalWinRate: item.originalTeamStats.winRate,
-        switchedWinRate: item.switchedTeamStats.winRate,
-        diff: item.switchedWinRateDiff,
-        originalGames: item.originalTeamStats.totalGames,
-        switchedGames: item.switchedTeamStats.totalGames,
-      }));
-  }, [data]);
+  const chartData: ChartData[] = data
+    .filter(
+      (item) =>
+        item.originalTeamStats.totalGames > 0 &&
+        item.switchedTeamStats.totalGames > 0
+    )
+    .map((item) => ({
+      name: item.playerNickname,
+      originalWinRate: item.originalTeamStats.winRate,
+      switchedWinRate: item.switchedTeamStats.winRate,
+      diff: item.switchedWinRateDiff,
+      originalGames: item.originalTeamStats.totalGames,
+      switchedGames: item.switchedTeamStats.totalGames,
+    }));
 
   if (error) {
     return (

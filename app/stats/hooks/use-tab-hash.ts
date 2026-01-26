@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 export function useHashSyncedTab<T extends string>(
   defaultValue: T,
@@ -14,11 +14,8 @@ export function useHashSyncedTab<T extends string>(
     }
   }, []);
 
-  const isValid = useCallback(
-    (value: string): value is T => {
-      return tabs.includes(value as T);
-    },
-    [tabs]
+  const isValid = useEffectEvent((value: string): value is T =>
+    tabs.includes(value as T)
   );
 
   useEffect(() => {
@@ -44,7 +41,7 @@ export function useHashSyncedTab<T extends string>(
     return () => {
       globalThis.window.removeEventListener("hashchange", syncFromHash);
     };
-  }, [defaultValue, isValid, setValueAndHash]);
+  }, [defaultValue, setValueAndHash]);
 
   return [value, setValueAndHash] as const;
 }

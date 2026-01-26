@@ -130,10 +130,7 @@ function getMatchTeamResult(input: {
   return "LOSE";
 }
 
-function updateResultCounts(
-  acc: DuoAccumulator,
-  result: MatchTeamResult
-): void {
+function updateResultCounts(acc: DuoAccumulator, result: MatchTeamResult) {
   if (result === "WIN") {
     acc.wins++;
     return;

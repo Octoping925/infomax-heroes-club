@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
@@ -62,16 +62,14 @@ export function FantasyDuoRankingChart() {
     },
   });
 
-  const rows = useMemo<DuoRow[]>(() => {
-    return data.map((item) => ({
-      duoName: `${item.playerA.playerNickname} × ${item.playerB.playerNickname}`,
-      winRate: item.winRate,
-      totalGames: item.totalGames,
-      wins: item.wins,
-      losses: item.losses,
-      draws: item.draws,
-    }));
-  }, [data]);
+  const rows: DuoRow[] = data.map((item) => ({
+    duoName: `${item.playerA.playerNickname} × ${item.playerB.playerNickname}`,
+    winRate: item.winRate,
+    totalGames: item.totalGames,
+    wins: item.wins,
+    losses: item.losses,
+    draws: item.draws,
+  }));
 
   if (error) {
     return (

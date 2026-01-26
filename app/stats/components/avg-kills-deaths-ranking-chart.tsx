@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -25,27 +24,23 @@ type ChartData = {
 export function AvgStatsRankingChart() {
   const { data, error } = usePlayerAverageStats();
 
-  const avgKillsData = useMemo<ChartData[]>(() => {
-    return data
-      .toSorted((a, b) => b.averageKills - a.averageKills)
-      .slice(0, 20)
-      .map((item) => ({
-        name: item.playerNickname,
-        value: item.averageKills,
-        totalGames: item.totalGames,
-      }));
-  }, [data]);
+  const avgKillsData: ChartData[] = data
+    .toSorted((a, b) => b.averageKills - a.averageKills)
+    .slice(0, 20)
+    .map((item) => ({
+      name: item.playerNickname,
+      value: item.averageKills,
+      totalGames: item.totalGames,
+    }));
 
-  const avgDeathsData = useMemo<ChartData[]>(() => {
-    return data
-      .toSorted((a, b) => b.averageDeaths - a.averageDeaths)
-      .slice(0, 20)
-      .map((item) => ({
-        name: item.playerNickname,
-        value: item.averageDeaths,
-        totalGames: item.totalGames,
-      }));
-  }, [data]);
+  const avgDeathsData: ChartData[] = data
+    .toSorted((a, b) => b.averageDeaths - a.averageDeaths)
+    .slice(0, 20)
+    .map((item) => ({
+      name: item.playerNickname,
+      value: item.averageDeaths,
+      totalGames: item.totalGames,
+    }));
 
   if (error) {
     return (

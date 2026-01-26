@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dayjs from "dayjs";
 import type { RivalryCardResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants";
@@ -21,7 +21,7 @@ export function RivalryTab() {
 
   const { hottest, items } = data;
 
-  const note = useMemo(() => {
+  const note = (() => {
     return (
       <>
         <p className="text-gray-400">
@@ -37,7 +37,7 @@ export function RivalryTab() {
         </p>
       </>
     );
-  }, [params.minMatches]);
+  })();
 
   if (error) {
     return (

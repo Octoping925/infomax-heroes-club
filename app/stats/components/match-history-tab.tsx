@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
@@ -29,7 +29,7 @@ export function MatchHistoryTab() {
     },
   });
 
-  const groups = useMemo<MatchGroup[]>(() => {
+  const groups: MatchGroup[] = (() => {
     const map = new Map<string, MatchHistoryItem[]>();
     for (const match of matches) {
       const dateKey = dayjs(match.playedAt).format("YYYY-MM-DD");
@@ -41,9 +41,9 @@ export function MatchHistoryTab() {
       dateKey,
       matches: list,
     }));
-  }, [matches]);
+  })();
 
-  const toggleMatch = (matchId: string): void => {
+  const toggleMatch = (matchId: string) => {
     setExpandedMap((prev) => ({
       ...prev,
       [matchId]: !prev[matchId],

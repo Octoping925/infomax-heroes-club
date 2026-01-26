@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants";
@@ -43,20 +43,18 @@ export function HeroDuoRankingChart() {
     },
   });
 
-  const rows = useMemo<ReadonlyArray<DuoRow>>(() => {
-    return data.map((item) => {
-      const heroAName = HeroMap[item.heroA] ?? String(item.heroA);
-      const heroBName = HeroMap[item.heroB] ?? String(item.heroB);
-      return {
-        duoName: `${heroAName} × ${heroBName}`,
-        winRate: item.winRate,
-        totalGames: item.totalGames,
-        wins: item.wins,
-        losses: item.losses,
-        draws: item.draws,
-      };
-    });
-  }, [data]);
+  const rows: DuoRow[] = data.map((item) => {
+    const heroAName = HeroMap[item.heroA] ?? String(item.heroA);
+    const heroBName = HeroMap[item.heroB] ?? String(item.heroB);
+    return {
+      duoName: `${heroAName} × ${heroBName}`,
+      winRate: item.winRate,
+      totalGames: item.totalGames,
+      wins: item.wins,
+      losses: item.losses,
+      draws: item.draws,
+    };
+  });
 
   if (error) {
     return (

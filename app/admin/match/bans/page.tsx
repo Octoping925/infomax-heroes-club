@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { HeroMap } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
+import { Hero } from "@/domain/hots/models";
 
 type MatchType = "LUNCH" | "DINNER";
 
@@ -26,7 +27,7 @@ type MatchHistoryGameTeam = {
   readonly id: string; // gameTeamId
   readonly teamNumber: number;
   readonly result: string;
-  readonly members: ReadonlyArray<MatchHistoryGameTeamMember>;
+  readonly members: MatchHistoryGameTeamMember[];
 };
 
 type MatchHistoryGame = {
@@ -34,7 +35,7 @@ type MatchHistoryGame = {
   readonly gameNumber: number;
   readonly map: string;
   readonly winnerTeamNumber: number | null;
-  readonly teams: ReadonlyArray<MatchHistoryGameTeam>;
+  readonly teams: MatchHistoryGameTeam[];
 };
 
 type MatchHistoryItem = {
@@ -42,29 +43,27 @@ type MatchHistoryItem = {
   readonly playedAt: string;
   readonly type: MatchType;
   readonly winnerTeamNumber: number | null;
-  readonly games: ReadonlyArray<MatchHistoryGame>;
+  readonly games: MatchHistoryGame[];
 };
-
-type HeroKey = keyof typeof HeroMap;
 
 type MatchBansResponse = {
-  readonly matchId: string;
-  readonly games: ReadonlyArray<{
-    readonly id: string;
-    readonly gameNumber: number;
-    readonly map: string;
-    readonly teams: ReadonlyArray<{
-      readonly id: string; // gameTeamId
-      readonly teamNumber: number;
-      readonly bans: ReadonlyArray<{
-        readonly banOrder: number;
-        readonly hero: HeroKey;
-      }>;
-    }>;
-  }>;
+  matchId: string;
+  games: {
+    id: string;
+    gameNumber: number;
+    map: string;
+    teams: {
+      id: string; // gameTeamId
+      teamNumber: number;
+      bans: {
+        banOrder: number;
+        hero: Hero;
+      }[];
+    }[];
+  }[];
 };
 
-type BanSlots = readonly [HeroKey | null, HeroKey | null, HeroKey | null];
+type BanSlots = readonly [Hero | null, Hero | null, Hero | null];
 
 type SaveResult =
   | { readonly status: "idle" }
@@ -81,7 +80,7 @@ function createBanSlotsFromResponse(
 
   for (const game of response.games) {
     for (const team of game.teams) {
-      const slots: (HeroKey | null)[] = [null, null, null];
+      const slots: (Hero | null)[] = [null, null, null];
       for (const ban of team.bans) {
         const index = ban.banOrder - 1;
         if (index >= 0 && index < 3) {
@@ -95,7 +94,7 @@ function createBanSlotsFromResponse(
   return result;
 }
 
-function isValidHeroKey(input: string): input is HeroKey {
+function isValidHeroKey(input: string): input is Hero {
   return Object.hasOwn(HeroMap, input);
 }
 
@@ -126,7 +125,8 @@ function getTeamMembersLabel(team: MatchHistoryGameTeam): string {
 }
 
 function validateTeamSlots(slots: BanSlots): string | null {
-  const heroes = slots.filter((h): h is HeroKey => h !== null);
+  const heroes = slots.filter((h) => h !== null);
+
   const set = new Set(heroes);
   if (set.size !== heroes.length) {
     return "동일 팀에서 같은 영웅을 중복 밴할 수 없습니다.";
@@ -148,17 +148,15 @@ export default function MatchBansPage() {
   const [isLoadingBans, setIsLoadingBans] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
-  const heroOptions = useMemo(() => {
-    const heroes = Object.keys(HeroMap).filter(isValidHeroKey);
-    heroes.sort((a, b) => HeroMap[a].localeCompare(HeroMap[b], "ko"));
-    return heroes;
-  }, []);
+  const heroOptions = Object.keys(HeroMap)
+    .filter(isValidHeroKey)
+    .toSorted((a, b) => HeroMap[a].localeCompare(HeroMap[b], "ko"));
 
-  const filteredMatches = useMemo(() => {
+  const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
     if (!trimmed) return matches;
     return matches.filter((m) => getMatchLabel(m).includes(trimmed));
-  }, [matches, matchSearchText]);
+  })();
 
   useEffect(() => {
     const run = async (): Promise<void> => {
@@ -193,7 +191,7 @@ export default function MatchBansPage() {
     const match = matches.find((m) => m.id === selectedMatchId) ?? null;
     setSelectedMatch(match);
 
-    const run = async (): Promise<void> => {
+    const run = async () => {
       setIsLoadingBans(true);
       setSaveResult({ status: "idle" });
       try {
@@ -218,17 +216,17 @@ export default function MatchBansPage() {
       }
     };
 
-    void run();
+    run();
   }, [matches, selectedMatchId]);
 
   const handleChangeBanSlot = (
     gameTeamId: string,
     index: 0 | 1 | 2,
-    hero: HeroKey | null
-  ): void => {
+    hero: Hero | null
+  ) => {
     setBanSlotsByGameTeamId((prev) => {
       const current = prev[gameTeamId] ?? DEFAULT_BAN_SLOTS;
-      const next: [HeroKey | null, HeroKey | null, HeroKey | null] = [
+      const next: [Hero | null, Hero | null, Hero | null] = [
         current[0],
         current[1],
         current[2],
@@ -238,14 +236,14 @@ export default function MatchBansPage() {
     });
   };
 
-  const handleClearTeamBans = (gameTeamId: string): void => {
+  const handleClearTeamBans = (gameTeamId: string) => {
     setBanSlotsByGameTeamId((prev) => ({
       ...prev,
       [gameTeamId]: DEFAULT_BAN_SLOTS,
     }));
   };
 
-  const handleSave = async (): Promise<void> => {
+  const handleSave = async () => {
     if (!selectedMatch) return;
 
     // 클라이언트 중복 밴 방지(서버에서도 검증함)
@@ -364,118 +362,116 @@ export default function MatchBansPage() {
             )}
           </div>
 
-          {selectedMatch &&
-            selectedMatch.games.map((game) => (
-              <div
-                key={game.id}
-                className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-6"
-              >
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold">
-                      {game.gameNumber}번째 경기
-                    </h2>
-                    <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-sm">
-                      {game.map}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    승리:{" "}
-                    <span className="text-gray-200">
-                      {game.winnerTeamNumber === null
-                        ? "무승부"
-                        : `${game.winnerTeamNumber}팀`}
-                    </span>
-                  </div>
+          {selectedMatch?.games?.map((game) => (
+            <div
+              key={game.id}
+              className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-6"
+            >
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold">
+                    {game.gameNumber}번째 경기
+                  </h2>
+                  <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-sm">
+                    {game.map}
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {game.teams.map((team) => {
-                    const slots =
-                      banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
-                    const teamError = validateTeamSlots(slots);
-
-                    return (
-                      <div
-                        key={team.id}
-                        className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <div className="text-lg font-bold">
-                              {team.teamNumber}팀 밴
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              gameTeamId: {team.id}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleClearTeamBans(team.id)}
-                            className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-gray-300 transition-all"
-                            type="button"
-                          >
-                            비우기
-                          </button>
-                        </div>
-
-                        <div className="text-sm text-gray-400">
-                          멤버:{" "}
-                          <span className="text-gray-200">
-                            {getTeamMembersLabel(team)}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {[0, 1, 2].map((i) => {
-                            const index = i as 0 | 1 | 2;
-                            const value = slots[index];
-
-                            return (
-                              <div key={index} className="space-y-2">
-                                <label className="text-xs text-gray-500">
-                                  {index + 1}밴
-                                </label>
-                                <select
-                                  value={value ?? ""}
-                                  onChange={(e) => {
-                                    const v = e.target.value;
-                                    handleChangeBanSlot(
-                                      team.id,
-                                      index,
-                                      v === "" ? null : (v as HeroKey)
-                                    );
-                                  }}
-                                  className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                                >
-                                  <option value="" className="bg-[#1a1a2e]">
-                                    선택 안 함
-                                  </option>
-                                  {heroOptions.map((heroKey) => (
-                                    <option
-                                      key={heroKey}
-                                      value={heroKey}
-                                      className="bg-[#1a1a2e]"
-                                    >
-                                      {HeroMap[heroKey]} ({heroKey})
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {teamError && (
-                          <div className="p-3 rounded-xl border bg-red-500/10 border-red-500/30 text-red-400 text-sm">
-                            {teamError}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="text-sm text-gray-400">
+                  승리:{" "}
+                  <span className="text-gray-200">
+                    {game.winnerTeamNumber === null
+                      ? "무승부"
+                      : `${game.winnerTeamNumber}팀`}
+                  </span>
                 </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {game.teams.map((team) => {
+                  const slots =
+                    banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
+                  const teamError = validateTeamSlots(slots);
+
+                  return (
+                    <div
+                      key={team.id}
+                      className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="text-lg font-bold">
+                            {team.teamNumber}팀 밴
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            gameTeamId: {team.id}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleClearTeamBans(team.id)}
+                          className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-gray-300 transition-all"
+                          type="button"
+                        >
+                          비우기
+                        </button>
+                      </div>
+
+                      <div className="text-sm text-gray-400">
+                        멤버:{" "}
+                        <span className="text-gray-200">
+                          {getTeamMembersLabel(team)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {([0, 1, 2] as const).map((i) => {
+                          const value = slots[i];
+
+                          return (
+                            <div key={i} className="space-y-2">
+                              <label className="text-xs text-gray-500">
+                                {i + 1}밴
+                              </label>
+                              <select
+                                value={value ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  handleChangeBanSlot(
+                                    team.id,
+                                    i,
+                                    v === "" ? null : (v as Hero)
+                                  );
+                                }}
+                                className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                              >
+                                <option value="" className="bg-[#1a1a2e]">
+                                  선택 안 함
+                                </option>
+                                {heroOptions.map((hero) => (
+                                  <option
+                                    key={hero}
+                                    value={hero}
+                                    className="bg-[#1a1a2e]"
+                                  >
+                                    {HeroMap[hero]} ({hero})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {teamError && (
+                        <div className="p-3 rounded-xl border bg-red-500/10 border-red-500/30 text-red-400 text-sm">
+                          {teamError}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
           {selectedMatch && (
             <div className="space-y-4">
@@ -496,12 +492,12 @@ export default function MatchBansPage() {
                 )}
 
               <button
-                onClick={() => void handleSave()}
+                onClick={handleSave}
                 disabled={saveResult.status === "saving" || isLoadingBans}
                 className={`w-full px-6 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${
                   saveResult.status === "saving" || isLoadingBans
                     ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-cyan-500/25"
+                    : "bg-linear-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-cyan-500/25"
                 }`}
                 type="button"
               >
