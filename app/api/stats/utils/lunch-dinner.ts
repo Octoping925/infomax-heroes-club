@@ -93,11 +93,11 @@ async function buildAccumulatorByGame(
     }
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator({
+      createAccumulator(
         playerId,
-        playerName: playerInfo.name,
-        playerNickname: playerInfo.nickname,
-      });
+        playerInfo.name,
+        playerInfo.nickname,
+      );
 
     const matchType = participation.gameTeam.game.match.type;
     const result = participation.gameTeam.result;
