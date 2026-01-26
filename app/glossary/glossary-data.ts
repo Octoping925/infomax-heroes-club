@@ -1,0 +1,451 @@
+export type GlossaryTag =
+  | "기본"
+  | "역할"
+  | "전투"
+  | "운영"
+  | "맵"
+  | "캠프"
+  | "오브젝트"
+  | "콜";
+
+export interface GlossaryEntry {
+  readonly id: string;
+  readonly term: string;
+  readonly aliases: readonly string[];
+  readonly description: string;
+  readonly details?: string;
+  readonly tags: readonly GlossaryTag[];
+  readonly exampleCalls?: readonly string[];
+}
+
+export const GLOSSARY_TAGS: readonly GlossaryTag[] = [
+  "기본",
+  "역할",
+  "전투",
+  "운영",
+  "맵",
+  "캠프",
+  "오브젝트",
+  "콜",
+] as const;
+
+export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
+  {
+    id: "soak",
+    term: "경험치 먹기(소크)",
+    aliases: ["소크", "경험치", "경치"],
+    description:
+      "미니언(돌격병) 죽을 때 근처에 있어 경험치를 획득하는 것.",
+    details:
+      "히오스는 라인 경험치가 매우 커서, 한타보다 ‘경험치 누락’이 더 치명적인 경우가 많습니다.",
+    tags: ["기본", "운영"],
+    exampleCalls: ["소냐 더블 소크시키고 저희 넷이 봇 가죠", "경험치 새고 있어요"],
+  },
+  {
+    id: "lane-clear",
+    term: "라인 클리어",
+    aliases: ["라클", "라인정리", "웨이브클리어"],
+    description: "미니언 웨이브를 빠르게 정리하는 능력/행동.",
+    tags: ["기본", "운영"],
+  },
+  {
+    id: "wave",
+    term: "웨이브",
+    aliases: ["미니언웨이브", "라인웨이브"],
+    description: "일정 주기로 등장하는 미니언 무리.",
+    tags: ["기본"],
+  },
+  {
+    id: "solo-lane",
+    term: "솔라인",
+    aliases: ["솔로라인", "솔"],
+    description: "혼자 라인을 서서 소크/라인클리어/맞로테를 담당하는 역할.",
+    tags: ["역할", "운영"],
+  },
+  {
+    id: "bruiser",
+    term: "브루저",
+    aliases: ["투사", "오프탱"],
+    description:
+      "솔라인/한타 모두 가능한 전사 포지션. 캠프 처리나 라인전도 자주 맡음.",
+    tags: ["역할", "전투", "운영"],
+  },
+  {
+    id: "gank",
+    term: "갱",
+    aliases: ["갱킹", "찌르기"],
+    description: "숨어 있다가(혹은 합류해서) 숫자 우위로 적을 끊어먹는 것.",
+    tags: ["전투", "운영"],
+    exampleCalls: ["탑 갱 한 번 볼게", "미드 갱각"],
+  },
+  {
+    id: "cleanse",
+    term: "정화",
+    aliases: ["클린즈"],
+    description: "아군에게 걸린 CC를 제거하거나 무효화해주는 스킬/특성. 아군에게 잠시 저지불가를 제공하는 원리다.",
+    tags: ["전투"],
+    exampleCalls: ["켈투자드 궁 생각해서 정화 아껴둘게"],
+  },
+  {
+    id: "vision",
+    term: "시야",
+    aliases: ["시야확보", "체크"],
+    description: "적 위치 정보를 확보하는 것(부쉬 체크, 안전한 진입 등).",
+    tags: ["기본", "운영"],
+    exampleCalls: ["부쉬 체크", "시야 없어요 조심"],
+  },
+  {
+    id: "camp",
+    term: "캠프(용병)",
+    aliases: ["용병", "용병캠프"],
+    description: "맵에 있는 중립 몬스터를 처치해 아군 편으로 만드는 것.",
+    tags: ["캠프", "운영"],
+  },
+  {
+    id: "timing",
+    term: "타이밍",
+    aliases: ["타이밍창", "윈도우"],
+    description:
+      "상대가 약하거나(궁 없음/죽음/라인 밀림) 우리가 강할 때를 골라 움직이는 것.",
+    tags: ["운영", "콜"],
+    exampleCalls: ["궁 없는 타이밍에 치자", "타이밍 좋아요"],
+  },
+  {
+    id: "objective",
+    term: "오브젝트",
+    aliases: ["옵젝"],
+    description:
+      "맵 이벤트(제단/신전/씨앗 등)처럼 진행하면 보상을 주는 핵심 목표.",
+    tags: ["오브젝트", "맵", "운영"],
+    exampleCalls: ["옵젝 준비", "옵젝 먼저 모여"],
+  },
+  {
+    id: "snowball",
+    term: "스노우볼",
+    aliases: ["굴리기"],
+    description:
+      "한 번 만든 우위를 경험치/캠프/구조물로 계속 누적시켜 승리를 굳히는 것.",
+    tags: ["운영"],
+  },
+  {
+    id: "push",
+    term: "푸시",
+    aliases: ["밀기", "압박"],
+    description: "라인을 밀며 구조물(성문/요새/핵)을 공격해 이득을 보는 것.",
+    tags: ["운영"],
+    exampleCalls: ["나 이거 푸시만 하고 옵젝 합류할게."]
+  },
+  {
+    id: "reset",
+    term: "리셋(리콜/정비)",
+    aliases: ["정비", "복귀", "리콜"],
+    description:
+      "체력/마나/쿨타임을 정비하기 위해 빠르게 빠지고, 다시 합류하는 것.",
+    tags: ["기본", "운영"],
+    exampleCalls: ["나 리셋 한 번", "정비하고 오브"],
+  },
+  {
+    "id": "initiate",
+    "term": "이니시",
+    "aliases": ["이니시에이팅", "걸다", "물다"],
+    "description": "전투를 시작하는 행위. 주로 탱커가 CC기를 사용해 적을 묶으며 시작한다.",
+    "tags": ["전투"],
+    "exampleCalls": ["소가 이니시 걸면 들어감", "지금 걸어!"]
+  },
+  {
+    "id": "mia",
+    "term": "미아",
+    "aliases": ["ㅁㅇ", "missing"],
+    "description": "Missing In Action. 해당 라인에 있던 적이 시야에서 사라졌음을 의미.",
+    "tags": ["콜"],
+    "exampleCalls": ["미드 미아", "탑 ㅁㅇ 조심"]
+  },
+  {
+    "id": "siege_camp",
+    "term": "공캠",
+    "aliases": ["공성 캠프", "식인종"],
+    "description": "공성 거인 등 구조물 철거에 특화된 용병 캠프.",
+    "tags": ["오브젝트", "운영"],
+    "exampleCalls": ["공캠 먹고 합류함", "바텀 공캠 굴러간다"]
+  },
+  {
+    "id": "samurai_camp",
+    "term": "겐지캠",
+    "aliases": ["사무라이", "검객"],
+    "description": "하나무라 사원 맵에 있는 사무라이 용병. 생김새가 영웅 겐지와 비슷해 이렇게 부름.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["적 겐지캠 먹음", "우리 겐지캠 챙기자"]
+  },
+  {
+    "id": "fountain",
+    "term": "우물",
+    "aliases": ["샘", "치유의 샘"],
+    "description": "요새/성채 옆에 있는 회복 시설. 마시면 일정 시간 동안 체력과 마나 회복.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["우물 빨고 옴", "적 우물 깼음"]
+  },
+  {
+    "id": "objective",
+    "term": "오브젝트",
+    "aliases": ["옵젝", "이벤트"],
+    "description": "맵마다 존재하는 승리 목표(공물, 신단 등). 게임의 흐름을 주도함.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["옵젝 떴다", "이번 옵젝 줄건줘"]
+  },
+  {
+    "id": "bruiser_camp",
+    "term": "투사",
+    "aliases": ["투사 캠프", "기사"],
+    "description": "일반 용병보다 강력한 3~4인조 몬스터 캠프. 라인 푸시력이 강함.",
+    "tags": ["오브젝트", "운영"],
+    "exampleCalls": ["탑 투사 굴리고 옵젝 가자", "투사 먹는 중"]
+  },
+  {
+    "id": "boss",
+    "term": "우두",
+    "aliases": ["보스", "우두머리"],
+    "description": "맵에서 가장 강력한 중립 몬스터. 처치 시 강력한 공성 유닛이 됨.",
+    "tags": ["오브젝트", "운영"],
+    "exampleCalls": ["적 3명 죽음 우두 ㄱㄱ", "우두 트라이 중"]
+  },
+  {
+    "id": "fort",
+    "term": "요새",
+    "aliases": ["1차", "포탑"],
+    "description": "라인의 1차 방어 건물. 파괴 시 경험치를 주며, 투석기는 나오지 않음.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["미드 요새 밈", "요새 끼고 싸우자"]
+  },
+  {
+    "id": "keep",
+    "term": "성채",
+    "aliases": ["2차", "억제기"],
+    "description": "본진 앞 2차 방어 건물. 파괴 시 해당 라인에서 투석기가 생성됨.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["성채 날아감", "성채만 깨고 빠져"]
+  },
+  {
+    "id": "core",
+    "term": "핵",
+    "aliases": ["코어", "넥서스"],
+    "description": "게임의 최종 목표물. 이것을 파괴하면 승리한다.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["핵각이다", "핵 점사"]
+  },
+  {
+    "id": "wall",
+    "term": "문",
+    "aliases": ["벽", "대문"],
+    "description": "요새나 성채 앞을 막는 구조물. 아군만 통과 가능.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["벽 넘어서 도망가", "문 열어줘"]
+  },
+  {
+    "id": "teamfight",
+    "term": "한타",
+    "aliases": ["5대5", "싸움"],
+    "description": "양 팀이 모여 대규모로 벌이는 전투.",
+    "tags": ["전투"],
+    "exampleCalls": ["이번 한타 지면 끝남", "한타 대승"]
+  },
+  {
+    "id": "contest",
+    "term": "비비기",
+    "aliases": ["컨테스트", "버티기"],
+    "description": "거점 점령 등을 막기 위해 몸으로 해당 지역에 들어가 버티는 행위.",
+    "tags": ["전투", "오브젝트"],
+    "exampleCalls": ["제발 비벼!", "들어가서 비벼야 돼"]
+  },
+  {
+    "id": "focusing",
+    "term": "포커싱",
+    "aliases": ["점사", "일점사"],
+    "description": "팀원들이 하나의 적(주로 힐러나 딸피)을 집중 공격하는 것.",
+    "tags": ["전투"],
+    "exampleCalls": ["모랄 포커싱", "소부터 점사해"]
+  },
+  {
+    "id": "cc",
+    "term": "CC기",
+    "aliases": ["군중제어기", "메즈"],
+    "description": "기절, 속박, 슬로우 등 적의 행동을 방해하는 기술.",
+    "tags": ["전투"],
+    "exampleCalls": ["CC 연계 좋았다", "CC기 아껴"]
+  },
+  {
+    "id": "stutter_step",
+    "term": "평캔",
+    "aliases": ["무빙샷", "스터터 스텝"],
+    "description": "공격 후딜레이 사이에 이동을 섞어 끊임없이 움직이며 공격하는 컨트롤.",
+    "tags": ["전투"],
+    "exampleCalls": ["평캔 실수함", "무빙샷 쩐다"]
+  },
+  {
+    "id": "body_block",
+    "term": "바디블락",
+    "aliases": ["길막", "몸대기"],
+    "description": "내 영웅의 몸으로 적의 이동 경로를 막아 도주나 진입을 방해하는 기술.",
+    "tags": ["전투",],
+    "exampleCalls": ["바디블락으로 잡음", "길막 굿"]
+  },
+  {
+    "id": "backdoor",
+    "term": "백도어",
+    "aliases": ["엘리전", "빈집털이"],
+    "description": "적들이 다른 곳에 있을 때 몰래 건물을 부수러 가는 행위.",
+    "tags": ["운영"],
+    "exampleCalls": ["얘네 백도어 옴", "그냥 백도어로 끝내자"]
+  },
+  {
+    "id": "macro",
+    "term": "운영",
+    "aliases": ["매크로", "돌려깎기"],
+    "description": "한타보다는 라인 관리, 용병 등으로 이득을 챙기는 전략.",
+    "tags": ["운영"],
+    "exampleCalls": ["운영으로 풀자", "지금은 운영할 타이밍 아님"]
+  },
+  {
+    "id": "give",
+    "term": "줄건줘",
+    "aliases": ["버려", "손절"],
+    "description": "불리한 상황에서 무리하게 막지 말고 내어준 뒤 다른 이득을 챙기라는 뜻.",
+    "tags": ["운영", "콜"],
+    "exampleCalls": ["이번 공물은 줄건줘", "탑 주고 바텀 밀자"]
+  },
+  {
+    "id": "unstoppable",
+    "term": "저지 불가",
+    "aliases": ["저불", "언스토퍼블"],
+    "description": "CC기에 면역이 되는 상태. 데미지는 입지만 행동 불가에 걸리지 않음.",
+    "tags": ["전투",],
+    "exampleCalls": ["저불 믿고 들어감", "저불 켰을 때 때려"]
+  },
+  {
+    "id": "stasis",
+    "term": "정지",
+    "aliases": ["얼방", "존야"],
+    "description": "아무 행동도 못 하지만 무적 상태가 되어 시간을 버는 상태.",
+    "tags": ["전투",],
+    "exampleCalls": ["얼방 썼음", "정지 풀리면 죽여"]
+  },
+  {
+    "id": "silence",
+    "term": "침묵",
+    "aliases": ["사일", "입닥쳐"],
+    "description": "스킬을 사용할 수 없는 상태. 이동과 평타는 가능.",
+    "tags": ["전투",],
+    "exampleCalls": ["힐러 침묵 걸림", "침묵 대박"]
+  },
+  {
+    "id": "blind",
+    "term": "실명",
+    "aliases": ["블라인드", "눈뽕"],
+    "description": "일반 공격(평타)이 100% 빗나가는 상태.",
+    "tags": ["전투",],
+    "exampleCalls": ["일리단 실명 걸어", "실명이라 딜 안 들어감"]
+  },
+  {
+    "id": "global",
+    "term": "글로벌",
+    "aliases": ["글로벌 이동기", "운영캐"],
+    "description": "맵 전체 혹은 먼 거리를 순간 이동할 수 있는 능력이나 영웅.",
+    "tags": ["운영"],
+    "exampleCalls": ["적 글로벌 있음", "폴스 글로벌로 합류함"]
+  },
+  {
+    "id": "talent_gap",
+    "term": "특성차",
+    "aliases": ["특차", "특성 밀림"],
+    "description": "상대와 특성 단계(예: 9 vs 10)가 차이 나서 싸우면 안 된다는 신호.",
+    "tags": ["콜"],
+    "exampleCalls": ["16 특성차 빼라", "특성차 나니까 사려"]
+  },
+  {
+    "id": "ult_ready",
+    "term": "궁온",
+    "aliases": ["궁on", "궁있음"],
+    "description": "궁극기 쿨타임이 돌아와 사용 가능하다는 뜻.",
+    "tags": ["콜"],
+    "exampleCalls": ["소 궁온", "우리 다 궁온임 싸우자"]
+  },
+  {
+    "id": "channeling",
+    "term": "채널링",
+    "aliases": ["정신집중", "캐스팅"],
+    "description": "오브젝트 획득 등을 위해 제자리에서 정신을 집중하는 상태. 피격 시 끊김.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["채널링 끊어!", "공물 채널링 중"]
+  },
+  {
+    "id": "turn_in",
+    "term": "입금",
+    "aliases": ["반납", "제출"],
+    "description": "수집한 보석이나 금화를 반납처에 내는 행위.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["보석 입금하자", "입금하다 짤림"]
+  },
+  {
+    "id": "shrine",
+    "term": "신단",
+    "aliases": ["점령지", "발판"],
+    "description": "활성화하기 위해 밟거나 주변 적을 처치해야 하는 구역.",
+    "tags": ["오브젝트"],
+    "exampleCalls": ["신단 밟아", "신단 내주지 마"]
+  },
+  {
+    "id": "rotation",
+    "term": "로테이션",
+    "aliases": ["돌기", "라인클리어"],
+    "description": "팀원이 뭉쳐서 여러 라인을 번갈아 가며 정리하는 운영 방식.",
+    "tags": ["운영",],
+    "exampleCalls": ["탑 미드 로테이션 돌자", "로테이션 늦음"]
+  },
+  {
+    "id": "kiting",
+    "term": "카이팅",
+    "aliases": ["거리재기", "짤짤이"],
+    "description": "적과의 사거리를 유지하며 일방적으로 공격하고 빠지는 컨트롤.",
+    "tags": ["전투"],
+    "exampleCalls": ["레이너 카이팅 좋네", "카이팅 당하다 죽음"]
+  },
+  {
+    "id": "dive",
+    "term": "다이브",
+    "aliases": ["타워 다이브", "들어가"],
+    "description": "적 포탑 사거리 안으로 위험을 감수하고 뛰어들어 적을 잡는 행위.",
+    "tags": ["운영"],
+    "exampleCalls": ["이거 다이브 치자", "다이브 받아쳐"]
+  },
+  {
+    "id": "throw",
+    "term": "뇌절",
+    "aliases": ["던짐", "급발진"],
+    "description": "유리한 상황에서 무리하게 들어가다가 죽어서 이득을 잃는 행위.",
+    "tags": ["운영"],
+    "exampleCalls": ["뇌절 ㄴㄴ", "아 거기서 뇌절을"]
+  },
+  {
+    "id": "trade",
+    "term": "트레이드",
+    "aliases": ["교환", "맞교환"],
+    "description": "오브젝트를 다 먹기 어렵다면 다른 이득(캠프/라인/구조물)을 교환하는 판단.",
+    "tags": ["운영"],
+    "exampleCalls": ["이거 트레이드하자", "옵젝 버리고 캠프 트레이드"]
+  },
+  {
+    "id": "freezing",
+    "term": "프리징",
+    "aliases": ["라인 얼리기", "디나이"],
+    "description": "라인을 밀지 않고 유지하여 적이 경험치를 못 먹게 하거나 갱킹 각을 보는 것.",
+    "tags": ["운영"],
+    "exampleCalls": ["탑 프리징 중", "프리징 풀고 밀자"]
+  },
+  {
+    "id": "face_check",
+    "term": "페이스 체크",
+    "aliases": ["몸니시", "얼굴 확인"],
+    "description": "시야가 없는 수풀 등을 스킬이 아닌 몸으로 직접 들어가 확인하는 위험한 행동.",
+    "tags": ["전투"],
+    "exampleCalls": ["페이스 체크 하다가 죽음", "탱커가 페이스 체크 해"]
+  }
+] as const;

@@ -40,6 +40,14 @@ export function TopBar({
             통계
           </Link>
           <Link
+            href="/glossary"
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              value === "glossary" ? selectedStyle : unselectedStyle
+            }`}
+          >
+            단어장
+          </Link>
+          <Link
             href="/gallery"
             className={`px-4 py-2 rounded-lg text-sm font-medium ${
               value === "gallery" ? selectedStyle : unselectedStyle

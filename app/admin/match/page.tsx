@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { TopBar } from "@/components/TopBar";
 
 type GameInput = {
@@ -288,11 +287,10 @@ Kill: 0 / Death: 0 / Takedown: 0
           {/* 결과 메시지 */}
           {result && (
             <div
-              className={`p-4 rounded-xl border ${
-                result.success
+              className={`p-4 rounded-xl border ${result.success
                   ? "bg-green-500/10 border-green-500/30 text-green-400"
                   : "bg-red-500/10 border-red-500/30 text-red-400"
-              }`}
+                }`}
             >
               <p className="font-medium">
                 {result.success ? "✅ " : "❌ "}
@@ -305,11 +303,10 @@ Kill: 0 / Death: 0 / Takedown: 0
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`w-full px-6 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${
-              isSubmitting
+            className={`w-full px-6 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${isSubmitting
                 ? "bg-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-cyan-500/25"
-            }`}
+              }`}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
