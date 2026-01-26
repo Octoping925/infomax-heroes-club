@@ -144,20 +144,13 @@ async function buildAccumulatorByMatch(
     }
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator({
-        playerId,
-        playerName: playerInfo.name,
-        playerNickname: playerInfo.nickname,
-      });
+      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const matchType = membership.matchTeam.match.type;
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
     const teamNumber = membership.matchTeam.teamNumber;
 
-    const result = toResultByWinnerTeamNumber({
-      winnerTeamNumber,
-      teamNumber,
-    });
+    const result = toResultByWinnerTeamNumber(winnerTeamNumber, teamNumber);
 
     if (matchType === MatchType.LUNCH) {
       updateCountsByResult(current.lunch, result);
@@ -171,26 +164,26 @@ async function buildAccumulatorByMatch(
   return accumulatorMap;
 }
 
-function createAccumulator(input: {
-  readonly playerId: string;
-  readonly playerName: string;
-  readonly playerNickname: string;
-}): PlayerAccumulator {
+function createAccumulator(
+  playerId: string,
+  playerName: string,
+  playerNickname: string
+): PlayerAccumulator {
   return {
-    playerId: input.playerId,
-    playerName: input.playerName,
-    playerNickname: input.playerNickname,
+    playerId,
+    playerName,
+    playerNickname,
     lunch: createResultCounts(),
     dinner: createResultCounts(),
   };
 }
 
-function toResultByWinnerTeamNumber(input: {
-  readonly winnerTeamNumber: number | null;
-  readonly teamNumber: number;
-}): GameResult {
-  if (input.winnerTeamNumber === null) return GameResult.DRAW;
-  if (input.winnerTeamNumber === input.teamNumber) return GameResult.WIN;
+function toResultByWinnerTeamNumber(
+  winnerTeamNumber: number | null,
+  teamNumber: number
+): GameResult {
+  if (winnerTeamNumber === null) return GameResult.DRAW;
+  if (winnerTeamNumber === teamNumber) return GameResult.WIN;
   return GameResult.LOSE;
 }
 

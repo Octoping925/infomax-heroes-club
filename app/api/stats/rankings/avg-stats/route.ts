@@ -47,11 +47,11 @@ export async function GET(): Promise<
     const playerId = participation.playerId;
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator({
+      createAccumulator(
         playerId,
-        playerName: participation.player.name,
-        playerNickname: participation.player.nickname,
-      });
+        participation.player.name,
+        participation.player.nickname
+      );
 
     current.totalGames++;
     current.totalKills += participation.kills ?? 0;
@@ -80,15 +80,15 @@ export async function GET(): Promise<
   return NextResponse.json(response);
 }
 
-function createAccumulator(input: {
-  playerId: string;
-  playerName: string;
-  playerNickname: string;
-}): PlayerAccumulator {
+function createAccumulator(
+  playerId: string,
+  playerName: string,
+  playerNickname: string
+): PlayerAccumulator {
   return {
-    playerId: input.playerId,
-    playerName: input.playerName,
-    playerNickname: input.playerNickname,
+    playerId,
+    playerName,
+    playerNickname,
     totalGames: 0,
     totalKills: 0,
     totalDeaths: 0,

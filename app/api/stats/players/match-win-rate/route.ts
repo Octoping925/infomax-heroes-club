@@ -3,10 +3,7 @@ import { prisma } from "@/config/prisma";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap } from "../../utils/player";
-import {
-  createResultCounts,
-  ResultCounts,
-} from "@/app/api/stats/utils/stats";
+import { createResultCounts, ResultCounts } from "@/app/api/stats/utils/stats";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -51,11 +48,7 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
     }
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator({
-        playerId,
-        playerName: playerInfo.name,
-        playerNickname: playerInfo.nickname,
-      });
+      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
     if (winnerTeamNumber === null) {
@@ -92,15 +85,15 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
   return NextResponse.json(response);
 }
 
-function createAccumulator(input: {
-  playerId: string;
-  playerName: string;
-  playerNickname: string;
-}): PlayerAccumulator {
+function createAccumulator(
+  playerId: string,
+  playerName: string,
+  playerNickname: string
+): PlayerAccumulator {
   return {
-    playerId: input.playerId,
-    playerName: input.playerName,
-    playerNickname: input.playerNickname,
+    playerId,
+    playerName,
+    playerNickname,
     stats: createResultCounts(),
   };
 }

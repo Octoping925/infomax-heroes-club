@@ -117,14 +117,14 @@ function createAccumulator(input: {
   };
 }
 
-function getMatchTeamResult(input: {
-  winnerTeamNumber: number | null;
-  teamNumber: number;
-}): MatchTeamResult {
-  if (input.winnerTeamNumber === null) {
+function getMatchTeamResult(
+  winnerTeamNumber: number | null,
+  teamNumber: number
+): MatchTeamResult {
+  if (winnerTeamNumber === null) {
     return "DRAW";
   }
-  if (input.winnerTeamNumber === input.teamNumber) {
+  if (winnerTeamNumber === teamNumber) {
     return "WIN";
   }
   return "LOSE";
@@ -173,10 +173,10 @@ async function calculateDuoStatsByMatch(
       continue;
     }
 
-    const result = getMatchTeamResult({
-      winnerTeamNumber: matchTeam.match.winnerTeamNumber,
-      teamNumber: matchTeam.teamNumber,
-    });
+    const result = getMatchTeamResult(
+      matchTeam.match.winnerTeamNumber,
+      matchTeam.teamNumber
+    );
 
     for (let i = 0; i < players.length - 1; i++) {
       for (let j = i + 1; j < players.length; j++) {

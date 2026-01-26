@@ -56,23 +56,23 @@ export async function GET(): Promise<
 
   const accumulator = new Map<string, PlayerAccumulator>();
 
-  const getOrCreate = (input: {
-    playerId: string;
-    playerName: string;
-    playerNickname: string;
-  }): PlayerAccumulator => {
-    const existing = accumulator.get(input.playerId);
+  const getOrCreate = (
+    playerId: string,
+    playerName: string,
+    playerNickname: string
+  ): PlayerAccumulator => {
+    const existing = accumulator.get(playerId);
     if (existing) {
       return existing;
     }
     const created: PlayerAccumulator = {
-      playerId: input.playerId,
-      playerName: input.playerName,
-      playerNickname: input.playerNickname,
+      playerId,
+      playerName,
+      playerNickname,
       matchStats: createResultCounts(),
       gameStats: createResultCounts(),
     };
-    accumulator.set(input.playerId, created);
+    accumulator.set(playerId, created);
     return created;
   };
 
@@ -81,11 +81,11 @@ export async function GET(): Promise<
     if (!playerInfo) {
       continue;
     }
-    const entry = getOrCreate({
-      playerId: membership.playerId,
-      playerName: playerInfo.name,
-      playerNickname: playerInfo.nickname,
-    });
+    const entry = getOrCreate(
+      membership.playerId,
+      playerInfo.name,
+      playerInfo.nickname
+    );
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
     if (winner === null) {
@@ -102,11 +102,11 @@ export async function GET(): Promise<
     if (!playerInfo) {
       continue;
     }
-    const entry = getOrCreate({
-      playerId: membership.playerId,
-      playerName: playerInfo.name,
-      playerNickname: playerInfo.nickname,
-    });
+    const entry = getOrCreate(
+      membership.playerId,
+      playerInfo.name,
+      playerInfo.nickname
+    );
 
     const result = membership.gameTeam.result as GameResult | null;
     if (result) {

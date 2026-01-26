@@ -173,10 +173,10 @@ export async function fetchRivalries(
         const pairId = `${a.playerId}:${b.playerId}`;
         const acc = pairMap.get(pairId) ?? createPairAccumulator(pairId, a, b);
 
-        const resultForA = toResultForA({
-          winnerTeamNumber: match.winnerTeamNumber,
-          teamNumberA: teamNumberByPlayerId.get(a.playerId) ?? null,
-        });
+        const resultForA = toResultForA(
+          match.winnerTeamNumber,
+          teamNumberByPlayerId.get(a.playerId) ?? null
+        );
 
         acc.matches.push({
           matchId: match.id,
@@ -186,12 +186,12 @@ export async function fetchRivalries(
         });
 
         updateWinLossCounts(acc, resultForA, match.type);
-        updateHeroCountsAndPerformance({
+        updateHeroCountsAndPerformance(
           acc,
-          matchGames: match.games,
-          aId: a.playerId,
-          bId: b.playerId,
-        });
+          match.games,
+          a.playerId,
+          b.playerId
+        );
 
         pairMap.set(pairId, acc);
       }
@@ -199,11 +199,7 @@ export async function fetchRivalries(
   }
 
   const cards: RivalryCardResponse[] = Array.from(pairMap.values(), (acc) =>
-    buildRivalryCard({
-      acc,
-      overallWinRateByPlayerId,
-      minMatches: normalizedParams.minMatches,
-    })
+    buildRivalryCard(acc, overallWinRateByPlayerId)
   )
     .filter((card) => {
       if (normalizedParams.includeInsufficientSample) return true;
@@ -264,58 +260,58 @@ function updateWinLossCounts(
   bucket.winsB += 1;
 }
 
-function updateHeroCountsAndPerformance(input: {
-  readonly acc: PairAccumulator;
-  readonly matchGames: ReadonlyArray<{
-    teams: ReadonlyArray<{
+function updateHeroCountsAndPerformance(
+  acc: PairAccumulator,
+  matchGames: {
+    teams: {
       teamNumber: number;
-      members: ReadonlyArray<{
+      members: {
         playerId: string;
         hero: Hero;
         kills: number | null;
         deaths: number | null;
         takedowns: number | null;
         heroDamage: number | null;
-      }>;
-    }>;
-  }>;
-  readonly aId: string;
-  readonly bId: string;
-}): void {
+      }[];
+    }[];
+  }[],
+  aId: string,
+  bId: string
+) {
   // 퍼포먼스는 game 단위로 계산 후 match 단위 평균
   const kdaA: number[] = [];
   const kdaB: number[] = [];
   const dmgShareA: number[] = [];
   const dmgShareB: number[] = [];
 
-  for (const game of input.matchGames) {
+  for (const game of matchGames) {
     for (const team of game.teams) {
       const teamTotalHeroDamage = team.members.reduce((sum, m) => {
         return sum + (m.heroDamage ?? 0);
       }, 0);
 
       for (const member of team.members) {
-        if (member.playerId !== input.aId && member.playerId !== input.bId) {
+        if (member.playerId !== aId && member.playerId !== bId) {
           continue;
         }
 
         // hero 카운트 (대표 영웅)
-        if (member.playerId === input.aId) {
-          input.acc.heroCountsA.set(
+        if (member.playerId === aId) {
+          acc.heroCountsA.set(
             member.hero,
-            (input.acc.heroCountsA.get(member.hero) ?? 0) + 1
+            (acc.heroCountsA.get(member.hero) ?? 0) + 1
           );
         } else {
-          input.acc.heroCountsB.set(
+          acc.heroCountsB.set(
             member.hero,
-            (input.acc.heroCountsB.get(member.hero) ?? 0) + 1
+            (acc.heroCountsB.get(member.hero) ?? 0) + 1
           );
         }
 
         const deaths = member.deaths ?? 0;
         const takedowns = member.takedowns ?? member.kills ?? 0;
         const kda = takedowns / Math.max(1, deaths);
-        if (member.playerId === input.aId) {
+        if (member.playerId === aId) {
           kdaA.push(kda);
         } else {
           kdaB.push(kda);
@@ -323,7 +319,7 @@ function updateHeroCountsAndPerformance(input: {
 
         if (teamTotalHeroDamage > 0 && member.heroDamage !== null) {
           const share = member.heroDamage / teamTotalHeroDamage; // 0~1
-          if (member.playerId === input.aId) {
+          if (member.playerId === aId) {
             dmgShareA.push(share);
           } else {
             dmgShareB.push(share);
@@ -348,49 +344,48 @@ function updateHeroCountsAndPerformance(input: {
     const kdaGapAbs = Math.abs(avgKdaA - avgKdaB);
     // gap 4 이상이면 "큰 차이"로 보고 1로 클램프
     const kdaGapNorm = clamp01(kdaGapAbs / 4);
-    input.acc.perfSamples.kdaGapSumNorm += kdaGapNorm;
+    acc.perfSamples.kdaGapSumNorm += kdaGapNorm;
   }
 
   if (avgShareA !== null && avgShareB !== null) {
     const shareGapAbs = Math.abs(avgShareA - avgShareB);
     // dmg share 0.15(15%p) 이상 차이나면 큰 격차
     const shareGapNorm = clamp01(shareGapAbs / 0.15);
-    input.acc.perfSamples.dmgShareGapSumNorm += shareGapNorm;
+    acc.perfSamples.dmgShareGapSumNorm += shareGapNorm;
   }
 
-  input.acc.perfSamples.count += 1;
+  acc.perfSamples.count += 1;
 }
 
-function buildRivalryCard(input: {
-  readonly acc: PairAccumulator;
-  readonly overallWinRateByPlayerId: Map<string, OverallWinRate>;
-  readonly minMatches: number;
-}): RivalryCardResponse {
-  const matchesSorted = [...input.acc.matches].sort(
+function buildRivalryCard(
+  acc: PairAccumulator,
+  overallWinRateByPlayerId: Map<string, OverallWinRate>
+): RivalryCardResponse {
+  const matchesSorted = [...acc.matches].sort(
     (a, b) => b.playedAt.getTime() - a.playedAt.getTime()
   );
   const lastPlayedAt = matchesSorted[0]?.playedAt ?? new Date(0);
 
-  const winRateA = toWinRate01(input.acc.winsA, input.acc.winsB);
-  const winRateB = toWinRate01(input.acc.winsB, input.acc.winsA);
+  const winRateA = toWinRate01(acc.winsA, acc.winsB);
+  const winRateB = toWinRate01(acc.winsB, acc.winsA);
 
   const playerA: RivalrySide = {
-    playerId: input.acc.a.playerId,
-    playerName: input.acc.a.playerName,
-    playerNickname: input.acc.a.playerNickname,
-    wins: input.acc.winsA,
-    losses: input.acc.winsB,
-    draws: input.acc.draws,
+    playerId: acc.a.playerId,
+    playerName: acc.a.playerName,
+    playerNickname: acc.a.playerNickname,
+    wins: acc.winsA,
+    losses: acc.winsB,
+    draws: acc.draws,
     winRate: Math.round(winRateA * 100),
   };
 
   const playerB: RivalrySide = {
-    playerId: input.acc.b.playerId,
-    playerName: input.acc.b.playerName,
-    playerNickname: input.acc.b.playerNickname,
-    wins: input.acc.winsB,
-    losses: input.acc.winsA,
-    draws: input.acc.draws,
+    playerId: acc.b.playerId,
+    playerName: acc.b.playerName,
+    playerNickname: acc.b.playerNickname,
+    wins: acc.winsB,
+    losses: acc.winsA,
+    draws: acc.draws,
     winRate: Math.round(winRateB * 100),
   };
 
@@ -411,12 +406,10 @@ function buildRivalryCard(input: {
   );
 
   const balance = 1 - Math.abs(winRateA - winRateB); // 0~1
-  const countScore = clamp01((input.acc.matches.length - 3) / 9); // 3~12 구간
+  const countScore = clamp01((acc.matches.length - 3) / 9); // 3~12 구간
   const recency = computeRecency(matchesSorted);
 
-  const performanceCloseness = computePerformanceCloseness(
-    input.acc.perfSamples
-  );
+  const performanceCloseness = computePerformanceCloseness(acc.perfSamples);
 
   let rawScore =
     0.3 * countScore +
@@ -433,7 +426,7 @@ function buildRivalryCard(input: {
   rawScore = clamp01(rawScore + closeRecentBonus);
 
   const breakdown: RivalryScoreBreakdown = {
-    matchesCount: input.acc.matches.length,
+    matchesCount: acc.matches.length,
     countScore: round3(countScore),
     balance: round3(balance),
     recency: round3(recency),
@@ -443,24 +436,18 @@ function buildRivalryCard(input: {
 
   const score = Math.round(rawScore * 100);
 
-  const labels = buildLabels({
-    acc: input.acc,
+  const labels = buildLabels(
+    acc,
     winRateA,
     winRateB,
     recent5Counts,
-    overallWinRateByPlayerId: input.overallWinRateByPlayerId,
-  });
+    overallWinRateByPlayerId
+  );
 
-  const comment = buildComment({
-    acc: input.acc,
-    labels,
-    recent5Counts,
-    winRateA,
-    winRateB,
-  });
+  const comment = buildComment(acc, labels, recent5Counts);
 
   return {
-    id: input.acc.id,
+    id: acc.id,
     score,
     labels,
     playerA,
@@ -471,19 +458,19 @@ function buildRivalryCard(input: {
     },
     lunchDinner: {
       lunch: {
-        winsA: input.acc.lunch.winsA,
-        winsB: input.acc.lunch.winsB,
-        draws: input.acc.lunch.draws,
+        winsA: acc.lunch.winsA,
+        winsB: acc.lunch.winsB,
+        draws: acc.lunch.draws,
       },
       dinner: {
-        winsA: input.acc.dinner.winsA,
-        winsB: input.acc.dinner.winsB,
-        draws: input.acc.dinner.draws,
+        winsA: acc.dinner.winsA,
+        winsB: acc.dinner.winsB,
+        draws: acc.dinner.draws,
       },
     },
     topHeroes: {
-      playerA: topHeroes(input.acc.heroCountsA, 2),
-      playerB: topHeroes(input.acc.heroCountsB, 2),
+      playerA: topHeroes(acc.heroCountsA, 2),
+      playerB: topHeroes(acc.heroCountsB, 2),
     },
     comment,
     breakdown,
@@ -491,48 +478,48 @@ function buildRivalryCard(input: {
   };
 }
 
-function buildLabels(input: {
-  readonly acc: PairAccumulator;
-  readonly winRateA: number; // 0~1
-  readonly winRateB: number; // 0~1
-  readonly recent5Counts: { winsA: number; winsB: number; draws: number };
-  readonly overallWinRateByPlayerId: Map<string, OverallWinRate>;
-}): RivalryLabel[] {
+function buildLabels(
+  acc: PairAccumulator,
+  winRateA: number, // 0~1
+  winRateB: number, // 0~1
+  recent5Counts: { winsA: number; winsB: number; draws: number },
+  overallWinRateByPlayerId: Map<string, OverallWinRate>
+): RivalryLabel[] {
   const labels: RivalryLabel[] = [];
-  const matchesCount = input.acc.matches.length;
-  const winRateDiff = Math.abs(input.winRateA - input.winRateB);
+  const matchesCount = acc.matches.length;
+  const winRateDiff = Math.abs(winRateA - winRateB);
 
   if (matchesCount >= 5 && winRateDiff <= 0.1) {
     labels.push({ type: "DESTINED_RIVAL", text: "숙명의 라이벌" });
   }
 
   // Nemesis (천적) - 방향성 있음
-  const overallA = input.overallWinRateByPlayerId.get(input.acc.a.playerId);
-  const overallB = input.overallWinRateByPlayerId.get(input.acc.b.playerId);
+  const overallA = overallWinRateByPlayerId.get(acc.a.playerId);
+  const overallB = overallWinRateByPlayerId.get(acc.b.playerId);
 
   if (overallA && overallA.decisions >= 5) {
-    const vsB = input.winRateA;
+    const vsB = winRateA;
     if (overallA.winRate - vsB >= 0.15) {
       labels.push({
         type: "NEMESIS",
-        text: `천적: ${input.acc.b.playerNickname} → ${input.acc.a.playerNickname}`,
+        text: `천적: ${acc.b.playerNickname} → ${acc.a.playerNickname}`,
       });
     }
   }
   if (overallB && overallB.decisions >= 5) {
-    const vsA = input.winRateB;
+    const vsA = winRateB;
     if (overallB.winRate - vsA >= 0.15) {
       labels.push({
         type: "NEMESIS",
-        text: `천적: ${input.acc.a.playerNickname} → ${input.acc.b.playerNickname}`,
+        text: `천적: ${acc.a.playerNickname} → ${acc.b.playerNickname}`,
       });
     }
   }
 
   // 박빙 흐름 배지(라벨 타입은 그대로 두고 텍스트만 추가)
   const closeRecent =
-    input.recent5Counts.winsA + input.recent5Counts.winsB >= 5 &&
-    Math.abs(input.recent5Counts.winsA - input.recent5Counts.winsB) === 1;
+    recent5Counts.winsA + recent5Counts.winsB >= 5 &&
+    Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1;
   if (matchesCount >= 5 && closeRecent) {
     labels.push({ type: "DESTINED_RIVAL", text: "최근 5경기 박빙" });
   }
@@ -540,21 +527,19 @@ function buildLabels(input: {
   return labels;
 }
 
-function buildComment(input: {
-  readonly acc: PairAccumulator;
-  readonly labels: ReadonlyArray<RivalryLabel>;
-  readonly recent5Counts: { winsA: number; winsB: number; draws: number };
-  readonly winRateA: number;
-  readonly winRateB: number;
-}): string {
-  const aNick = input.acc.a.playerNickname;
-  const bNick = input.acc.b.playerNickname;
+function buildComment(
+  acc: PairAccumulator,
+  labels: RivalryLabel[],
+  recent5Counts: { winsA: number; winsB: number; draws: number }
+): string {
+  const aNick = acc.a.playerNickname;
+  const bNick = acc.b.playerNickname;
 
-  const hasNemesis = input.labels.some((l) => l.type === "NEMESIS");
+  const hasNemesis = labels.some((l) => l.type === "NEMESIS");
   if (hasNemesis) {
     // “전체 승률은 높은데, 유독 B를 만나면 약해지는 A(천적)”
     // 방향성 라벨 텍스트 자체가 "천적: B → A" 형식이라, 그대로 활용
-    const nemesis = input.labels.find((l) => l.type === "NEMESIS")?.text;
+    const nemesis = labels.find((l) => l.type === "NEMESIS")?.text;
     if (nemesis) {
       const parts = nemesis.replace("천적: ", "").split(" → ");
       if (parts.length === 2) {
@@ -566,16 +551,16 @@ function buildComment(input: {
   }
 
   // 최근 흐름
-  if (input.recent5Counts.winsB - input.recent5Counts.winsA >= 2) {
+  if (recent5Counts.winsB - recent5Counts.winsA >= 2) {
     return `최근 흐름은 ${bNick} 쪽`;
   }
-  if (input.recent5Counts.winsA - input.recent5Counts.winsB >= 2) {
+  if (recent5Counts.winsA - recent5Counts.winsB >= 2) {
     return `최근 흐름은 ${aNick} 쪽`;
   }
 
   // 점심/저녁 분리 멘트
-  const lunch = input.acc.lunch;
-  const dinner = input.acc.dinner;
+  const lunch = acc.lunch;
+  const dinner = acc.dinner;
   const lunchDiff = lunch.winsA - lunch.winsB;
   const dinnerDiff = dinner.winsA - dinner.winsB;
   if (lunchDiff >= 2 && dinnerDiff <= -2) {
@@ -586,11 +571,11 @@ function buildComment(input: {
   }
 
   // 기본: 균형/우세 표현
-  if (Math.abs(input.acc.winsA - input.acc.winsB) <= 1) {
+  if (Math.abs(acc.winsA - acc.winsB) <= 1) {
     return `승률이 엇비슷한 박빙 구도`;
   }
-  const leader = input.acc.winsA > input.acc.winsB ? aNick : bNick;
-  const chaser = input.acc.winsA > input.acc.winsB ? bNick : aNick;
+  const leader = acc.winsA > acc.winsB ? aNick : bNick;
+  const chaser = acc.winsA > acc.winsB ? bNick : aNick;
   return `초반엔 ${leader}가 앞서지만 ${chaser}도 따라붙는 중`;
 }
 
@@ -629,18 +614,18 @@ function topHeroes(
   topN: number
 ): { hero: Hero; count: number }[] {
   return Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
+    .toSorted((a, b) => b[1] - a[1])
     .slice(0, topN)
     .map(([hero, count]) => ({ hero, count }));
 }
 
-function toResultForA(input: {
-  readonly winnerTeamNumber: number | null;
-  readonly teamNumberA: 1 | 2 | null;
-}): "WIN" | "LOSE" | "DRAW" {
-  if (input.winnerTeamNumber === null) return "DRAW";
-  if (input.teamNumberA === null) return "DRAW";
-  return input.winnerTeamNumber === input.teamNumberA ? "WIN" : "LOSE";
+function toResultForA(
+  winnerTeamNumber: number | null,
+  teamNumberA: 1 | 2 | null
+): "WIN" | "LOSE" | "DRAW" {
+  if (winnerTeamNumber === null) return "DRAW";
+  if (teamNumberA === null) return "DRAW";
+  return winnerTeamNumber === teamNumberA ? "WIN" : "LOSE";
 }
 
 function sortPair(
