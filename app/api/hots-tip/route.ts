@@ -10,7 +10,7 @@ const BOT_ICON_IMAGE =
   "https://infomax.dooray.com/messenger/v1/api/apps/4058807707438101450/icon/4168246310654965318";
 
 export async function GET() {
-  const tips = sampleSize(TIPS, 2);
+  const tips = sampleSize(TIPS, 4);
 
   await DoorayBotMessageSender.url(BOT_TARGET_ROOM)
     .body({
