@@ -12,10 +12,7 @@ export function createResultCounts(): ResultCounts {
   return { wins: 0, losses: 0, draws: 0 };
 }
 
-export function updateCountsByResult(
-  counts: ResultCounts,
-  result: GameResult
-): void {
+export function updateCountsByResult(counts: ResultCounts, result: GameResult) {
   if (result === GameResult.WIN) {
     counts.wins += 1;
     return;
@@ -27,9 +24,7 @@ export function updateCountsByResult(
   counts.draws += 1;
 }
 
-export function buildWinRateStatsFromCounts(
-  counts: ResultCounts
-): WinRateStats {
+export function buildWinRateStatsFromCounts(counts: ResultCounts): WinRateStats {
   return {
     totalGames: counts.wins + counts.losses + counts.draws,
     wins: counts.wins,
@@ -39,9 +34,7 @@ export function buildWinRateStatsFromCounts(
   };
 }
 
-export function buildWinRateStatsFromResults(
-  results: GameResult[]
-): WinRateStats {
+export function buildWinRateStatsFromResults(results: GameResult[]): WinRateStats {
   const counts = createResultCounts();
   for (const result of results) {
     updateCountsByResult(counts, result);

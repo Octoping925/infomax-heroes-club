@@ -93,16 +93,11 @@ async function buildAccumulatorByGame(
     }
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator(
-        playerId,
-        playerInfo.name,
-        playerInfo.nickname,
-      );
+      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
-    const matchType = participation.gameTeam.game.match.type;
-    const result = participation.gameTeam.result;
+    const { game, result } = participation.gameTeam;
 
-    if (matchType === MatchType.LUNCH) {
+    if (game.match.type === MatchType.LUNCH) {
       updateCountsByResult(current.lunch, result);
     } else {
       updateCountsByResult(current.dinner, result);
