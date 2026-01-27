@@ -1,16 +1,22 @@
 "use client";
 import { WinRateStats } from "@/app/api/stats/types";
 import { usePlayerCombinedWinRate } from "../../hooks/usePlayerCombinedWinRate";
+import { useScrimWinRateTier } from "../../hooks/useScrimWinRateTier";
 import { useMemo, useState } from "react";
 import { LunchDinnerOption } from "@/components/LunchDinnerOption";
 
 export function ScrimWinRate() {
   const { overallData, matchData, gameData } = usePlayerCombinedWinRate();
   const [unit, setUnit] = useState<"all" | "lunch" | "dinner">("all");
+  const getTier = useScrimWinRateTier();
 
   const stats = useMemo(() => {
     if (unit === "all") {
-      return overallData;
+      return overallData.map(it => {
+        const tier = getTier(it.matchStats, it.gameStats);
+        return { ...it, tier };
+      })
+        .toSorted((a, b) => b.tier.score - a.tier.score);
     }
 
     return overallData
@@ -22,23 +28,28 @@ export function ScrimWinRate() {
           (it) => it.playerNickname === row.playerNickname
         );
 
+        const lunchTier = getTier(matchStat?.lunchStats ?? EMPTY_STATS, gameStat?.lunchStats ?? EMPTY_STATS);
+        const dinnerTier = getTier(matchStat?.dinnerStats ?? EMPTY_STATS, gameStat?.dinnerStats ?? EMPTY_STATS);
+
         if (unit === "lunch") {
           return {
             ...row,
             matchStats: matchStat?.lunchStats ?? EMPTY_STATS,
             gameStats: gameStat?.lunchStats ?? EMPTY_STATS,
+            tier: lunchTier
           };
         } else {
           return {
             ...row,
             matchStats: matchStat?.dinnerStats ?? EMPTY_STATS,
             gameStats: gameStat?.dinnerStats ?? EMPTY_STATS,
+            tier: dinnerTier
           };
         }
       })
       .filter((it) => it.matchStats.totalGames > 0)
-      .toSorted((a, b) => b.matchStats.winRate - a.matchStats.winRate);
-  }, [unit, matchData, gameData, overallData]);
+      .toSorted((a, b) => b.tier.score - a.tier.score);
+  }, [unit, matchData, gameData, overallData, getTier]);
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/10 p-4 bg-black/20">
@@ -55,13 +66,26 @@ export function ScrimWinRate() {
         </thead>
         <tbody>
           {stats.map((row) => {
+            const { tier } = row;
+            const tierScore = formatTierScore(tier.score);
+
             return (
               <tr
                 key={row.playerId}
                 className="border-t border-white/10 transition-colors hover:bg-white/6"
               >
                 <td className="px-4 py-2 font-medium text-white">
-                  <div>{row.playerName}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{row.playerName}</span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${tier.tier.className}`}
+                    >
+                      {tier.tier.label}
+                    </span>
+                    <span className="text-[11px] font-semibold text-gray-300">
+                      {tierScore}
+                    </span>
+                  </div>
                   <div className="text-xs text-gray-400">
                     {row.playerNickname}
                   </div>
@@ -110,6 +134,15 @@ function WinRatePill({
 
 function formatRecord(stats: WinRateStats): string {
   return `${stats.wins}승 ${stats.losses}패 ${stats.draws}무 (${stats.totalGames}경기)`;
+}
+
+function formatTierScore(score: number): string {
+  const normalized = Math.round(score * 10) / 10;
+  const display = Number.isInteger(normalized)
+    ? normalized.toFixed(0)
+    : normalized.toFixed(1);
+
+  return `${display}%`;
 }
 
 const EMPTY_STATS: WinRateStats = {
