@@ -2,7 +2,7 @@ import { WinRateStats } from "@/app/api/stats/types";
 import { useCallback } from "react";
 
 export type ScrimTier = {
-  readonly key: "diamond" | "platinum" | "gold" | "silver" | "bronze";
+  readonly key: "challenger" | "diamond" | "platinum" | "gold" | "silver" | "bronze";
   readonly label: string;
   readonly className: string;
 };
@@ -18,9 +18,15 @@ type ScrimTierRule = ScrimTier & {
 
 const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
   {
+    "key": "challenger",
+    label: "챌린저",
+    min: 49,
+    className: "text-purple-200 bg-purple-500/15 border-purple-400/40",
+  },
+  {
     key: "diamond",
     label: "다이아",
-    min: 50,
+    min: 45,
     className: "text-cyan-200 bg-cyan-500/15 border-cyan-400/40",
   },
   {
@@ -32,13 +38,13 @@ const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
   {
     key: "gold",
     label: "골드",
-    min: 34,
+    min: 36,
     className: "text-amber-200 bg-amber-500/15 border-amber-400/40",
   },
   {
     key: "silver",
     label: "실버",
-    min: 26,
+    min: 32,
     className: "text-slate-200 bg-slate-500/15 border-slate-400/40",
   },
   {
@@ -68,8 +74,8 @@ function calculateCompositeScore(matchStats: WinRateStats, gameStats: WinRateSta
   // ---- tunables ----
   const PRIOR_GAMES_K = 15; // 베이지안 프라이어 강도
   const Z = 1.28;          // 보수성 (≈90% 하한)
-  const MATCH_WEIGHT = 0.6;
-  const GAME_WEIGHT = 0.5;
+  const MATCH_WEIGHT = 0.7;
+  const GAME_WEIGHT = 0.35;
 
   const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
