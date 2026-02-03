@@ -1,6 +1,7 @@
 import { DooraySlashCommandRequest } from "@/domain/dooray/types";
 import {
   MAPS,
+  MAPS_DESCRIPTION,
   MAPS_IMAGE,
   MAPS_NAMUWIKI_URL,
 } from "@/domain/hots/constants/maps";
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
       thumbUrl: MAPS_IMAGE[key as keyof typeof MAPS_IMAGE],
       title: title,
       titleLink: MAPS_NAMUWIKI_URL[key as keyof typeof MAPS_NAMUWIKI_URL],
+      text: MAPS_DESCRIPTION[key as keyof typeof MAPS_DESCRIPTION],
     })),
     responseType: "inChannel",
   });
