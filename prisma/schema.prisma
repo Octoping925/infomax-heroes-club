@@ -268,6 +268,7 @@ model GameTeamMember {
   gameTeamId  String
   playerId    String
   hero        Hero // 선택한 영웅
+  position    HeroRole @default(TANKER)// 포지션
   kills       Int // 킬 수
   deaths      Int // 데스 수
   takedowns   Int // 테이크다운 수

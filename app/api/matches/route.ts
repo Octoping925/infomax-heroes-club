@@ -7,6 +7,7 @@ import {
 } from "@/domain/hots/utils/game-stats-parser";
 import dayjs from "dayjs";
 import { fetchPlayerMap } from "../stats/utils/player";
+import { HeroRole } from "@/domain/hots/models";
 
 type MatchHistoryPlayer = {
   readonly id: string;
@@ -24,6 +25,7 @@ type MatchHistoryMatchTeam = {
 type MatchHistoryGameTeamMember = {
   id: string;
   player: MatchHistoryPlayer;
+  position: HeroRole;
   hero: string;
   kills: number;
   deaths: number;
@@ -43,6 +45,7 @@ type MatchHistoryGameTeam = {
   readonly id: string;
   readonly teamNumber: number;
   readonly result: GameResult;
+  readonly teamLevel: number;
   readonly members: MatchHistoryGameTeamMember[];
   readonly bans: MatchHistoryGameTeamBan[];
 };
@@ -50,6 +53,7 @@ type MatchHistoryGameTeam = {
 type MatchHistoryGame = {
   readonly id: string;
   readonly gameNumber: number;
+  readonly gameLength: number;
   readonly map: string;
   readonly winnerTeamNumber: number | null;
   readonly teams: MatchHistoryGameTeam[];
@@ -111,6 +115,7 @@ export async function GET(
           select: {
             id: true,
             gameNumber: true,
+            gameLength: true,
             map: true,
             winnerTeamNumber: true,
             teams: {
@@ -121,6 +126,7 @@ export async function GET(
                 id: true,
                 teamNumber: true,
                 result: true,
+                teamLevel: true,
                 bans: {
                   orderBy: {
                     banOrder: "asc",
@@ -134,6 +140,7 @@ export async function GET(
                   select: {
                     id: true,
                     hero: true,
+                    position: true,
                     kills: true,
                     deaths: true,
                     takedowns: true,
@@ -165,12 +172,14 @@ export async function GET(
       games: match.games.map((game) => ({
         id: game.id,
         gameNumber: game.gameNumber,
+        gameLength: game.gameLength,
         map: game.map,
         winnerTeamNumber: game.winnerTeamNumber,
         teams: game.teams.map((team) => ({
           id: team.id,
           teamNumber: team.teamNumber,
           result: team.result,
+          teamLevel: team.teamLevel,
           bans: team.bans.map((ban) => ({
             banOrder: ban.banOrder,
             hero: ban.hero,
@@ -178,6 +187,7 @@ export async function GET(
           members: team.members.map((member) => ({
             id: member.id,
             player: playerMap.get(member.playerId)!,
+            position: member.position,
             hero: member.hero,
             kills: member.kills,
             deaths: member.deaths,
