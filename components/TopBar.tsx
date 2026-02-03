@@ -27,10 +27,10 @@ export function TopBar({
           <NavLink label="통계" href="/stats" isSelected={value === "stats"} />
           <NavLink label="단어장" href="/glossary" isSelected={value === "glossary"} />
           <NavLink label="갤러리" href="/gallery" isSelected={value === "gallery"} />
-          <NavLink label="경기입력" href="/admin/match" isSelected={value === "match"} />
+          <NavLink label="전적" href="/match-history" isSelected={value === "match-history"} />
+          {/* <NavLink label="경기입력" href="/admin/match" isSelected={value === "match"} />
           <NavLink label="밴입력" href="/admin/match/bans" isSelected={value === "bans"} />
-          <NavLink label="전적입력" href="/admin/match/stats" isSelected={value === "match-stats"} />
-
+          <NavLink label="전적입력" href="/admin/match/stats" isSelected={value === "match-stats"} /> */}
         </nav>
       </div>
     </header>

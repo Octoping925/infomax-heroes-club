@@ -3,7 +3,6 @@
 import { createContext, Suspense, useState } from "react";
 import { TeamSwitchChart } from "./team-switch-chart";
 import { AvgStatsRankingChart } from "./avg-kills-deaths-ranking-chart";
-import { MatchHistoryTab } from "./match-history-tab";
 import { FantasyDuoRankingChart } from "./fantasy-duo-ranking-chart";
 import { HeroDuoRankingChart } from "./hero-duo-ranking-chart";
 import type { PlayerListItem } from "../../api/players/route";
@@ -23,8 +22,7 @@ type TabType =
   | "teamSwitch"
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
-  | "heroDuo"
-  | "matchHistory";
+  | "heroDuo";
 
 const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "personalStats", label: "개인 통계", icon: "👤" },
@@ -35,7 +33,6 @@ const TABS: { id: TabType; label: string; icon: string }[] = [
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
   { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
   { id: "heroDuo", label: "영웅 듀오", icon: "🧩" },
-  { id: "matchHistory", label: "전적", icon: "📜" },
 ];
 
 const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats"]);
@@ -76,11 +73,10 @@ export function StatsPageLayout({ players }: Props) {
             <button
               key={tab.id}
               onClick={() => handleTabSelect(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                  : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+                }`}
             >
               {tab.icon} {tab.label}
             </button>
@@ -124,7 +120,6 @@ export function StatsPageLayout({ players }: Props) {
                 )}
                 {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
                 {activeTab === "heroDuo" && <HeroDuoRankingChart />}
-                {activeTab === "matchHistory" && <MatchHistoryTab />}
               </Suspense>
             </SelectedPlayerContext.Provider>
           </div>

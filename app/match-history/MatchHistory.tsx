@@ -5,7 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
 import { statsQueryKeys } from "@/config/query-keys";
-import { MatchCard } from "./match-history/MatchCard";
+import { MatchCard } from "./components/MatchCard";
 import { SITE_URL } from "@/config/url";
 
 type MatchGroup = {
@@ -16,7 +16,7 @@ type MatchGroup = {
 /**
  * Stats 탭에서 보여주는 역대 match 전적
  */
-export function MatchHistoryTab() {
+export function MatchHistory() {
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
   const { data: matches = [], error } = useSuspenseQuery<MatchHistoryItem[]>({
     queryKey: statsQueryKeys.matches.latest(200),
