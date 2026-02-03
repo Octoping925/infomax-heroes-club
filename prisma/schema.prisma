@@ -18,11 +18,10 @@ enum MatchType {
 
 enum HeroRole {
   TANKER
-  BRUISER
-  RANGED_ASSASSIN
-  MELEE_ASSASSIN
+  OFFLANER
+  MAIN_DEALER
+  SUB_DEALER
   HEALER
-  SUPPORT
 }
 
 enum GameMap {
@@ -215,6 +214,7 @@ model Game {
   id               String   @id @default(cuid())
   matchId          String
   gameNumber       Int // 경기 순서 (1, 2, 3...)
+  gameLength       Int @default(0) // 경기 시간 (초)
   map              GameMap
   winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부
   createdAt        DateTime @default(now())
@@ -235,6 +235,7 @@ model GameTeam {
   teamNumber        Int // 팀 번호 (1 or 2)
   sourceMatchTeamId String // 파생된 원본 MatchTeam
   result            GameResult // 승/패/무승부
+  teamLevel         Int @default(0) // 팀 레벨
 
   // Relations
   game            Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -267,11 +268,22 @@ model GameTeamMember {
   gameTeamId  String
   playerId    String
   hero        Hero // 선택한 영웅
-  kills       Int? // 킬 수
-  deaths      Int? // 데스 수
-  takedowns   Int? // 테이크다운 수
-  heroDamage  Int? // 가한 피해량
-  damageTaken Int? // 받은 피해량
+  kills       Int // 킬 수
+  deaths      Int // 데스 수
+  takedowns   Int // 테이크다운 수
+  heroDamage  Int @default(0) // 가한 피해량
+  siegeDamage Int @default(0) // 공성 피해량
+  damageTaken Int @default(0) // 받은 피해량
+  healingDone Int @default(0) // 힐해준 량
+  timeSpentDead Int @default(0) // 죽은 시간 (초)
+  timeCCdEnemyHeroes Int @default(0) // 적 영웅 얼린 시간 (초)
+  dpm Int @default(0) // 분당 딜
+  mercCampCaptures Int @default(0) // 캠프 획득 수
+  watchTowerCaptures Int @default(0) // 감시탑 획득 수
+  regenGlobes Int @default(0) // 회복 구슬 획득 수
+
+
+
 
   // Relations
   gameTeam GameTeam @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
