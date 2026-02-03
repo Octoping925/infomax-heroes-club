@@ -22,13 +22,16 @@ type MatchHistoryMatchTeam = {
 };
 
 type MatchHistoryGameTeamMember = {
+  id: string;
   player: MatchHistoryPlayer;
   hero: string;
-  kills: number | null;
-  deaths: number | null;
-  takedowns: number | null;
-  heroDamage: number | null;
-  damageTaken: number | null;
+  kills: number;
+  deaths: number;
+  takedowns: number;
+  heroDamage: number;
+  siegeDamage: number;
+  healingDone: number;
+  damageTaken: number;
 };
 
 type MatchHistoryGameTeamBan = {
@@ -129,11 +132,14 @@ export async function GET(
                 },
                 members: {
                   select: {
+                    id: true,
                     hero: true,
                     kills: true,
                     deaths: true,
                     takedowns: true,
                     heroDamage: true,
+                    siegeDamage: true,
+                    healingDone: true,
                     damageTaken: true,
                     playerId: true,
                   },
@@ -170,12 +176,15 @@ export async function GET(
             hero: ban.hero,
           })),
           members: team.members.map((member) => ({
+            id: member.id,
             player: playerMap.get(member.playerId)!,
             hero: member.hero,
             kills: member.kills,
             deaths: member.deaths,
             takedowns: member.takedowns,
             heroDamage: member.heroDamage,
+            siegeDamage: member.siegeDamage,
+            healingDone: member.healingDone,
             damageTaken: member.damageTaken,
           })),
         })),

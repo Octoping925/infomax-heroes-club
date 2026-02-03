@@ -14,6 +14,8 @@ type PlayerAccumulator = {
   totalDeaths: number;
   totalTakedowns: number;
   totalHeroDamage: number;
+  totalSiegeDamage: number;
+  totalHealingDone: number;
   totalDamageTaken: number;
 };
 
@@ -31,6 +33,8 @@ export async function GET(): Promise<
       deaths: true,
       takedowns: true,
       heroDamage: true,
+      siegeDamage: true,
+      healingDone: true,
       damageTaken: true,
       player: {
         select: {
@@ -54,11 +58,11 @@ export async function GET(): Promise<
       );
 
     current.totalGames++;
-    current.totalKills += participation.kills ?? 0;
-    current.totalDeaths += participation.deaths ?? 0;
-    current.totalTakedowns += participation.takedowns ?? 0;
-    current.totalHeroDamage += participation.heroDamage ?? 0;
-    current.totalDamageTaken += participation.damageTaken ?? 0;
+    current.totalKills += participation.kills;
+    current.totalDeaths += participation.deaths;
+    current.totalTakedowns += participation.takedowns;
+    current.totalHeroDamage += participation.heroDamage;
+    current.totalDamageTaken += participation.damageTaken;
 
     accumulatorMap.set(playerId, current);
   }
@@ -95,5 +99,7 @@ function createAccumulator(
     totalTakedowns: 0,
     totalHeroDamage: 0,
     totalDamageTaken: 0,
+    totalSiegeDamage: 0,
+    totalHealingDone: 0,
   };
 }
