@@ -9,7 +9,7 @@ import type {
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Hero, MatchType } from "@/generated/prisma/client";
-import { clamp } from "es-toolkit";
+import { clamp, sum, sumBy } from "es-toolkit";
 
 type PlayerInfo = {
   readonly playerId: string;
@@ -268,10 +268,10 @@ function updateHeroCountsAndPerformance(
       members: {
         playerId: string;
         hero: Hero;
-        kills: number | null;
-        deaths: number | null;
-        takedowns: number | null;
-        heroDamage: number | null;
+        kills: number;
+        deaths: number;
+        takedowns: number;
+        heroDamage: number;
       }[];
     }[];
   }[],
@@ -286,9 +286,7 @@ function updateHeroCountsAndPerformance(
 
   for (const game of matchGames) {
     for (const team of game.teams) {
-      const teamTotalHeroDamage = team.members.reduce((sum, m) => {
-        return sum + (m.heroDamage ?? 0);
-      }, 0);
+      const teamTotalHeroDamage = sumBy(team.members, (m) => m.heroDamage);
 
       for (const member of team.members) {
         if (member.playerId !== aId && member.playerId !== bId) {
@@ -308,16 +306,14 @@ function updateHeroCountsAndPerformance(
           );
         }
 
-        const deaths = member.deaths ?? 0;
-        const takedowns = member.takedowns ?? member.kills ?? 0;
-        const kda = takedowns / Math.max(1, deaths);
+        const kda = member.takedowns / Math.max(1, member.deaths);
         if (member.playerId === aId) {
           kdaA.push(kda);
         } else {
           kdaB.push(kda);
         }
 
-        if (teamTotalHeroDamage > 0 && member.heroDamage !== null) {
+        if (teamTotalHeroDamage > 0) {
           const share = member.heroDamage / teamTotalHeroDamage; // 0~1
           if (member.playerId === aId) {
             dmgShareA.push(share);
@@ -331,7 +327,7 @@ function updateHeroCountsAndPerformance(
 
   const avg = (list: number[]): number | null => {
     if (list.length === 0) return null;
-    return list.reduce((s, v) => s + v, 0) / list.length;
+    return sum(list) / list.length;
   };
 
   const avgKdaA = avg(kdaA);
@@ -420,7 +416,7 @@ function buildRivalryCard(
   // 최근 5경기 박빙(2:3 / 3:2) 가산점
   const closeRecentBonus =
     recent5.length >= 5 &&
-    Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1
+      Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1
       ? 0.03
       : 0;
   rawScore = clamp01(rawScore + closeRecentBonus);

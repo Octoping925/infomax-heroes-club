@@ -68,10 +68,10 @@ function createStatMapFromResponse(
       for (const member of team.members) {
         result[member.id] = {
           hero: member.hero,
-          heroDamage: member.heroDamage ?? 0,
-          siegeDamage: member.siegeDamage ?? 0,
-          damageTaken: member.damageTaken ?? 0,
-          healingDone: member.healingDone ?? 0,
+          heroDamage: member.heroDamage,
+          siegeDamage: member.siegeDamage,
+          damageTaken: member.damageTaken,
+          healingDone: member.healingDone,
         };
       }
     }

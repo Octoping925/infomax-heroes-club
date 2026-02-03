@@ -39,12 +39,8 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   }));
 
   // 팀별로 분리
-  const team1MembersWithRank = membersWithRank
-    .filter((m) => m.teamNumber === 1)
-    .map(({ teamNumber, ...rest }) => rest);
-  const team2MembersWithRank = membersWithRank
-    .filter((m) => m.teamNumber === 2)
-    .map(({ teamNumber, ...rest }) => rest);
+  const team1MembersWithRank = membersWithRank.filter((m) => m.teamNumber === 1);
+  const team2MembersWithRank = membersWithRank.filter((m) => m.teamNumber === 2);
 
   return (
     <div className="bg-white/5 border border-white/10 overflow-hidden transition-all">

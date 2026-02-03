@@ -1,6 +1,5 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
 import { HeroImage, HeroMap } from "@/domain/hots/constants";
-import { Hero } from "@/domain/hots/models";
 import Image from "next/image";
 
 type GameTeamBan =
@@ -18,15 +17,11 @@ export function Ban({ bans }: Props) {
   const banData = bans
     .toSorted((a, b) => a.banOrder - b.banOrder)
     .map((ban) => {
-      const heroKey = ban.hero as Hero;
-      const heroLabel =
-        (HeroMap as Record<string, string>)[ban.hero] ?? ban.hero;
-      const heroImage = (HeroImage as Record<string, string | undefined>)[
-        ban.hero
-      ];
+      const heroLabel = HeroMap[ban.hero] ?? ban.hero;
+      const heroImage = HeroImage[ban.hero];
 
       return {
-        heroKey,
+        heroKey: ban.hero,
         heroLabel,
         heroImage,
         banOrder: ban.banOrder,
@@ -38,7 +33,7 @@ export function Ban({ bans }: Props) {
     <div className="flex items-center gap-2 mb-3 text-sm font-bold text-gray-500">
       밴
       {banData.map((ban) => {
-        const { heroKey, heroLabel, heroImage } = ban;
+        const { heroLabel, heroImage } = ban;
 
         return (
           <div
@@ -60,7 +55,7 @@ export function Ban({ bans }: Props) {
                 />
               </div>
             ) : (
-              <span className="text-xs text-gray-300 font-bold">{heroKey}</span>
+              <span className="text-xs text-gray-300 font-bold">{ban.hero}</span>
             )}
             <span className="text-xs text-gray-300 font-bold">{heroLabel}</span>
           </div>

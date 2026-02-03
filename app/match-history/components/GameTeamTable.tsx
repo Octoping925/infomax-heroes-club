@@ -1,6 +1,6 @@
 import { MatchHistoryItem } from "@/app/api/matches/route";
 import { HeroImage } from "@/domain/hots/constants";
-import { Hero, HeroRole } from "@/domain/hots/models";
+import { HeroRole } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
 import { sumBy } from "es-toolkit";
 import Image from "next/image";
@@ -41,9 +41,9 @@ export function GameTeamTable({
   members,
   accent,
 }: GameTeamTableProps) {
-  const totalKill = sumBy(members, (m) => m.kills ?? 0);
-  const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage || 0));
-  const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken || 0));
+  const totalKill = sumBy(members, (m) => m.kills);
+  const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage));
+  const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken));
 
   return (
     <div
@@ -79,7 +79,7 @@ export function GameTeamTable({
                 <td className="py-2.5">
                   <div className="relative w-8 h-8 rounded-lg overflow-hidden">
                     <Image
-                      src={HeroImage[member.hero as Hero]}
+                      src={HeroImage[member.hero]}
                       alt={member.hero}
                       width={30}
                       height={30}
@@ -118,15 +118,15 @@ export function GameTeamTable({
                         (
                         {totalKill > 0
                           ? `${Math.round(
-                            (member.takedowns! / totalKill) * 100
+                            (member.takedowns / totalKill) * 100
                           )}%`
                           : "0%"}
                         )
                       </span>
                     </div>
                     <Kda
-                      deaths={member.deaths ?? 0}
-                      takedowns={member.takedowns ?? 0}
+                      deaths={member.deaths}
+                      takedowns={member.takedowns}
                     />
                   </div>
                 </td>
@@ -152,8 +152,7 @@ export function GameTeamTable({
                     <span className="tabular-nums text-sm font-bold text-gray-300">
                       {member.damageTaken ? commarize(member.damageTaken) : "-"}
                     </span>
-                    {typeof member.damageTaken === "number" &&
-                      maxDamageTaken > 0 ? (
+                    {maxDamageTaken > 0 ? (
                       <DamageBar
                         damage={member.damageTaken}
                         maxDamage={maxDamageTaken}
