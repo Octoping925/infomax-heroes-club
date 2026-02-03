@@ -23,56 +23,24 @@ export function TopBar({
           <p className="text-xs text-gray-500">{description}</p>
         </div>
         <nav className="flex gap-2">
-          <Link
-            href="/"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              value === "home" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            홈
-          </Link>
-          <Link
-            href="/stats"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              value === "stats" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            통계
-          </Link>
-          <Link
-            href="/glossary"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              value === "glossary" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            단어장
-          </Link>
-          <Link
-            href="/gallery"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              value === "gallery" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            갤러리
-          </Link>
-          <Link
-            href="/admin/match"
-            className={`px-4 py-2 rounded-lg text-sm font-medium max-lg:hidden ${
-              value === "match" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            경기입력
-          </Link>
-          <Link
-            href="/admin/match/bans"
-            className={`px-4 py-2 rounded-lg text-sm font-medium max-lg:hidden ${
-              value === "bans" ? selectedStyle : unselectedStyle
-            }`}
-          >
-            밴입력
-          </Link>
+          <NavLink label="홈" href="/" isSelected={value === "home"} />
+          <NavLink label="통계" href="/stats" isSelected={value === "stats"} />
+          <NavLink label="단어장" href="/glossary" isSelected={value === "glossary"} />
+          <NavLink label="갤러리" href="/gallery" isSelected={value === "gallery"} />
+          <NavLink label="경기입력" href="/admin/match" isSelected={value === "match"} />
+          <NavLink label="밴입력" href="/admin/match/bans" isSelected={value === "bans"} />
+          <NavLink label="전적입력" href="/admin/match/stats" isSelected={value === "match-stats"} />
+
         </nav>
       </div>
     </header>
+  );
+}
+
+function NavLink({ href, label, isSelected }: { href: string; label: string, isSelected: boolean }) {
+  return (
+    <Link href={href} className={`px-4 py-2 rounded-lg text-sm font-medium ${isSelected ? selectedStyle : unselectedStyle}`}>
+      {label}
+    </Link>
   );
 }
