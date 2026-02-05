@@ -168,7 +168,7 @@ function RivalryCard(input: { readonly card: RivalryCardResponse; readonly varia
       className={[
         "rounded-2xl border backdrop-blur-xl p-5",
         variant === "hottest"
-          ? "bg-gradient-to-br from-cyan-500/10 via-white/5 to-purple-500/10 border-cyan-500/30"
+          ? "bg-linear-to-br from-cyan-500/10 via-white/5 to-purple-500/10 border-cyan-500/30"
           : "bg-white/5 border-white/10",
       ].join(" ")}
     >
@@ -209,10 +209,8 @@ function RivalryCard(input: { readonly card: RivalryCardResponse; readonly varia
             <p className="text-sm">
               {lead === "tie" ? (
                 <span className="text-gray-300">호각</span>
-              ) : lead === "A" ? (
-                <span className="text-green-400">{a.playerNickname} 우세</span>
               ) : (
-                <span className="text-green-400">{b.playerNickname} 우세</span>
+                <span className="text-green-400">{lead === "A" ? a.playerNickname : b.playerNickname} 우세</span>
               )}
             </p>
           </div>
