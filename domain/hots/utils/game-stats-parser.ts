@@ -25,14 +25,10 @@ export type ParsedGameStats = {
 };
 
 // 한글 영웅 이름 → Hero enum 매핑 (역방향)
-const koreanToHeroMap = new Map<string, Hero>(
-  Object.entries(HeroMap).map(([key, value]) => [value, key as Hero])
-);
+const koreanToHeroMap = new Map<string, Hero>(Object.entries(HeroMap).map(([key, value]) => [value, key as Hero]));
 
 // 한글 맵 이름 → GameMap enum 매핑 (역방향)
-const koreanToMapMap = new Map<string, GameMap>(
-  Object.entries(MAPS).map(([key, value]) => [value, key as GameMap])
-);
+const koreanToMapMap = new Map<string, GameMap>(Object.entries(MAPS).map(([key, value]) => [value, key as GameMap]));
 
 /**
  * 게임 스탯 텍스트를 파싱합니다.
@@ -51,9 +47,7 @@ export function parseGameStats(text: string): ParsedGameStats {
 }
 
 function parseMapName(lines: string[]): GameMap {
-  const mapLine = lines.find(
-    (line) => line.startsWith("[") && line.endsWith("]") && !line.includes("(")
-  );
+  const mapLine = lines.find((line) => line.startsWith("[") && line.endsWith("]") && !line.includes("("));
 
   if (!mapLine) {
     throw new Error("맵 이름을 찾을 수 없습니다.");
@@ -117,9 +111,7 @@ function parseTeams(lines: string[]): ParsedTeam[] {
     }
 
     // KDA 파싱: Kill: 2 / Death: 2 / Takedown: 5
-    const kdaMatch = line.match(
-      /Kill:\s*(\d+)\s*\/\s*Death:\s*(\d+)\s*\/\s*Takedown:\s*(\d+)/
-    );
+    const kdaMatch = line.match(/Kill:\s*(\d+)\s*\/\s*Death:\s*(\d+)\s*\/\s*Takedown:\s*(\d+)/);
     if (kdaMatch && currentPlayerData) {
       currentPlayerData.kills = parseInt(kdaMatch[1], 10);
       currentPlayerData.deaths = parseInt(kdaMatch[2], 10);
@@ -128,9 +120,7 @@ function parseTeams(lines: string[]): ParsedTeam[] {
     }
 
     // 데미지 파싱: 가한 데미지: 52,281 / 공성 데미지: 133,642 / 받은 데미지: 60,100
-    const damageMatch = line.match(
-      /가한 데미지:\s*([\d,]+)\s*\/.*\/\s*받은 데미지:\s*([\d,]+)/
-    );
+    const damageMatch = line.match(/가한 데미지:\s*([\d,]+)\s*\/.*\/\s*받은 데미지:\s*([\d,]+)/);
     if (damageMatch && currentPlayerData) {
       currentPlayerData.heroDamage = parseNumberWithCommas(damageMatch[1]);
       currentPlayerData.damageTaken = parseNumberWithCommas(damageMatch[2]);
@@ -157,7 +147,7 @@ function parseTeams(lines: string[]): ParsedTeam[] {
 }
 
 function parseNumberWithCommas(value: string): number {
-  return parseInt(value.replace(/,/g, ""), 10);
+  return Number.parseInt(value.replaceAll(",", ""), 10);
 }
 
 function isCompletePlayerData(data: Partial<ParsedPlayerStat>): boolean {

@@ -6,17 +6,11 @@ interface Props {
   readonly selectedPlayer: PlayerListItem | null;
 }
 
-export function PlayerSidebar({
-  players,
-  setSelectedPlayerId,
-  selectedPlayer,
-}: Props) {
+export function PlayerSidebar({ players, setSelectedPlayerId, selectedPlayer }: Props) {
   return (
     <aside className="w-64 max-lg:w-full shrink-0">
       <div className="sticky top-24 bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-          플레이어 목록
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">플레이어 목록</h3>
 
         <div className="flex lg:flex-col gap-2 space-y-1 max-h-[calc(100vh-250px)] overflow-y-auto scrollbar-hide">
           {players.map((player) => (

@@ -18,7 +18,7 @@ type ScrimTierRule = ScrimTier & {
 
 const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
   {
-    "key": "challenger",
+    key: "challenger",
     label: "챌린저",
     min: 49,
     className: "text-purple-200 bg-purple-500/15 border-purple-400/40",
@@ -55,35 +55,28 @@ const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
   },
 ];
 
-const FALLBACK_TIER = TIER_RULES[TIER_RULES.length - 1];
+const FALLBACK_TIER = TIER_RULES.at(-1)!;
 
 export function useScrimWinRateTier() {
-  return useCallback(
-    (matchStats: WinRateStats, gameStats: WinRateStats): ScrimTierResult => {
-      const score = calculateCompositeScore(matchStats, gameStats);
-      const tier = TIER_RULES.find((entry) => score >= entry.min) ?? FALLBACK_TIER;
+  return useCallback((matchStats: WinRateStats, gameStats: WinRateStats): ScrimTierResult => {
+    const score = calculateCompositeScore(matchStats, gameStats);
+    const tier = TIER_RULES.find((entry) => score >= entry.min) ?? FALLBACK_TIER;
 
-      return { tier, score };
-    },
-    []
-  );
+    return { tier, score };
+  }, []);
 }
-
 
 function calculateCompositeScore(matchStats: WinRateStats, gameStats: WinRateStats) {
   // ---- tunables ----
   const PRIOR_GAMES_K = 15; // 베이지안 프라이어 강도
-  const Z = 1.28;          // 보수성 (≈90% 하한)
+  const Z = 1.28; // 보수성 (≈90% 하한)
   const MATCH_WEIGHT = 0.7;
   const GAME_WEIGHT = 0.35;
 
   const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
   const conservativeBayesScore = (s: WinRateStats): number => {
-    const total =
-      s.totalGames > 0
-        ? s.totalGames
-        : s.wins + s.losses + s.draws;
+    const total = s.totalGames > 0 ? s.totalGames : s.wins + s.losses + s.draws;
 
     if (total <= 0) return 50;
 
@@ -91,9 +84,7 @@ function calculateCompositeScore(matchStats: WinRateStats, gameStats: WinRateSta
     const p0 = 0.5;
 
     // posterior mean
-    const p =
-      (effectiveWins + PRIOR_GAMES_K * p0) /
-      (total + PRIOR_GAMES_K);
+    const p = (effectiveWins + PRIOR_GAMES_K * p0) / (total + PRIOR_GAMES_K);
 
     // uncertainty penalty (lower bound)
     const nEff = total + PRIOR_GAMES_K;

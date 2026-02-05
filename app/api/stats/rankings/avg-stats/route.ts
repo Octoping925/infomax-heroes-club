@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import {
-  PlayerAverageStatsResponse,
-  calculateAverage,
-} from "@/app/api/stats/types";
+import { PlayerAverageStatsResponse, calculateAverage } from "@/app/api/stats/types";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -23,9 +20,7 @@ type PlayerAccumulator = {
  * 평균 스탯 랭킹 조회 (게임 단위)
  * GET /api/stats/rankings/avg-stats
  */
-export async function GET(): Promise<
-  NextResponse<PlayerAverageStatsResponse[]>
-> {
+export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>> {
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
@@ -51,11 +46,7 @@ export async function GET(): Promise<
     const playerId = participation.playerId;
     const current =
       accumulatorMap.get(playerId) ??
-      createAccumulator(
-        playerId,
-        participation.player.name,
-        participation.player.nickname
-      );
+      createAccumulator(playerId, participation.player.name, participation.player.nickname);
 
     current.totalGames++;
     current.totalKills += participation.kills;
@@ -84,11 +75,7 @@ export async function GET(): Promise<
   return NextResponse.json(response);
 }
 
-function createAccumulator(
-  playerId: string,
-  playerName: string,
-  playerNickname: string
-): PlayerAccumulator {
+function createAccumulator(playerId: string, playerName: string, playerNickname: string): PlayerAccumulator {
   return {
     playerId,
     playerName,

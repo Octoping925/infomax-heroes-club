@@ -1,28 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import type { RivalryListResponse } from "@/app/api/stats/types";
-import {
-  fetchRivalries,
-  normalizeFetchRivalriesParams,
-} from "@/domain/hots/service/rivalry-service";
+import { fetchRivalries, normalizeFetchRivalriesParams } from "@/domain/hots/service/rivalry-service";
 import { parseBoolean, parseNumber } from "@/app/api/stats/utils/query";
 
 /**
  * 라이벌리 (A vs B) 카드 목록
  * GET /api/stats/rivalries?minMatches=3&limit=30&takeMatches=500
  */
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<RivalryListResponse | { error: string }>> {
+export async function GET(request: NextRequest): Promise<NextResponse<RivalryListResponse | { error: string }>> {
   try {
     const search = request.nextUrl.searchParams;
     const params = normalizeFetchRivalriesParams({
       minMatches: parseNumber(search.get("minMatches")),
       limit: parseNumber(search.get("limit")),
       takeMatches: parseNumber(search.get("takeMatches")),
-      includeInsufficientSample: parseBoolean(
-        search.get("includeInsufficientSample")
-      ),
+      includeInsufficientSample: parseBoolean(search.get("includeInsufficientSample")),
     });
 
     const response = await fetchRivalries(prisma, params);

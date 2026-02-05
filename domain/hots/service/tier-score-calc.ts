@@ -53,12 +53,7 @@ function wilsonLowerBound(wins: number, games: number, z: number): number {
   return clamp01(lower);
 }
 
-function bayesAdjustedWinRate(
-  wins: number,
-  games: number,
-  priorWinRate: number,
-  priorGames: number
-): number {
+function bayesAdjustedWinRate(wins: number, games: number, priorWinRate: number, priorGames: number): number {
   if (games < 0) throw new Error("games must be >= 0");
   if (priorGames < 0) throw new Error("priorGames must be >= 0");
 
@@ -74,10 +69,7 @@ function bayesAdjustedWinRate(
 /**
  * 3(베이지안/라플라스) + 4(Wilson lower bound) 혼합 점수
  */
-export function scoreHeroes(
-  stats: HeroStat[],
-  opts: ScoreOptions
-): Record<string, ScoredHero> {
+export function scoreHeroes(stats: HeroStat[], opts: ScoreOptions): Record<string, ScoredHero> {
   const z = opts.z ?? 1.96; // default 95%
   const mixK = opts.mixK ?? 10; // default: 10판 정도부터 점점 bayes 비중 증가
 
@@ -88,12 +80,7 @@ export function scoreHeroes(
       const games = wins + losses;
 
       const rawWinRate = games > 0 ? wins / games : 0;
-      const bayesWinRate = bayesAdjustedWinRate(
-        wins,
-        games,
-        opts.priorWinRate,
-        opts.priorGames
-      );
+      const bayesWinRate = bayesAdjustedWinRate(wins, games, opts.priorWinRate, opts.priorGames);
       const wilsonLower = wilsonLowerBound(wins, games, z);
 
       // α(n) = n / (n + k)
@@ -111,8 +98,11 @@ export function scoreHeroes(
         score: clamp01(score),
       };
     })
-    .reduce((acc, curr) => {
-      acc[curr.hero] = curr;
-      return acc;
-    }, {} as Record<string, ScoredHero>);
+    .reduce(
+      (acc, curr) => {
+        acc[curr.hero] = curr;
+        return acc;
+      },
+      {} as Record<string, ScoredHero>,
+    );
 }

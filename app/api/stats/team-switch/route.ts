@@ -16,9 +16,7 @@ import { fetchPlayerMap } from "../utils/player";
  *
  * 초기 편성(MatchTeam)과 다른 팀(GameTeam)에서 뛴 경기의 승률을 비교합니다.
  */
-export async function GET(): Promise<
-  NextResponse<TeamSwitchWinRateResponse[]>
-> {
+export async function GET(): Promise<NextResponse<TeamSwitchWinRateResponse[]>> {
   const [players, participations, matchTeamMemberships] = await Promise.all([
     fetchPlayerMap(),
     prisma.gameTeamMember.findMany({
@@ -50,8 +48,7 @@ export async function GET(): Promise<
     }),
   ]);
 
-  const originalTeamMapByPlayer =
-    getOriginalTeamMapByPlayer(matchTeamMemberships);
+  const originalTeamMapByPlayer = getOriginalTeamMapByPlayer(matchTeamMemberships);
 
   const playerStats = getPlayerStats(participations, originalTeamMapByPlayer);
 
@@ -74,8 +71,7 @@ export async function GET(): Promise<
       playerNickname: player.nickname,
       originalTeamStats,
       switchedTeamStats,
-      switchedWinRateDiff:
-        switchedTeamStats.winRate - originalTeamStats.winRate,
+      switchedWinRateDiff: switchedTeamStats.winRate - originalTeamStats.winRate,
     });
   }
 
@@ -86,7 +82,7 @@ export async function GET(): Promise<
       headers: {
         "Cache-Control": "public, max-age=86400",
       },
-    }
+    },
   );
 }
 
@@ -94,7 +90,7 @@ function getOriginalTeamMapByPlayer(
   matchTeamMemberships: {
     playerId: string;
     matchTeam: { id: string; matchId: string };
-  }[]
+  }[],
 ) {
   return matchTeamMemberships.reduce((acc, m) => {
     const perPlayer = acc.get(m.playerId) ?? new Map();
@@ -116,21 +112,16 @@ function getPlayerStats(
       };
     };
   }[],
-  originalTeamMapByPlayer: Map<string, Map<string, string>>
+  originalTeamMapByPlayer: Map<string, Map<string, string>>,
 ) {
-  const statsByPlayer = new Map<
-    string,
-    { original: ResultCounts; switched: ResultCounts }
-  >();
+  const statsByPlayer = new Map<string, { original: ResultCounts; switched: ResultCounts }>();
 
   for (const p of participations) {
     const playerId = p.playerId;
     const matchId = p.gameTeam.game.matchId;
     const currentMatchTeamId = p.gameTeam.sourceMatchTeamId;
 
-    const originalMatchTeamId = originalTeamMapByPlayer
-      .get(playerId)
-      ?.get(matchId);
+    const originalMatchTeamId = originalTeamMapByPlayer.get(playerId)?.get(matchId);
 
     const playerStats = statsByPlayer.get(playerId) ?? {
       original: createResultCounts(),

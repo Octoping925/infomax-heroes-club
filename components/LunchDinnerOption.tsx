@@ -8,10 +8,7 @@ interface LunchDinnerOptionProps {
 export function LunchDinnerOption({ unit, setUnit }: LunchDinnerOptionProps) {
   return (
     <div className="flex items-center justify-end gap-3 mb-4">
-      <label
-        htmlFor="winrate-unit-select"
-        className="text-gray-300 text-sm font-medium"
-      >
+      <label htmlFor="winrate-unit-select" className="text-gray-300 text-sm font-medium">
         구분
       </label>
       <select

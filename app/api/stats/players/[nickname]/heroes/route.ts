@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult } from "@/generated/prisma/client";
-import {
-  PlayerHeroWinRateResponse,
-  HeroWinRateResponse,
-} from "@/app/api/stats/types";
+import { PlayerHeroWinRateResponse, HeroWinRateResponse } from "@/app/api/stats/types";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
@@ -23,7 +20,7 @@ type RouteParams = {
  */
 export async function GET(
   _request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<PlayerHeroWinRateResponse | { error: string }>> {
   const { nickname } = await params;
 
@@ -69,9 +66,7 @@ type GameResultWithHero = {
   gameTeam: { result: GameResult };
 };
 
-function aggregateHeroStats(
-  results: GameResultWithHero[]
-): HeroWinRateResponse[] {
+function aggregateHeroStats(results: GameResultWithHero[]): HeroWinRateResponse[] {
   const heroMap = new Map<Hero, ResultCounts>();
 
   for (const result of results) {
@@ -80,10 +75,8 @@ function aggregateHeroStats(
     heroMap.set(result.hero, current);
   }
 
-  return Array.from(heroMap.entries())
-    .map(([hero, stats]) => ({
-      hero,
-      ...buildWinRateStatsFromCounts(stats),
-    }))
-    .sort((a, b) => b.totalGames - a.totalGames);
+  return Array.from(heroMap.entries(), ([hero, stats]) => ({
+    hero,
+    ...buildWinRateStatsFromCounts(stats),
+  })).toSorted((a, b) => b.totalGames - a.totalGames);
 }

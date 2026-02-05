@@ -19,9 +19,7 @@ export default async function GalleryPage(): Promise<ReactElement> {
       <main className="max-w-6xl mx-auto px-6 py-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold">사진집</h2>
-          <p className="text-sm text-gray-400">
-            클릭하면 크게 보기(캐러셀)로 열립니다.
-          </p>
+          <p className="text-sm text-gray-400">클릭하면 크게 보기(캐러셀)로 열립니다.</p>
         </div>
         <Suspense fallback={<Loading />}>
           <AlbumGallery images={images} />

@@ -26,14 +26,11 @@ export function RivalryTab() {
       <>
         <p className="text-gray-400">
           <span className="text-white">내전 1건</span>을 1회 맞대결로 보고,{" "}
-          <span className="text-white">승률 균형(50:50)</span> +{" "}
-          <span className="text-white">최근 경기 가중</span> +{" "}
-          <span className="text-white">퍼포먼스 격차(작을수록 가산)</span>로
-          점수를 계산합니다.
+          <span className="text-white">승률 균형(50:50)</span> + <span className="text-white">최근 경기 가중</span> +{" "}
+          <span className="text-white">퍼포먼스 격차(작을수록 가산)</span>로 점수를 계산합니다.
         </p>
         <p className="text-xs text-gray-500">
-          표본이 적은 페어는 기본적으로 제외되며(최소 {params.minMatches}회),
-          옵션으로 포함할 수 있습니다.
+          표본이 적은 페어는 기본적으로 제외되며(최소 {params.minMatches}회), 옵션으로 포함할 수 있습니다.
         </p>
       </>
     );
@@ -61,10 +58,7 @@ export function RivalryTab() {
 
   return (
     <section className="space-y-6">
-      <Title
-        title="라이벌리"
-        description="가장 뜨거운 1:1 구도를 찾아봅니다."
-      />
+      <Title title="라이벌리" description="가장 뜨거운 1:1 구도를 찾아봅니다." />
       <div className="space-y-2">{note}</div>
       <RivalryControls params={params} setParams={setParams} />
 
@@ -118,9 +112,7 @@ function RivalryControls(input: {
           min={1}
           max={200}
           value={params.limit}
-          onChange={(e) =>
-            setParams((prev) => ({ ...prev, limit: Number(e.target.value) }))
-          }
+          onChange={(e) => setParams((prev) => ({ ...prev, limit: Number(e.target.value) }))}
           className="w-32 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
         />
       </label>
@@ -160,10 +152,7 @@ function RivalryControls(input: {
   );
 }
 
-function RivalryCard(input: {
-  readonly card: RivalryCardResponse;
-  readonly variant: "hottest" | "normal";
-}) {
+function RivalryCard(input: { readonly card: RivalryCardResponse; readonly variant: "hottest" | "normal" }) {
   const { card, variant } = input;
 
   const a = card.playerA;
@@ -171,12 +160,8 @@ function RivalryCard(input: {
   const total = card.breakdown.matchesCount;
   const lead = a.wins === b.wins ? "tie" : a.wins > b.wins ? "A" : "B";
 
-  const heroNamesA = card.topHeroes.playerA
-    .map((h) => `${HeroMap[h.hero] ?? String(h.hero)}(${h.count})`)
-    .join(", ");
-  const heroNamesB = card.topHeroes.playerB
-    .map((h) => `${HeroMap[h.hero] ?? String(h.hero)}(${h.count})`)
-    .join(", ");
+  const heroNamesA = card.topHeroes.playerA.map((h) => `${HeroMap[h.hero] ?? String(h.hero)}(${h.count})`).join(", ");
+  const heroNamesB = card.topHeroes.playerB.map((h) => `${HeroMap[h.hero] ?? String(h.hero)}(${h.count})`).join(", ");
 
   return (
     <article
@@ -191,8 +176,7 @@ function RivalryCard(input: {
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-lg font-bold text-white truncate">
-              {a.playerNickname} <span className="text-gray-400">vs</span>{" "}
-              {b.playerNickname}
+              {a.playerNickname} <span className="text-gray-400">vs</span> {b.playerNickname}
             </h3>
             <span className="px-2 py-1 rounded-full text-xs border border-white/10 bg-white/5 text-gray-200">
               점수 {card.score}
@@ -211,9 +195,7 @@ function RivalryCard(input: {
 
         <div className="text-right shrink-0">
           <p className="text-xs text-gray-400">최근 경기</p>
-          <p className="text-sm text-gray-200">
-            {dayjs(card.lastPlayedAt).format("YYYY-MM-DD")}
-          </p>
+          <p className="text-sm text-gray-200">{dayjs(card.lastPlayedAt).format("YYYY-MM-DD")}</p>
         </div>
       </div>
 
@@ -235,8 +217,7 @@ function RivalryCard(input: {
             </p>
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            승률 {a.playerNickname} {a.winRate}% · {b.playerNickname}{" "}
-            {b.winRate}%
+            승률 {a.playerNickname} {a.winRate}% · {b.playerNickname} {b.winRate}%
           </p>
         </section>
 
@@ -251,20 +232,10 @@ function RivalryCard(input: {
               {card.recent5.sequence.map((r, idx) => (
                 <span
                   key={`${card.id}-r5-${idx}`}
-                  title={
-                    r === "A"
-                      ? a.playerNickname
-                      : r === "B"
-                      ? b.playerNickname
-                      : "무승부"
-                  }
+                  title={r === "A" ? a.playerNickname : r === "B" ? b.playerNickname : "무승부"}
                   className={[
                     "w-3 h-3 rounded-full border border-white/10",
-                    r === "A"
-                      ? "bg-cyan-400/90"
-                      : r === "B"
-                      ? "bg-purple-400/90"
-                      : "bg-gray-500/80",
+                    r === "A" ? "bg-cyan-400/90" : r === "B" ? "bg-purple-400/90" : "bg-gray-500/80",
                   ].join(" ")}
                 />
               ))}
@@ -281,18 +252,14 @@ function RivalryCard(input: {
               <p className="text-xs text-gray-500">점심</p>
               <p className="text-sm text-gray-200">
                 {card.lunchDinner.lunch.winsA}:{card.lunchDinner.lunch.winsB}
-                {card.lunchDinner.lunch.draws > 0
-                  ? ` (무 ${card.lunchDinner.lunch.draws})`
-                  : ""}
+                {card.lunchDinner.lunch.draws > 0 ? ` (무 ${card.lunchDinner.lunch.draws})` : ""}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500">저녁</p>
               <p className="text-sm text-gray-200">
                 {card.lunchDinner.dinner.winsA}:{card.lunchDinner.dinner.winsB}
-                {card.lunchDinner.dinner.draws > 0
-                  ? ` (무 ${card.lunchDinner.dinner.draws})`
-                  : ""}
+                {card.lunchDinner.dinner.draws > 0 ? ` (무 ${card.lunchDinner.dinner.draws})` : ""}
               </p>
             </div>
           </div>
@@ -314,17 +281,12 @@ function RivalryCard(input: {
       </div>
 
       <details className="mt-4">
-        <summary className="text-xs text-gray-400 cursor-pointer select-none">
-          점수 구성 보기
-        </summary>
+        <summary className="text-xs text-gray-400 cursor-pointer select-none">점수 구성 보기</summary>
         <div className="mt-2 text-xs text-gray-400 grid grid-cols-2 lg:grid-cols-5 gap-2">
           <ScorePill label="횟수" value={card.breakdown.countScore} />
           <ScorePill label="균형" value={card.breakdown.balance} />
           <ScorePill label="최근성" value={card.breakdown.recency} />
-          <ScorePill
-            label="퍼포먼스(격차↓)"
-            value={card.breakdown.performanceCloseness}
-          />
+          <ScorePill label="퍼포먼스(격차↓)" value={card.breakdown.performanceCloseness} />
           <ScorePill label="raw" value={card.breakdown.rawScore} />
         </div>
       </details>

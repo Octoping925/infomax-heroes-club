@@ -21,10 +21,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   const gameLengthSeconds = game.gameLength % 60;
   const formattedGameLength = `${gameLengthMinutes}:${gameLengthSeconds.toString().padStart(2, "0")}`;
 
-  const maxTeamLevel = Math.max(
-    team1?.teamLevel ?? 0,
-    team2?.teamLevel ?? 0
-  );
+  const maxTeamLevel = Math.max(team1?.teamLevel ?? 0, team2?.teamLevel ?? 0);
 
   // 전체 게임 플레이어를 정렬하여 등수 계산 (가라로 1~10등)
   const allMembers = [
@@ -61,10 +58,11 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
             </span>
           ) : (
             <span
-              className={`text-sm font-bold tracking-widest px-2 py-0.5 rounded border ${isTeam1Winner
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
-                : "bg-purple-500/10 text-purple-400 border-purple-500/30"
-                }`}
+              className={`text-sm font-bold tracking-widest px-2 py-0.5 rounded border ${
+                isTeam1Winner
+                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                  : "bg-purple-500/10 text-purple-400 border-purple-500/30"
+              }`}
             >
               {game.winnerTeamNumber === 1 ? team1Name : team2Name} 승
             </span>

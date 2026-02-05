@@ -39,18 +39,13 @@ export function PersonalStatTab() {
       <div className="w-full flex flex-col gap-12">
         {isCardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div
-              className="absolute inset-0 bg-black/70"
-              onClick={() => setIsCardModalOpen(false)}
-            />
+            <div className="absolute inset-0 bg-black/70" onClick={() => setIsCardModalOpen(false)} />
             <div
               className="relative w-full max-w-4xl rounded-2xl border border-white/10 bg-[#0b0f1c] p-6 shadow-xl"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-white">
-                  전적 카드 생성
-                </h3>
+                <h3 className="text-lg font-semibold text-white">전적 카드 생성</h3>
                 <button
                   onClick={() => setIsCardModalOpen(false)}
                   className="rounded-lg border border-white/10 px-3 py-1 text-sm text-gray-300 hover:bg-white/10"

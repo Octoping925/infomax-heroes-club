@@ -14,7 +14,7 @@ type RouteParams = {
  */
 export async function GET(
   _request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<HeroWinRateResponse | { error: string }>> {
   const { hero } = await params;
 
@@ -33,9 +33,7 @@ export async function GET(
     },
   });
 
-  const stats = buildWinRateStatsFromResults(
-    gameResults.map((r) => r.gameTeam.result)
-  );
+  const stats = buildWinRateStatsFromResults(gameResults.map((r) => r.gameTeam.result));
 
   return NextResponse.json({ hero, ...stats });
 }

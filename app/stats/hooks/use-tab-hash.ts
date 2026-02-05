@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
-export function useHashSyncedTab<T extends string>(
-  defaultValue: T,
-  tabs: ReadonlyArray<T>
-) {
+export function useHashSyncedTab<T extends string>(defaultValue: T, tabs: ReadonlyArray<T>) {
   const [value, setValue] = useState<T>(defaultValue);
 
   const setValueAndHash = useCallback((nextValue: T) => {
@@ -14,9 +11,7 @@ export function useHashSyncedTab<T extends string>(
     }
   }, []);
 
-  const isValid = useEffectEvent((value: string): value is T =>
-    tabs.includes(value as T)
-  );
+  const isValid = useEffectEvent((value: string): value is T => tabs.includes(value as T));
 
   useEffect(() => {
     if (globalThis.window === undefined) return;

@@ -6,13 +6,7 @@ export interface AlbumImage {
   readonly alt: string;
 }
 
-const ALLOWED_EXTENSIONS = new Set<string>([
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".webp",
-  ".gif",
-]);
+const ALLOWED_EXTENSIONS = new Set<string>([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 function isAllowedImageExtension(fileName: string): boolean {
   const extension = path.extname(fileName).toLowerCase();
@@ -41,7 +35,7 @@ export async function getAlbumImages(): Promise<AlbumImage[]> {
         (fileName): AlbumImage => ({
           src: `/album/${encodeURIComponent(fileName)}`,
           alt: convertFileNameToAltText(fileName),
-        })
+        }),
       );
   } catch {
     return [];

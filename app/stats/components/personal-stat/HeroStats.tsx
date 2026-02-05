@@ -1,7 +1,6 @@
 import { Loading } from "@/components/Loading";
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
 import { HeroMap } from "@/domain/hots/constants";
-import { Hero } from "@/domain/hots/models";
 import { Suspense } from "react";
 import {
   BarChart,
@@ -32,7 +31,7 @@ export function HeroStats({ nickname }: Props) {
 
   const chartData =
     data?.heroStats.map((stat) => ({
-      name: HeroMap[stat.hero as Hero] || stat.hero,
+      name: HeroMap[stat.hero] || stat.hero,
       totalGames: stat.totalGames,
       winRate: stat.winRate,
       wins: stat.wins,
@@ -45,9 +44,7 @@ export function HeroStats({ nickname }: Props) {
       <Suspense fallback={<Loading />}>
         {/* 경기 수 차트 */}
         <div className="space-y-3 w-full">
-          <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">
-            영웅별 경기 수
-          </h3>
+          <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">영웅별 경기 수</h3>
           <div
             style={{
               width: "100%",
@@ -58,13 +55,7 @@ export function HeroStats({ nickname }: Props) {
               <BarChart data={chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" stroke="#888" />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={80}
-                  stroke="#888"
-                  tick={{ fontSize: 12 }}
-                />
+                <YAxis type="category" dataKey="name" width={80} stroke="#888" tick={{ fontSize: 12 }} />
                 <Tooltip content={HeroRateTooltip} />
                 <Bar dataKey="totalGames" name="경기 수" fill="#7b2ff7" />
               </BarChart>
@@ -74,9 +65,7 @@ export function HeroStats({ nickname }: Props) {
 
         {/* 승률 차트 */}
         <div className="space-y-3 w-full">
-          <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">
-            영웅별 승률
-          </h3>
+          <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">영웅별 승률</h3>
           <div
             style={{
               width: "100%",
@@ -87,20 +76,11 @@ export function HeroStats({ nickname }: Props) {
               <BarChart data={chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={80}
-                  stroke="#888"
-                  tick={{ fontSize: 12 }}
-                />
+                <YAxis type="category" dataKey="name" width={80} stroke="#888" tick={{ fontSize: 12 }} />
                 <Tooltip content={HeroRateTooltip} />
                 <Bar dataKey="winRate" name="승률" fill="#22c55e">
                   {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"}
-                    />
+                    <Cell key={`cell-${index}`} fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -112,11 +92,7 @@ export function HeroStats({ nickname }: Props) {
   );
 }
 
-function HeroRateTooltip({
-  active,
-  payload,
-  label,
-}: TooltipContentProps<number, string>) {
+function HeroRateTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
   if (!active || !payload || !payload.length || !payload[0].payload) {
     return null;
   }

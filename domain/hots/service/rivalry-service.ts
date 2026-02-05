@@ -67,22 +67,11 @@ const DEFAULT_PARAMS: FetchRivalriesParams = {
 const MAX_TAKE_MATCHES = 2000;
 const MAX_LIMIT = 200;
 
-export function normalizeFetchRivalriesParams(
-  input: Partial<FetchRivalriesParams>
-): FetchRivalriesParams {
-  const minMatches = clamp(
-    input.minMatches ?? DEFAULT_PARAMS.minMatches,
-    1,
-    50
-  );
+export function normalizeFetchRivalriesParams(input: Partial<FetchRivalriesParams>): FetchRivalriesParams {
+  const minMatches = clamp(input.minMatches ?? DEFAULT_PARAMS.minMatches, 1, 50);
   const limit = clamp(input.limit ?? DEFAULT_PARAMS.limit, 1, MAX_LIMIT);
-  const takeMatches = clamp(
-    input.takeMatches ?? DEFAULT_PARAMS.takeMatches,
-    1,
-    MAX_TAKE_MATCHES
-  );
-  const includeInsufficientSample =
-    input.includeInsufficientSample ?? DEFAULT_PARAMS.includeInsufficientSample;
+  const takeMatches = clamp(input.takeMatches ?? DEFAULT_PARAMS.takeMatches, 1, MAX_TAKE_MATCHES);
+  const includeInsufficientSample = input.includeInsufficientSample ?? DEFAULT_PARAMS.includeInsufficientSample;
   return { minMatches, limit, takeMatches, includeInsufficientSample };
 }
 
@@ -93,10 +82,7 @@ export function normalizeFetchRivalriesParams(
  * - 같은 match에서 A와 B가 서로 다른 GameTeam(실제론 MatchTeam teamNumber로 충분) 이면 A vs B 맞대결 1회
  * - 집계 단위는 match(내전 1건) 입니다.
  */
-export async function fetchRivalries(
-  prisma: PrismaClient,
-  params: FetchRivalriesParams
-): Promise<RivalryListResponse> {
+export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalriesParams): Promise<RivalryListResponse> {
   const normalizedParams = normalizeFetchRivalriesParams(params);
   const playerMap = await fetchPlayerMap();
 
@@ -173,10 +159,7 @@ export async function fetchRivalries(
         const pairId = `${a.playerId}:${b.playerId}`;
         const acc = pairMap.get(pairId) ?? createPairAccumulator(pairId, a, b);
 
-        const resultForA = toResultForA(
-          match.winnerTeamNumber,
-          teamNumberByPlayerId.get(a.playerId) ?? null
-        );
+        const resultForA = toResultForA(match.winnerTeamNumber, teamNumberByPlayerId.get(a.playerId) ?? null);
 
         acc.matches.push({
           matchId: match.id,
@@ -186,12 +169,7 @@ export async function fetchRivalries(
         });
 
         updateWinLossCounts(acc, resultForA, match.type);
-        updateHeroCountsAndPerformance(
-          acc,
-          match.games,
-          a.playerId,
-          b.playerId
-        );
+        updateHeroCountsAndPerformance(acc, match.games, a.playerId, b.playerId);
 
         pairMap.set(pairId, acc);
       }
@@ -199,16 +177,13 @@ export async function fetchRivalries(
   }
 
   const cards: RivalryCardResponse[] = Array.from(pairMap.values(), (acc) =>
-    buildRivalryCard(acc, overallWinRateByPlayerId)
+    buildRivalryCard(acc, overallWinRateByPlayerId),
   )
     .filter((card) => {
       if (normalizedParams.includeInsufficientSample) return true;
       return card.breakdown.matchesCount >= normalizedParams.minMatches;
     })
-    .sort(
-      (a, b) =>
-        b.score - a.score || b.breakdown.matchesCount - a.breakdown.matchesCount
-    )
+    .sort((a, b) => b.score - a.score || b.breakdown.matchesCount - a.breakdown.matchesCount)
     .slice(0, normalizedParams.limit);
 
   return {
@@ -219,11 +194,7 @@ export async function fetchRivalries(
   };
 }
 
-function createPairAccumulator(
-  id: string,
-  a: PlayerInfo,
-  b: PlayerInfo
-): PairAccumulator {
+function createPairAccumulator(id: string, a: PlayerInfo, b: PlayerInfo): PairAccumulator {
   return {
     id,
     a,
@@ -240,11 +211,7 @@ function createPairAccumulator(
   };
 }
 
-function updateWinLossCounts(
-  acc: PairAccumulator,
-  resultForA: "WIN" | "LOSE" | "DRAW",
-  matchType: MatchType
-) {
+function updateWinLossCounts(acc: PairAccumulator, resultForA: "WIN" | "LOSE" | "DRAW", matchType: MatchType) {
   const bucket = matchType === MatchType.LUNCH ? acc.lunch : acc.dinner;
   if (resultForA === "DRAW") {
     acc.draws += 1;
@@ -276,7 +243,7 @@ function updateHeroCountsAndPerformance(
     }[];
   }[],
   aId: string,
-  bId: string
+  bId: string,
 ) {
   // 퍼포먼스는 game 단위로 계산 후 match 단위 평균
   const kdaA: number[] = [];
@@ -295,15 +262,9 @@ function updateHeroCountsAndPerformance(
 
         // hero 카운트 (대표 영웅)
         if (member.playerId === aId) {
-          acc.heroCountsA.set(
-            member.hero,
-            (acc.heroCountsA.get(member.hero) ?? 0) + 1
-          );
+          acc.heroCountsA.set(member.hero, (acc.heroCountsA.get(member.hero) ?? 0) + 1);
         } else {
-          acc.heroCountsB.set(
-            member.hero,
-            (acc.heroCountsB.get(member.hero) ?? 0) + 1
-          );
+          acc.heroCountsB.set(member.hero, (acc.heroCountsB.get(member.hero) ?? 0) + 1);
         }
 
         const kda = member.takedowns / Math.max(1, member.deaths);
@@ -355,11 +316,9 @@ function updateHeroCountsAndPerformance(
 
 function buildRivalryCard(
   acc: PairAccumulator,
-  overallWinRateByPlayerId: Map<string, OverallWinRate>
+  overallWinRateByPlayerId: Map<string, OverallWinRate>,
 ): RivalryCardResponse {
-  const matchesSorted = [...acc.matches].sort(
-    (a, b) => b.playedAt.getTime() - a.playedAt.getTime()
-  );
+  const matchesSorted = [...acc.matches].sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime());
   const lastPlayedAt = matchesSorted[0]?.playedAt ?? new Date(0);
 
   const winRateA = toWinRate01(acc.winsA, acc.winsB);
@@ -398,7 +357,7 @@ function buildRivalryCard(
       else acc.draws += 1;
       return acc;
     },
-    { winsA: 0, winsB: 0, draws: 0 }
+    { winsA: 0, winsB: 0, draws: 0 },
   );
 
   const balance = 1 - Math.abs(winRateA - winRateB); // 0~1
@@ -407,18 +366,10 @@ function buildRivalryCard(
 
   const performanceCloseness = computePerformanceCloseness(acc.perfSamples);
 
-  let rawScore =
-    0.3 * countScore +
-    0.3 * balance +
-    0.2 * recency +
-    0.2 * performanceCloseness;
+  let rawScore = 0.3 * countScore + 0.3 * balance + 0.2 * recency + 0.2 * performanceCloseness;
 
   // 최근 5경기 박빙(2:3 / 3:2) 가산점
-  const closeRecentBonus =
-    recent5.length >= 5 &&
-      Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1
-      ? 0.03
-      : 0;
+  const closeRecentBonus = recent5.length >= 5 && Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1 ? 0.03 : 0;
   rawScore = clamp01(rawScore + closeRecentBonus);
 
   const breakdown: RivalryScoreBreakdown = {
@@ -432,13 +383,7 @@ function buildRivalryCard(
 
   const score = Math.round(rawScore * 100);
 
-  const labels = buildLabels(
-    acc,
-    winRateA,
-    winRateB,
-    recent5Counts,
-    overallWinRateByPlayerId
-  );
+  const labels = buildLabels(acc, winRateA, winRateB, recent5Counts, overallWinRateByPlayerId);
 
   const comment = buildComment(acc, labels, recent5Counts);
 
@@ -479,7 +424,7 @@ function buildLabels(
   winRateA: number, // 0~1
   winRateB: number, // 0~1
   recent5Counts: { winsA: number; winsB: number; draws: number },
-  overallWinRateByPlayerId: Map<string, OverallWinRate>
+  overallWinRateByPlayerId: Map<string, OverallWinRate>,
 ): RivalryLabel[] {
   const labels: RivalryLabel[] = [];
   const matchesCount = acc.matches.length;
@@ -514,8 +459,7 @@ function buildLabels(
 
   // 박빙 흐름 배지(라벨 타입은 그대로 두고 텍스트만 추가)
   const closeRecent =
-    recent5Counts.winsA + recent5Counts.winsB >= 5 &&
-    Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1;
+    recent5Counts.winsA + recent5Counts.winsB >= 5 && Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1;
   if (matchesCount >= 5 && closeRecent) {
     labels.push({ type: "DESTINED_RIVAL", text: "최근 5경기 박빙" });
   }
@@ -526,7 +470,7 @@ function buildLabels(
 function buildComment(
   acc: PairAccumulator,
   labels: RivalryLabel[],
-  recent5Counts: { winsA: number; winsB: number; draws: number }
+  recent5Counts: { winsA: number; winsB: number; draws: number },
 ): string {
   const aNick = acc.a.playerNickname;
   const bNick = acc.b.playerNickname;
@@ -579,25 +523,19 @@ function computeRecency(matchesSorted: ReadonlyArray<H2HMatch>): number {
   if (matchesSorted.length === 0) return 0;
 
   const last = matchesSorted[0];
-  const daysSinceLast =
-    (Date.now() - last.playedAt.getTime()) / (1000 * 60 * 60 * 24);
+  const daysSinceLast = (Date.now() - last.playedAt.getTime()) / (1000 * 60 * 60 * 24);
   const recentByTime = Math.exp(-daysSinceLast / 60); // 60일 반감 느낌
 
   // 최근 10경기 내에서 "최근 5경기"를 더 크게 가중
   const capped = matchesSorted.slice(0, 10);
   const maxWeightSum = 5 * 1 + 5 * 0.5; // 7.5
-  const weightSum = capped.reduce(
-    (sum, _m, idx) => sum + (idx < 5 ? 1 : 0.5),
-    0
-  );
+  const weightSum = capped.reduce((sum, _m, idx) => sum + (idx < 5 ? 1 : 0.5), 0);
   const recentByVolume = clamp01(weightSum / maxWeightSum);
 
   return clamp01(0.6 * recentByTime + 0.4 * recentByVolume);
 }
 
-function computePerformanceCloseness(
-  samples: PairAccumulator["perfSamples"]
-): number {
+function computePerformanceCloseness(samples: PairAccumulator["perfSamples"]): number {
   if (samples.count <= 0) return 0.5;
   const avgKdaGapNorm = samples.kdaGapSumNorm / samples.count;
   const avgShareGapNorm = samples.dmgShareGapSumNorm / samples.count;
@@ -605,29 +543,20 @@ function computePerformanceCloseness(
   return clamp01(1 - gap);
 }
 
-function topHeroes(
-  map: Map<Hero, number>,
-  topN: number
-): { hero: Hero; count: number }[] {
+function topHeroes(map: Map<Hero, number>, topN: number): { hero: Hero; count: number }[] {
   return Array.from(map.entries())
     .toSorted((a, b) => b[1] - a[1])
     .slice(0, topN)
     .map(([hero, count]) => ({ hero, count }));
 }
 
-function toResultForA(
-  winnerTeamNumber: number | null,
-  teamNumberA: 1 | 2 | null
-): "WIN" | "LOSE" | "DRAW" {
+function toResultForA(winnerTeamNumber: number | null, teamNumberA: 1 | 2 | null): "WIN" | "LOSE" | "DRAW" {
   if (winnerTeamNumber === null) return "DRAW";
   if (teamNumberA === null) return "DRAW";
   return winnerTeamNumber === teamNumberA ? "WIN" : "LOSE";
 }
 
-function sortPair(
-  p1: PlayerInfo,
-  p2: PlayerInfo
-): { a: PlayerInfo; b: PlayerInfo } {
+function sortPair(p1: PlayerInfo, p2: PlayerInfo): { a: PlayerInfo; b: PlayerInfo } {
   return p1.playerId < p2.playerId ? { a: p1, b: p2 } : { a: p2, b: p1 };
 }
 
@@ -637,9 +566,7 @@ function toWinRate01(wins: number, losses: number): number {
   return wins / decisions;
 }
 
-async function fetchOverallMatchWinRateByPlayerId(
-  prisma: PrismaClient
-): Promise<Map<string, OverallWinRate>> {
+async function fetchOverallMatchWinRateByPlayerId(prisma: PrismaClient): Promise<Map<string, OverallWinRate>> {
   const memberships = await prisma.matchTeamMember.findMany({
     select: {
       playerId: true,

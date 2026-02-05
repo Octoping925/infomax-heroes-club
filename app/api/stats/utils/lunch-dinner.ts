@@ -34,14 +34,12 @@ export function parseLunchDinnerUnit(input: string | null): LunchDinnerUnit {
  * - unit=match: matchTeamMember + match.winnerTeamNumber 기준(매치 단위)
  */
 export async function fetchPlayerLunchDinnerWinRate(
-  unit: LunchDinnerUnit
+  unit: LunchDinnerUnit,
 ): Promise<PlayerLunchDinnerWinRateResponse[]> {
   const playerMap = await fetchPlayerMap();
 
   const accumulatorMap =
-    unit === "match"
-      ? await buildAccumulatorByMatch(playerMap)
-      : await buildAccumulatorByGame(playerMap);
+    unit === "match" ? await buildAccumulatorByMatch(playerMap) : await buildAccumulatorByGame(playerMap);
 
   return Array.from(accumulatorMap.values(), (acc) => {
     const lunchStats = buildWinRateStatsFromCounts(acc.lunch);
@@ -60,9 +58,7 @@ export async function fetchPlayerLunchDinnerWinRate(
   });
 }
 
-async function buildAccumulatorByGame(
-  playerMap: PlayerMap
-): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByGame(playerMap: PlayerMap): Promise<Map<string, PlayerAccumulator>> {
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
@@ -91,9 +87,7 @@ async function buildAccumulatorByGame(
     if (!playerInfo) {
       continue;
     }
-    const current =
-      accumulatorMap.get(playerId) ??
-      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
+    const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const { game, result } = participation.gameTeam;
 
@@ -109,9 +103,7 @@ async function buildAccumulatorByGame(
   return accumulatorMap;
 }
 
-async function buildAccumulatorByMatch(
-  playerMap: PlayerMap
-): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByMatch(playerMap: PlayerMap): Promise<Map<string, PlayerAccumulator>> {
   const memberships = await prisma.matchTeamMember.findMany({
     select: {
       playerId: true,
@@ -137,9 +129,7 @@ async function buildAccumulatorByMatch(
     if (!playerInfo) {
       continue;
     }
-    const current =
-      accumulatorMap.get(playerId) ??
-      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
+    const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const matchType = membership.matchTeam.match.type;
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
@@ -159,11 +149,7 @@ async function buildAccumulatorByMatch(
   return accumulatorMap;
 }
 
-function createAccumulator(
-  playerId: string,
-  playerName: string,
-  playerNickname: string
-): PlayerAccumulator {
+function createAccumulator(playerId: string, playerName: string, playerNickname: string): PlayerAccumulator {
   return {
     playerId,
     playerName,
@@ -173,10 +159,7 @@ function createAccumulator(
   };
 }
 
-function toResultByWinnerTeamNumber(
-  winnerTeamNumber: number | null,
-  teamNumber: number
-): GameResult {
+function toResultByWinnerTeamNumber(winnerTeamNumber: number | null, teamNumber: number): GameResult {
   if (winnerTeamNumber === null) return GameResult.DRAW;
   if (winnerTeamNumber === teamNumber) return GameResult.WIN;
   return GameResult.LOSE;

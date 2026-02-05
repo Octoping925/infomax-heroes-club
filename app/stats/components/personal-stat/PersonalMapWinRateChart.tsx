@@ -29,9 +29,7 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
 
   const chartData: ChartData[] = data
     .map((curr) => {
-      const player = curr.playerStats.find(
-        (p) => p.playerNickname === nickname
-      );
+      const player = curr.playerStats.find((p) => p.playerNickname === nickname);
       if (!player) {
         return null;
       }
@@ -50,9 +48,7 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
 
   return (
     <div>
-      <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">
-        맵별 승률
-      </h3>
+      <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">맵별 승률</h3>
       <div
         style={{
           width: "100%",
@@ -63,20 +59,11 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
           <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
             <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={100}
-              stroke="#888"
-              tick={{ fontSize: 12 }}
-            />
+            <YAxis type="category" dataKey="name" width={100} stroke="#888" tick={{ fontSize: 12 }} />
             <Tooltip content={WinRateTooltip} />
             <Bar dataKey="winRate" name="승률" fill="#22c55e">
               {chartData.map((entry) => (
-                <Cell
-                  key={`cell-${entry.name}`}
-                  fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"}
-                />
+                <Cell key={`cell-${entry.name}`} fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"} />
               ))}
             </Bar>
           </BarChart>
@@ -86,11 +73,7 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
   );
 }
 
-function WinRateTooltip({
-  active,
-  payload,
-  label,
-}: TooltipContentProps<number, string>) {
+function WinRateTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
   if (!active || !payload || !payload.length || !payload[0].payload) {
     return null;
   }

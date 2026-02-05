@@ -31,15 +31,11 @@ export function MapStatTab() {
           </select>
         </label>
       </div>
-      <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-        플레이어별 승률
-      </h3>
+      <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">플레이어별 승률</h3>
       <Suspense fallback={<Loading />}>
         <MapPlayerWinRateChart map={selectedMap} />
       </Suspense>
-      <h3 className="mt-8 text-sm font-semibold text-gray-400 uppercase tracking-wider">
-        영웅별 승률
-      </h3>
+      <h3 className="mt-8 text-sm font-semibold text-gray-400 uppercase tracking-wider">영웅별 승률</h3>
       <Suspense fallback={<Loading />}>
         <MapHeroWinRateChart map={selectedMap} />
       </Suspense>

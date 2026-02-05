@@ -49,14 +49,12 @@ interface Props {
 export function StatsPageLayout({ players }: Props) {
   const [activeTab, handleTabSelect] = useHashSyncedTab(
     "personalStats",
-    TABS.map((tab) => tab.id)
+    TABS.map((tab) => tab.id),
   );
 
   const selectedTab = TABS.find((tab) => tab.id === activeTab)!;
 
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerListItem | null>(
-    players[0] ?? null
-  );
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerListItem | null>(players[0] ?? null);
 
   const handleSelectPlayer = (playerId: string) => {
     const player = players.find((p) => p.id === playerId);
@@ -73,10 +71,11 @@ export function StatsPageLayout({ players }: Props) {
             <button
               key={tab.id}
               onClick={() => handleTabSelect(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
-                }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                  : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+              }`}
             >
               {tab.icon} {tab.label}
             </button>
@@ -89,11 +88,7 @@ export function StatsPageLayout({ players }: Props) {
         <div className="flex max-lg:flex-col gap-6">
           {/* 플레이어 사이드바 */}
           {SHOW_PLAYER_SIDEBAR_TABS.has(activeTab) && (
-            <PlayerSidebar
-              players={players}
-              setSelectedPlayerId={handleSelectPlayer}
-              selectedPlayer={selectedPlayer}
-            />
+            <PlayerSidebar players={players} setSelectedPlayerId={handleSelectPlayer} selectedPlayer={selectedPlayer} />
           )}
 
           {/* 차트 영역 */}
@@ -102,9 +97,7 @@ export function StatsPageLayout({ players }: Props) {
               <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-lg">
                 {selectedTab.icon}
               </span>
-              <h2 className="text-xl font-bold text-white">
-                {selectedTab.label}
-              </h2>
+              <h2 className="text-xl font-bold text-white">{selectedTab.label}</h2>
             </div>
 
             <SelectedPlayerContext.Provider value={selectedPlayer}>
@@ -115,9 +108,7 @@ export function StatsPageLayout({ players }: Props) {
                 {activeTab === "rivalry" && <RivalryTab />}
                 {activeTab === "mapStats" && <MapStatTab />}
                 {activeTab === "teamSwitch" && <TeamSwitchChart />}
-                {activeTab === "avgKillsDeathsRanking" && (
-                  <AvgStatsRankingChart />
-                )}
+                {activeTab === "avgKillsDeathsRanking" && <AvgStatsRankingChart />}
                 {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
                 {activeTab === "heroDuo" && <HeroDuoRankingChart />}
               </Suspense>

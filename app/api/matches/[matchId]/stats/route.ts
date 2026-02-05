@@ -50,7 +50,7 @@ export type MatchStatsResponse = {
  */
 export async function GET(
   _request: NextRequest,
-  context: { params: Promise<{ matchId: string }> }
+  context: { params: Promise<{ matchId: string }> },
 ): Promise<NextResponse<MatchStatsResponse | { error: string }>> {
   try {
     const { matchId } = await context.params;
@@ -91,10 +91,7 @@ export async function GET(
     });
 
     if (!match) {
-      return NextResponse.json(
-        { error: "존재하지 않는 내전입니다." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "존재하지 않는 내전입니다." }, { status: 404 });
     }
 
     return NextResponse.json(
@@ -120,7 +117,7 @@ export async function GET(
           })),
         })),
       },
-      { headers: { "Cache-Control": "no-store" } }
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
     console.error("내전 전적 조회 오류:", err);
@@ -135,7 +132,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ matchId: string }> }
+  context: { params: Promise<{ matchId: string }> },
 ): Promise<NextResponse<{ success: true } | { error: string }>> {
   try {
     const { matchId } = await context.params;
@@ -143,10 +140,7 @@ export async function PUT(
 
     const updates = body.updates ?? [];
     if (updates.length === 0) {
-      return NextResponse.json(
-        { error: "업데이트할 데이터가 없습니다." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "업데이트할 데이터가 없습니다." }, { status: 400 });
     }
 
     for (const update of updates) {
@@ -175,32 +169,21 @@ export async function PUT(
       },
     });
 
-    const memberMatchIdMap = new Map(
-      members.map((member) => [member.id, member.gameTeam.game.matchId] as const)
-    );
+    const memberMatchIdMap = new Map(members.map((member) => [member.id, member.gameTeam.game.matchId] as const));
 
-    const missingMembers = targetMemberIds.filter(
-      (id) => !memberMatchIdMap.has(id)
-    );
+    const missingMembers = targetMemberIds.filter((id) => !memberMatchIdMap.has(id));
     if (missingMembers.length > 0) {
       return NextResponse.json(
         {
-          error: `존재하지 않는 gameTeamMemberId가 포함되어 있습니다: ${missingMembers.join(
-            ", "
-          )}`,
+          error: `존재하지 않는 gameTeamMemberId가 포함되어 있습니다: ${missingMembers.join(", ")}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const invalidScopeMembers = targetMemberIds.filter(
-      (id) => memberMatchIdMap.get(id) !== matchId
-    );
+    const invalidScopeMembers = targetMemberIds.filter((id) => memberMatchIdMap.get(id) !== matchId);
     if (invalidScopeMembers.length > 0) {
-      return NextResponse.json(
-        { error: "요청한 내전에 속하지 않는 멤버가 포함되어 있습니다." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "요청한 내전에 속하지 않는 멤버가 포함되어 있습니다." }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -218,10 +201,7 @@ export async function PUT(
       }
     });
 
-    return NextResponse.json(
-      { success: true },
-      { headers: { "Cache-Control": "no-store" } }
-    );
+    return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("내전 전적 저장 오류:", err);
     const message = err instanceof Error ? err.message : "알 수 없는 오류";

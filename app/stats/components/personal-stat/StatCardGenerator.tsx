@@ -37,26 +37,17 @@ type CardData = {
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
 
-export function StatCardGenerator({
-  playerId,
-  playerName,
-  playerNickname,
-}: Props) {
+export function StatCardGenerator({ playerId, playerName, playerNickname }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPending, startTransition] = useTransition();
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const { data: overallData, error: overallError } = useOverallWinRate();
   const { data: kdaData, error: kdaError } = usePlayerAverageStats();
-  const { data: heroData, error: heroError } =
-    usePlayerHeroWinRate(playerNickname);
+  const { data: heroData, error: heroError } = usePlayerHeroWinRate(playerNickname);
 
   const cardData: CardData | null = (() => {
-    const selectedPlayerStat = overallData.find(
-      (stat) => stat.playerId === playerId
-    );
-    const selectedPlayerKda = kdaData.find(
-      (stat) => stat.playerId === playerId
-    );
+    const selectedPlayerStat = overallData.find((stat) => stat.playerId === playerId);
+    const selectedPlayerKda = kdaData.find((stat) => stat.playerId === playerId);
 
     if (!selectedPlayerStat || !selectedPlayerKda) {
       return null;
@@ -114,9 +105,7 @@ export function StatCardGenerator({
   if (overallError || kdaError || heroError) {
     return (
       <div className="flex justify-center py-6">
-        <p className="text-red-400">
-          ❌ 전적 카드 데이터를 불러오는데 실패했습니다.
-        </p>
+        <p className="text-red-400">❌ 전적 카드 데이터를 불러오는데 실패했습니다.</p>
       </div>
     );
   }
@@ -133,12 +122,8 @@ export function StatCardGenerator({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-base font-semibold text-white">
-            전적 카드 미리보기
-          </h3>
-          <p className="text-sm text-gray-400">
-            카드가 로드된 뒤 다운로드를 눌러주세요.
-          </p>
+          <h3 className="text-base font-semibold text-white">전적 카드 미리보기</h3>
+          <p className="text-sm text-gray-400">카드가 로드된 뒤 다운로드를 눌러주세요.</p>
         </div>
         <button
           onClick={() => {
@@ -146,18 +131,12 @@ export function StatCardGenerator({
               downloadCanvas(canvasRef.current, cardData.playerNickname);
               setDownloadError(null);
             } catch (error) {
-              setDownloadError(
-                error instanceof Error
-                  ? error.message
-                  : "다운로드에 실패했습니다."
-              );
+              setDownloadError(error instanceof Error ? error.message : "다운로드에 실패했습니다.");
             }
           }}
           disabled={isPending}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            isPending
-              ? "bg-white/10 text-gray-400 cursor-not-allowed"
-              : "bg-cyan-500 text-white hover:bg-cyan-400"
+            isPending ? "bg-white/10 text-gray-400 cursor-not-allowed" : "bg-cyan-500 text-white hover:bg-cyan-400"
           }`}
         >
           PNG 다운로드
@@ -195,11 +174,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
 
   const winRateText = `${data.winRate}%`;
   const recordText = `${data.wins}승 ${data.losses}패 ${data.draws}무`;
-  const kdaText = `${roundToOneDecimal(
-    data.averageKills
-  )} / ${roundToOneDecimal(data.averageDeaths)} / ${roundToOneDecimal(
-    data.averageTakedowns
-  )}`;
+  const kdaText = `${roundToOneDecimal(data.averageKills)} / ${roundToOneDecimal(data.averageDeaths)} / ${roundToOneDecimal(data.averageTakedowns)}`;
   const damageText = commarize(Math.floor(data.averageHeroDamage));
 
   const leftX = 70;
@@ -260,9 +235,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
     height: 90,
     heroes: data.topHeroes,
     heroImages: await Promise.all(
-      data.topHeroes.map((hero) =>
-        hero.imageUrl ? loadImage(hero.imageUrl) : Promise.resolve(null)
-      )
+      data.topHeroes.map((hero) => (hero.imageUrl ? loadImage(hero.imageUrl) : Promise.resolve(null))),
     ),
   });
 
@@ -295,7 +268,7 @@ function drawStatBlock(
     readonly value: string;
     readonly accent: string;
     readonly subText: string;
-  }
+  },
 ) {
   drawRoundedRect(ctx, x, y, width, height, 22, "rgba(255, 255, 255, 0.06)");
 
@@ -338,7 +311,7 @@ function drawTopHeroesBlock(
       imageUrl: string | null;
     }>;
     readonly heroImages: ReadonlyArray<HTMLImageElement | null>;
-  }
+  },
 ) {
   drawRoundedRect(ctx, x, y, width, height, 22, "rgba(255, 255, 255, 0.06)");
 
@@ -370,15 +343,7 @@ function drawTopHeroesBlock(
     const imageY = blockY + 6;
     const image = heroImages[index];
 
-    drawRoundedRect(
-      ctx,
-      imageX,
-      imageY,
-      imageSize,
-      imageSize,
-      12,
-      "rgba(15, 23, 42, 0.6)"
-    );
+    drawRoundedRect(ctx, imageX, imageY, imageSize, imageSize, 12, "rgba(15, 23, 42, 0.6)");
 
     if (image) {
       drawRoundedImage(ctx, image, imageX, imageY, imageSize, 12);
@@ -394,32 +359,19 @@ function drawTopHeroesBlock(
 
     ctx.fillStyle = "#94a3b8";
     ctx.font = "500 16px sans-serif";
-    ctx.fillText(
-      `${hero.totalGames}경기`,
-      imageX + imageSize + 24,
-      imageY + 42
-    );
+    ctx.fillText(`${hero.totalGames}경기`, imageX + imageSize + 24, imageY + 42);
 
     if (index < heroes.length - 1) {
       ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
       ctx.beginPath();
       ctx.moveTo(imageX + imageSize + 120 + cardGap / 2, imageY + 8);
-      ctx.lineTo(
-        imageX + imageSize + 120 + cardGap / 2,
-        imageY + imageSize - 8
-      );
+      ctx.lineTo(imageX + imageSize + 120 + cardGap / 2, imageY + imageSize - 8);
       ctx.stroke();
     }
   });
 }
 
-function drawGlow(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  radius: number,
-  color: string
-) {
+function drawGlow(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, color: string) {
   ctx.save();
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -435,7 +387,7 @@ function drawRoundedRect(
   width: number,
   height: number,
   radius: number,
-  fillStyle: string
+  fillStyle: string,
 ) {
   ctx.save();
   ctx.fillStyle = fillStyle;
@@ -450,7 +402,7 @@ function drawRoundedImage(
   x: number,
   y: number,
   size: number,
-  radius: number
+  radius: number,
 ) {
   ctx.save();
   drawRoundedRectPath(ctx, x, y, size, size, radius);
@@ -475,7 +427,7 @@ function drawRoundedRectPath(
   y: number,
   width: number,
   height: number,
-  radius: number
+  radius: number,
 ) {
   const clampedRadius = Math.min(radius, width / 2, height / 2);
   ctx.beginPath();
@@ -483,12 +435,7 @@ function drawRoundedRectPath(
   ctx.lineTo(x + width - clampedRadius, y);
   ctx.quadraticCurveTo(x + width, y, x + width, y + clampedRadius);
   ctx.lineTo(x + width, y + height - clampedRadius);
-  ctx.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - clampedRadius,
-    y + height
-  );
+  ctx.quadraticCurveTo(x + width, y + height, x + width - clampedRadius, y + height);
   ctx.lineTo(x + clampedRadius, y + height);
   ctx.quadraticCurveTo(x, y + height, x, y + height - clampedRadius);
   ctx.lineTo(x, y + clampedRadius);

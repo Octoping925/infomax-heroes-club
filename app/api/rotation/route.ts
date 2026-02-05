@@ -3,9 +3,7 @@ type ApiResponse = {
 };
 
 export async function POST() {
-  const data = (await fetch(`https://nexuscompendium.com/api/currently`).then(
-    (res) => res.json()
-  )) as ApiResponse;
+  const data: ApiResponse = await fetch(`https://nexuscompendium.com/api/currently`).then((res) => res.json());
 
   return Response.json({
     text: "히오스 로테이션",

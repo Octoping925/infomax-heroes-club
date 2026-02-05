@@ -13,9 +13,7 @@ export function useRivalries(params: RivalryParams) {
         takeMatches: String(params.takeMatches),
         includeInsufficientSample: String(params.includeInsufficientSample),
       });
-      const response = await fetch(
-        `${SITE_URL}/api/stats/rivalries?${searchParams.toString()}`
-      );
+      const response = await fetch(`${SITE_URL}/api/stats/rivalries?${searchParams.toString()}`);
       if (!response.ok) {
         throw new Error("라이벌리 데이터를 불러오는데 실패했습니다.");
       }

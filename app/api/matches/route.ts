@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult, MatchType } from "@/generated/prisma/client";
-import {
-  parseGameStats,
-  ParsedGameStats,
-} from "@/domain/hots/utils/game-stats-parser";
+import { parseGameStats, ParsedGameStats } from "@/domain/hots/utils/game-stats-parser";
 import dayjs from "dayjs";
 import { fetchPlayerMap } from "../stats/utils/player";
-import { HeroRole } from "@/domain/hots/models";
+import { Hero, HeroRole } from "@/domain/hots/models";
 
 type MatchHistoryPlayer = {
   readonly id: string;
@@ -26,7 +23,7 @@ type MatchHistoryGameTeamMember = {
   id: string;
   player: MatchHistoryPlayer;
   position: HeroRole;
-  hero: string;
+  hero: Hero;
   kills: number;
   deaths: number;
   takedowns: number;
@@ -38,7 +35,7 @@ type MatchHistoryGameTeamMember = {
 
 type MatchHistoryGameTeamBan = {
   readonly banOrder: number;
-  readonly hero: string;
+  readonly hero: Hero;
 };
 
 type MatchHistoryGameTeam = {
@@ -75,9 +72,7 @@ export type MatchHistoryItem = {
  * - 날짜별 grouping은 프론트에서 처리합니다.
  * - 열기 시 match의 games, 각 game의 team members + hero + kills/deaths 등을 제공합니다.
  */
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<MatchHistoryItem[] | { error: string }>> {
+export async function GET(request: NextRequest): Promise<NextResponse<MatchHistoryItem[] | { error: string }>> {
   try {
     const take = parseTakeParam(request.nextUrl.searchParams.get("take"));
 
@@ -249,19 +244,14 @@ type CreateMatchResponse = {
  * 내전 생성 API
  * POST /api/matches
  */
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<CreateMatchResponse | { error: string }>> {
+export async function POST(request: NextRequest): Promise<NextResponse<CreateMatchResponse | { error: string }>> {
   try {
     const body: CreateMatchRequest = await request.json();
 
     // 날짜 파싱 (yyyyMMdd → Date)
     const playedAt = dayjs(body.playedAt, "YYYYMMDD");
     if (!playedAt.isValid()) {
-      return NextResponse.json(
-        { error: "잘못된 날짜 형식입니다. YYYYMMDD 형식으로 입력해주세요." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "잘못된 날짜 형식입니다. YYYYMMDD 형식으로 입력해주세요." }, { status: 400 });
     }
 
     // 게임 스탯 파싱
@@ -272,10 +262,7 @@ export async function POST(
         parsedGames.push(parsed);
       } catch (err) {
         const message = err instanceof Error ? err.message : "파싱 오류";
-        return NextResponse.json(
-          { error: `게임 스탯 파싱 실패: ${message}` },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: `게임 스탯 파싱 실패: ${message}` }, { status: 400 });
       }
     }
 
@@ -297,40 +284,27 @@ export async function POST(
     const playerMap = new Map(players.map((p) => [p.nickname, p.id]));
 
     // 누락된 플레이어 확인
-    const missingPlayers = Array.from(allNicknames).filter(
-      (nick) => !playerMap.has(nick)
-    );
+    const missingPlayers = Array.from(allNicknames).filter((nick) => !playerMap.has(nick));
     if (missingPlayers.length > 0) {
-      return NextResponse.json(
-        { error: `등록되지 않은 플레이어: ${missingPlayers.join(", ")}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `등록되지 않은 플레이어: ${missingPlayers.join(", ")}` }, { status: 400 });
     }
 
     // 첫 번째 게임에서 팀 구성 추출 (MatchTeam 초기 편성용)
     const firstGame = parsedGames[0];
-    const team1Players = firstGame.teams[0].players.map(
-      (p) => playerMap.get(p.nickname)!
-    );
-    const team2Players = firstGame.teams[1].players.map(
-      (p) => playerMap.get(p.nickname)!
-    );
+    const team1Players = firstGame.teams[0].players.map((p) => playerMap.get(p.nickname)!);
+    const team2Players = firstGame.teams[1].players.map((p) => playerMap.get(p.nickname)!);
 
     const team1LeaderId = playerMap.get(body.team1Leader);
     const team2LeaderId = playerMap.get(body.team2Leader);
 
     if (!team1LeaderId || !team2LeaderId) {
-      return NextResponse.json(
-        { error: `등록되지 않은 리더` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `등록되지 않은 리더` }, { status: 400 });
     }
 
     // 전체 승패 계산
     const team1Wins = body.games.filter((g) => g.winnerTeamNumber === 1).length;
     const team2Wins = body.games.filter((g) => g.winnerTeamNumber === 2).length;
-    const matchWinnerTeamNumber =
-      team1Wins > team2Wins ? 1 : team2Wins > team1Wins ? 2 : null;
+    const matchWinnerTeamNumber = team1Wins > team2Wins ? 1 : team2Wins > team1Wins ? 2 : null;
 
     // 트랜잭션으로 모든 데이터 저장
     const match = await prisma.$transaction(
@@ -345,22 +319,20 @@ export async function POST(
         });
 
         // 2. MatchTeam 생성 (팀장은 첫 번째 플레이어)
-        const [matchTeam1, matchTeam2] = await tx.matchTeam.createManyAndReturn(
-          {
-            data: [
-              {
-                matchId: newMatch.id,
-                teamNumber: 1,
-                leaderId: team1LeaderId,
-              },
-              {
-                matchId: newMatch.id,
-                teamNumber: 2,
-                leaderId: team2LeaderId,
-              },
-            ],
-          }
-        );
+        const [matchTeam1, matchTeam2] = await tx.matchTeam.createManyAndReturn({
+          data: [
+            {
+              matchId: newMatch.id,
+              teamNumber: 1,
+              leaderId: team1LeaderId,
+            },
+            {
+              matchId: newMatch.id,
+              teamNumber: 2,
+              leaderId: team2LeaderId,
+            },
+          ],
+        });
 
         // 3. MatchTeamMember 생성
         await tx.matchTeamMember.createMany({
@@ -392,13 +364,9 @@ export async function POST(
 
           // 5. GameTeam 생성
           for (const parsedTeam of parsedGame.teams) {
-            const sourceMatchTeamId =
-              parsedTeam.teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
+            const sourceMatchTeamId = parsedTeam.teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
 
-            const gameResult = calculateGameResult(
-              parsedTeam.teamNumber,
-              gameInput.winnerTeamNumber
-            );
+            const gameResult = calculateGameResult(parsedTeam.teamNumber, gameInput.winnerTeamNumber);
 
             const gameTeam = await tx.gameTeam.create({
               data: {
@@ -430,7 +398,7 @@ export async function POST(
       {
         timeout: 10000,
         maxWait: 10000,
-      }
+      },
     );
 
     return NextResponse.json({
@@ -444,10 +412,7 @@ export async function POST(
   }
 }
 
-function calculateGameResult(
-  teamNumber: number,
-  winnerTeamNumber: number | null
-): GameResult {
+function calculateGameResult(teamNumber: number, winnerTeamNumber: number | null): GameResult {
   if (winnerTeamNumber === null) {
     return GameResult.DRAW;
   }

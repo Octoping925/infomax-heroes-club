@@ -28,25 +28,15 @@ function getWrappedIndex(nextIndex: number, total: number): number {
   return ((nextIndex % total) + total) % total;
 }
 
-function getSafeIndex(
-  nextIndex: number,
-  total: number,
-  isLoopEnabled: boolean
-) {
-  return isLoopEnabled
-    ? getWrappedIndex(nextIndex, total)
-    : getClampedIndex(nextIndex, total);
+function getSafeIndex(nextIndex: number, total: number, isLoopEnabled: boolean) {
+  return isLoopEnabled ? getWrappedIndex(nextIndex, total) : getClampedIndex(nextIndex, total);
 }
 
 /**
  * 캐러셀 상태(열림/닫힘)와 활성 인덱스, 이동 API를 제공하는 훅입니다.
  * 기본 동작은 끝에서 멈추는(clamp) 방식이며, 옵션으로 루프(wrap)를 켤 수 있습니다.
  */
-export function useCarousel(
-  total: number,
-  initialIndex: number = 0,
-  isLoopEnabled: boolean = false
-): CarouselApi {
+export function useCarousel(total: number, initialIndex: number = 0, isLoopEnabled: boolean = false): CarouselApi {
   const [state, setState] = useState<CarouselState>(() => ({
     isOpen: false,
     activeIndex: getSafeIndex(initialIndex, total, isLoopEnabled),
@@ -71,7 +61,7 @@ export function useCarousel(
         activeIndex: getSafeIndex(index, total, isLoopEnabled),
       }));
     },
-    [isLoopEnabled, total]
+    [isLoopEnabled, total],
   );
 
   const openAt = useCallback(
@@ -81,7 +71,7 @@ export function useCarousel(
         activeIndex: getSafeIndex(index, total, isLoopEnabled),
       });
     },
-    [isLoopEnabled, total]
+    [isLoopEnabled, total],
   );
 
   const close = useCallback(() => {

@@ -40,23 +40,17 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           >
             {match.type === "LUNCH" ? "점심" : "저녁"}
           </span>
-          <span className="text-sm font-medium text-gray-400">
-            {dayjs(match.playedAt).format("YYYY년 MM월 DD일")}
-          </span>
+          <span className="text-sm font-medium text-gray-400">{dayjs(match.playedAt).format("YYYY년 MM월 DD일")}</span>
         </div>
 
         {/* Action Button */}
         <button
           onClick={onToggle}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-            isExpanded
-              ? "bg-gray-700 text-gray-300"
-              : "bg-white/10 text-white hover:bg-white/20"
+            isExpanded ? "bg-gray-700 text-gray-300" : "bg-white/10 text-white hover:bg-white/20"
           }`}
         >
-          <span className="relative z-10 flex items-center gap-2">
-            {isExpanded ? "닫기" : "열기"}
-          </span>
+          <span className="relative z-10 flex items-center gap-2">{isExpanded ? "닫기" : "열기"}</span>
         </button>
       </div>
 
@@ -70,9 +64,7 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
             }`}
           >
             <div className="mb-2">
-              <span className="text-xs font-bold text-cyan-400/80 uppercase tracking-tighter block mb-1">
-                TEAM 1
-              </span>
+              <span className="text-xs font-bold text-cyan-400/80 uppercase tracking-tighter block mb-1">TEAM 1</span>
               <h3 className="text-2xl font-black text-white">{team1Name}</h3>
             </div>
             <div className="flex flex-wrap justify-center md:justify-end gap-1.5 mt-2">
@@ -94,18 +86,12 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           {/* Score Center */}
           <div className="flex flex-col items-center shrink-0 px-4">
             <div className="flex items-center gap-4">
-              <span
-                className={`text-5xl font-black tabular-nums ${
-                  isTeam1Winner ? "text-cyan-400" : "text-gray-600"
-                }`}
-              >
+              <span className={`text-5xl font-black tabular-nums ${isTeam1Winner ? "text-cyan-400" : "text-gray-600"}`}>
                 {team1Wins}
               </span>
               <span className="text-2xl font-bold text-gray-700">:</span>
               <span
-                className={`text-5xl font-black tabular-nums ${
-                  isTeam2Winner ? "text-purple-400" : "text-gray-600"
-                }`}
+                className={`text-5xl font-black tabular-nums ${isTeam2Winner ? "text-purple-400" : "text-gray-600"}`}
               >
                 {team2Wins}
               </span>
@@ -115,11 +101,7 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
                 {isDraw ? (
                   "DRAW"
                 ) : (
-                  <span
-                    className={
-                      isTeam1Winner ? "text-cyan-400" : "text-purple-400"
-                    }
-                  >
+                  <span className={isTeam1Winner ? "text-cyan-400" : "text-purple-400"}>
                     {isTeam1Winner ? team1Name : team2Name} WIN
                   </span>
                 )}
@@ -134,9 +116,7 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
             }`}
           >
             <div className="mb-2">
-              <span className="text-xs font-bold text-purple-400/80 uppercase tracking-tighter block mb-1">
-                TEAM 2
-              </span>
+              <span className="text-xs font-bold text-purple-400/80 uppercase tracking-tighter block mb-1">TEAM 2</span>
               <h3 className="text-2xl font-black text-white">{team2Name}</h3>
             </div>
             <div className="flex flex-wrap justify-center md:justify-start gap-1.5 mt-2">
@@ -161,12 +141,7 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
       {isExpanded && (
         <div className="bg-black/20 border-t border-white/10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
           {match.games.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              team1Name={team1Name}
-              team2Name={team2Name}
-            />
+            <GameCard key={game.id} game={game} team1Name={team1Name} team2Name={team2Name} />
           ))}
         </div>
       )}

@@ -8,8 +8,7 @@ import { Kda } from "./Kda";
 import { Ban } from "./Ban";
 import { DamageBar } from "@/components/DamageBar";
 
-type GameTeamBan =
-  MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
+type GameTeamBan = MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
 
 type MemberWithRank = MatchHistoryItem["games"][number]["teams"][number]["members"][number] & {
   rank: number;
@@ -34,22 +33,14 @@ function getPositionLabel(position: HeroRole): string {
   return positionMap[position] ?? position;
 }
 
-export function GameTeamTable({
-  title,
-  result,
-  bans,
-  members,
-  accent,
-}: GameTeamTableProps) {
+export function GameTeamTable({ title, result, bans, members, accent }: GameTeamTableProps) {
   const totalKill = sumBy(members, (m) => m.kills);
   const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage));
   const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken));
 
   return (
     <div
-      className={`p-4 pb-1 border-t shrink-0 lg:border-t-0 lg:border-l border-white/10 ${accent} ${getTeamBackgroundClass(
-        result
-      )}`}
+      className={`p-4 pb-1 border-t shrink-0 lg:border-t-0 lg:border-l border-white/10 ${accent} ${getTeamBackgroundClass(result)}`}
     >
       <div className="flex items-center justify-between text-sm mb-3 gap-3 text-gray-300 font-bold">
         <span>{title}</span>
@@ -88,12 +79,8 @@ export function GameTeamTable({
                   </div>
                 </td>
                 <td className="py-2.5 px-2">
-                  <div className="font-bold text-gray-200 text-sm">
-                    {member.player.nickname}
-                  </div>
-                  <div className="text-xs text-gray-500 font-medium">
-                    {member.player.name}
-                  </div>
+                  <div className="font-bold text-gray-200 text-sm">{member.player.nickname}</div>
+                  <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
                 </td>
 
                 <td className="py-2.5 text-center">
@@ -103,9 +90,7 @@ export function GameTeamTable({
                 </td>
 
                 <td className="py-2.5 text-center">
-                  <span className="text-sm font-bold text-gray-300 tabular-nums">
-                    {member.rank}등
-                  </span>
+                  <span className="text-sm font-bold text-gray-300 tabular-nums">{member.rank}등</span>
                 </td>
 
                 <td className="py-2.5 text-center">
@@ -115,19 +100,10 @@ export function GameTeamTable({
                         {member.kills} / {member.deaths} / {member.takedowns}
                       </span>
                       <span className="ml-2 text-xs text-gray-500 font-bold">
-                        (
-                        {totalKill > 0
-                          ? `${Math.round(
-                            (member.takedowns / totalKill) * 100
-                          )}%`
-                          : "0%"}
-                        )
+                        ({totalKill > 0 ? `${Math.round((member.takedowns / totalKill) * 100)}%` : "0%"})
                       </span>
                     </div>
-                    <Kda
-                      deaths={member.deaths}
-                      takedowns={member.takedowns}
-                    />
+                    <Kda deaths={member.deaths} takedowns={member.takedowns} />
                   </div>
                 </td>
                 <td className="py-2.5 text-right">
@@ -135,13 +111,8 @@ export function GameTeamTable({
                     <span className="tabular-nums text-sm font-bold text-gray-300">
                       {member.heroDamage ? commarize(member.heroDamage) : "-"}
                     </span>
-                    {typeof member.heroDamage === "number" &&
-                      maxHeroDamage > 0 ? (
-                      <DamageBar
-                        damage={member.heroDamage}
-                        maxDamage={maxHeroDamage}
-                        color="bg-red-500/50"
-                      />
+                    {typeof member.heroDamage === "number" && maxHeroDamage > 0 ? (
+                      <DamageBar damage={member.heroDamage} maxDamage={maxHeroDamage} color="bg-red-500/50" />
                     ) : (
                       <div className="w-16 h-1 bg-white/5 rounded" />
                     )}
@@ -153,11 +124,7 @@ export function GameTeamTable({
                       {member.damageTaken ? commarize(member.damageTaken) : "-"}
                     </span>
                     {maxDamageTaken > 0 ? (
-                      <DamageBar
-                        damage={member.damageTaken}
-                        maxDamage={maxDamageTaken}
-                        color="bg-gray-100/50"
-                      />
+                      <DamageBar damage={member.damageTaken} maxDamage={maxDamageTaken} color="bg-gray-100/50" />
                     ) : (
                       <div className="w-16 h-1 bg-white/5 rounded" />
                     )}

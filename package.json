@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
+    "format": "prettier --write .",
     "studio": "prisma studio"
   },
   "dependencies": {

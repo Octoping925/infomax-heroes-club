@@ -19,7 +19,7 @@ export function AppQueryProvider({ children }: AppQueryProviderProps) {
             retry: 1,
           },
         },
-      })
+      }),
   );
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;

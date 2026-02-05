@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameMap, GameResult } from "@/generated/prisma/client";
-import {
-  MapPlayerWinRateResponse,
-  PlayerWinRateResponse,
-} from "@/app/api/stats/types";
+import { MapPlayerWinRateResponse, PlayerWinRateResponse } from "@/app/api/stats/types";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
@@ -46,11 +43,9 @@ export async function GET(): Promise<NextResponse<MapPlayerWinRateResponse[]>> {
     Array.from(mapStats.entries())
       .map(([map, playerStats]) => ({
         map,
-        playerStats: Array.from(playerStats.values()).sort(
-          (a, b) => b.totalGames - a.totalGames
-        ),
+        playerStats: Array.from(playerStats.values()).sort((a, b) => b.totalGames - a.totalGames),
       }))
-      .sort((a, b) => a.map.localeCompare(b.map))
+      .sort((a, b) => a.map.localeCompare(b.map)),
   );
 }
 
@@ -76,7 +71,7 @@ type PlayerStatsAccumulator = {
 };
 
 function aggregateMapPlayerStats(
-  participations: GameParticipation[]
+  participations: GameParticipation[],
 ): Map<GameMap, Map<string, PlayerWinRateResponse>> {
   const mapStats = new Map<GameMap, Map<string, PlayerStatsAccumulator>>();
 

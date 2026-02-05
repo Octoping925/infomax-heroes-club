@@ -68,28 +68,16 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
     }));
 
   return (
-    <div
-      className="w-full max-h-[300px]"
-      style={{ height: chartData.length * 35 }}
-    >
+    <div className="w-full max-h-[300px]" style={{ height: chartData.length * 35 }}>
       <ResponsiveContainer>
         <BarChart data={chartData} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" stroke="#333" />
           <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={100}
-            stroke="#888"
-            tick={{ fontSize: 12 }}
-          />
+          <YAxis type="category" dataKey="name" width={100} stroke="#888" tick={{ fontSize: 12 }} />
           <Tooltip content={WinRateTooltip} />
           <Bar dataKey="winRate" name="승률" fill="#22c55e">
             {chartData.map((it) => (
-              <Cell
-                key={it.name}
-                fill={it.winRate >= 50 ? "#22c55e" : "#ef4444"}
-              />
+              <Cell key={it.name} fill={it.winRate >= 50 ? "#22c55e" : "#ef4444"} />
             ))}
           </Bar>
         </BarChart>
@@ -98,11 +86,7 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
   );
 }
 
-function WinRateTooltip({
-  active,
-  payload,
-  label,
-}: TooltipContentProps<number, string>) {
+function WinRateTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
   if (!active || !payload?.[0]?.payload) {
     return null;
   }

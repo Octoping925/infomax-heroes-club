@@ -1,15 +1,5 @@
 import { useHeroPopularity } from "../../hooks/useHeroPopularity";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { HeroMap } from "@/domain/hots/constants/hero";
 import { Title } from "../Title";
 
@@ -23,9 +13,7 @@ export function HeroPopularityChart() {
     pickWinRate: item.pickWinRate,
   }));
 
-  const pickWinRateSortedData = chartData.toSorted(
-    (a, b) => b.pickWinRate - a.pickWinRate
-  );
+  const pickWinRateSortedData = chartData.toSorted((a, b) => b.pickWinRate - a.pickWinRate);
 
   return (
     <div className="space-y-8">
@@ -35,13 +23,7 @@ export function HeroPopularityChart() {
           <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
             <XAxis type="number" stroke="#888" />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={80}
-              stroke="#888"
-              tick={{ fontSize: 12 }}
-            />
+            <YAxis type="category" dataKey="name" width={80} stroke="#888" tick={{ fontSize: 12 }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#1a1a2e",
@@ -62,13 +44,7 @@ export function HeroPopularityChart() {
           <BarChart data={pickWinRateSortedData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
             <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={80}
-              stroke="#888"
-              tick={{ fontSize: 12 }}
-            />
+            <YAxis type="category" dataKey="name" width={80} stroke="#888" tick={{ fontSize: 12 }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#1a1a2e",
@@ -79,10 +55,7 @@ export function HeroPopularityChart() {
             />
             <Bar dataKey="pickWinRate" name="승률" fill="#22c55e">
               {pickWinRateSortedData.map((it) => (
-                <Cell
-                  key={it.name}
-                  fill={it.pickWinRate >= 50 ? "#22c55e" : "#ef4444"}
-                />
+                <Cell key={it.name} fill={it.pickWinRate >= 50 ? "#22c55e" : "#ef4444"} />
               ))}
             </Bar>
           </BarChart>

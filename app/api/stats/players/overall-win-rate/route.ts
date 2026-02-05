@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import {
-  PlayerCombinedWinRateResponse,
-  WinRateStats,
-} from "@/app/api/stats/types";
+import { PlayerCombinedWinRateResponse, WinRateStats } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
 import { fetchPlayerMap } from "../../utils/player";
 import {
@@ -21,9 +18,7 @@ type PlayerAccumulator = {
   readonly gameStats: ResultCounts;
 };
 
-export async function GET(): Promise<
-  NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>
-> {
+export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>> {
   const playerMap = await fetchPlayerMap();
 
   const [matchMemberships, gameMemberships] = await Promise.all([
@@ -56,11 +51,7 @@ export async function GET(): Promise<
 
   const accumulator = new Map<string, PlayerAccumulator>();
 
-  const getOrCreate = (
-    playerId: string,
-    playerName: string,
-    playerNickname: string
-  ): PlayerAccumulator => {
+  const getOrCreate = (playerId: string, playerName: string, playerNickname: string): PlayerAccumulator => {
     const existing = accumulator.get(playerId);
     if (existing) {
       return existing;
@@ -81,11 +72,7 @@ export async function GET(): Promise<
     if (!playerInfo) {
       continue;
     }
-    const entry = getOrCreate(
-      membership.playerId,
-      playerInfo.name,
-      playerInfo.nickname
-    );
+    const entry = getOrCreate(membership.playerId, playerInfo.name, playerInfo.nickname);
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
     if (winner === null) {
@@ -102,11 +89,7 @@ export async function GET(): Promise<
     if (!playerInfo) {
       continue;
     }
-    const entry = getOrCreate(
-      membership.playerId,
-      playerInfo.name,
-      playerInfo.nickname
-    );
+    const entry = getOrCreate(membership.playerId, playerInfo.name, playerInfo.nickname);
 
     const result = membership.gameTeam.result as GameResult | null;
     if (result) {
@@ -114,24 +97,18 @@ export async function GET(): Promise<
     }
   }
 
-  const toResponse = (stats: ResultCounts): WinRateStats =>
-    buildWinRateStatsFromCounts(stats);
-
-  const response: PlayerCombinedWinRateResponse[] = Array.from(
-    accumulator.values()
-  )
+  const response: PlayerCombinedWinRateResponse[] = accumulator
+    .values()
     .map((entry) => ({
       playerId: entry.playerId,
       playerName: entry.playerName,
       playerNickname: entry.playerNickname,
-      matchStats: toResponse(entry.matchStats),
-      gameStats: toResponse(entry.gameStats),
+      matchStats: buildWinRateStatsFromCounts(entry.matchStats),
+      gameStats: buildWinRateStatsFromCounts(entry.gameStats),
     }))
-    .filter(
-      (entry) =>
-        entry.matchStats.totalGames > 0 || entry.gameStats.totalGames > 0
-    )
-    .sort((a, b) => {
+    .filter((entry) => entry.matchStats.totalGames > 0 || entry.gameStats.totalGames > 0)
+    .toArray()
+    .toSorted((a, b) => {
       if (b.matchStats.winRate !== a.matchStats.winRate) {
         return b.matchStats.winRate - a.matchStats.winRate;
       }

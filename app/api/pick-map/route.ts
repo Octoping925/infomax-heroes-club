@@ -1,10 +1,5 @@
 import { DooraySlashCommandRequest } from "@/domain/dooray/types";
-import {
-  MAPS,
-  MAPS_DESCRIPTION,
-  MAPS_IMAGE,
-  MAPS_NAMUWIKI_URL,
-} from "@/domain/hots/constants/maps";
+import { MAPS, MAPS_DESCRIPTION, MAPS_IMAGE, MAPS_NAMUWIKI_URL } from "@/domain/hots/constants/maps";
 import { sampleSize } from "es-toolkit";
 import { NextRequest } from "next/server";
 

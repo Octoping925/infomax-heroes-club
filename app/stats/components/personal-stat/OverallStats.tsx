@@ -11,9 +11,7 @@ export function OverallStats({ playerId }: Props) {
   const { data: overallData, error } = useOverallWinRate();
   const { data: kdaData } = usePlayerAverageStats();
 
-  const selectedPlayerStat = overallData.find(
-    (stat) => stat.playerId === playerId
-  );
+  const selectedPlayerStat = overallData.find((stat) => stat.playerId === playerId);
   const selectedPlayerKda = kdaData.find((stat) => stat.playerId === playerId);
 
   if (error) {
@@ -44,11 +42,7 @@ export function OverallStats({ playerId }: Props) {
         stats={selectedPlayerStat.gameStats}
         accent="from-purple-500/30 to-purple-700/20"
       />
-      <AverageStatsSummary
-        title="평균 스탯"
-        stats={selectedPlayerKda}
-        accent="from-blue-500/30 to-blue-700/20"
-      />
+      <AverageStatsSummary title="평균 스탯" stats={selectedPlayerKda} accent="from-blue-500/30 to-blue-700/20" />
     </div>
   );
 }
@@ -63,15 +57,10 @@ function WinRateSummary({
   readonly accent: string;
 }) {
   return (
-    <div
-      className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}
-    >
+    <div className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}>
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
-        {stats.winRate}%
-        <span className="text-sm text-gray-300 ml-2">
-          ({stats.totalGames}경기)
-        </span>
+        {stats.winRate}%<span className="text-sm text-gray-300 ml-2">({stats.totalGames}경기)</span>
       </p>
       <p className="text-md text-gray-400 mt-3">
         {stats.wins}승 {stats.losses}패 {stats.draws}무
@@ -96,24 +85,15 @@ interface AverageStatsSummaryProps {
   accent: string;
 }
 
-function AverageStatsSummary({
-  title,
-  stats,
-  accent,
-}: AverageStatsSummaryProps) {
+function AverageStatsSummary({ title, stats, accent }: AverageStatsSummaryProps) {
   return (
-    <div
-      className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}
-    >
+    <div className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}>
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
-        {roundToOneDecimal(stats.averageKills)} /{" "}
-        {roundToOneDecimal(stats.averageDeaths)} /{" "}
+        {roundToOneDecimal(stats.averageKills)} / {roundToOneDecimal(stats.averageDeaths)} /{" "}
         {roundToOneDecimal(stats.averageTakedowns)}
       </p>
-      <p className="text-md text-gray-400 mt-3">
-        평균 딜량: {commarize(Math.floor(stats.averageHeroDamage))}
-      </p>
+      <p className="text-md text-gray-400 mt-3">평균 딜량: {commarize(Math.floor(stats.averageHeroDamage))}</p>
     </div>
   );
 }

@@ -260,8 +260,7 @@ export const HeroImageLegacy: Record<Hero, string> = {
   Sylvanas: "https://nexuscompendium.com/images/portraits/sylvanas.png",
   Tassadar: "https://nexuscompendium.com/images/portraits/tassadar.png",
   TheButcher: "https://nexuscompendium.com/images/portraits/the-butcher.png",
-  TheLostVikings:
-    "https://nexuscompendium.com/images/portraits/the-lost-vikings.png",
+  TheLostVikings: "https://nexuscompendium.com/images/portraits/the-lost-vikings.png",
   Thrall: "https://nexuscompendium.com/images/portraits/thrall.png",
   Tracer: "https://nexuscompendium.com/images/portraits/tracer.png",
   Tychus: "https://nexuscompendium.com/images/portraits/tychus.png",
@@ -279,7 +278,6 @@ export const HeroImageLegacy: Record<Hero, string> = {
   Zeratul: "https://nexuscompendium.com/images/portraits/zeratul.png",
   Zuljin: "https://nexuscompendium.com/images/portraits/zuljin.png",
 };
-
 
 export const HeroRole = {
   TANKER: "TANKER",

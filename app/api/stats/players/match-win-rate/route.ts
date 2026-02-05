@@ -46,9 +46,7 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
     if (!playerInfo) {
       continue;
     }
-    const current =
-      accumulatorMap.get(playerId) ??
-      createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
+    const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
     if (winnerTeamNumber === null) {
@@ -72,11 +70,7 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
         wins: acc.stats.wins,
         losses: acc.stats.losses,
         draws: acc.stats.draws,
-        winRate: calculateWinRate(
-          acc.stats.wins,
-          acc.stats.losses,
-          acc.stats.draws
-        ),
+        winRate: calculateWinRate(acc.stats.wins, acc.stats.losses, acc.stats.draws),
       };
     })
     .filter((item) => item.totalGames > 0)
@@ -85,11 +79,7 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
   return NextResponse.json(response);
 }
 
-function createAccumulator(
-  playerId: string,
-  playerName: string,
-  playerNickname: string
-): PlayerAccumulator {
+function createAccumulator(playerId: string, playerName: string, playerNickname: string): PlayerAccumulator {
   return {
     playerId,
     playerName,

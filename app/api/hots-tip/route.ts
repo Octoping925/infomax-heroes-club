@@ -6,8 +6,7 @@ import { NextResponse } from "next/server";
 
 const BOT_TARGET_ROOM = INFOMAX_HOTS_CLUB_MESSAGE_ROOM; // MYC_TEST_MESSAGE_ROOM;
 
-const BOT_ICON_IMAGE =
-  "https://infomax.dooray.com/messenger/v1/api/apps/4058807707438101450/icon/4168246310654965318";
+const BOT_ICON_IMAGE = "https://infomax.dooray.com/messenger/v1/api/apps/4058807707438101450/icon/4168246310654965318";
 
 export async function GET() {
   const tips = sampleSize(TIPS, 4);

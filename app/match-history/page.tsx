@@ -13,5 +13,5 @@ export default function MatchHistoryPage() {
         </Suspense>
       </main>
     </div>
-  )
+  );
 }

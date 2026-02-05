@@ -36,16 +36,11 @@ const MAX_LIMIT = 200;
  * - unit=match: match.winnerTeamNumber 기준으로 승/패/무를 계산합니다.
  * - unit=game: gameTeam.result 기준으로 승/패/무를 계산합니다.
  */
-export async function GET(
-  req: Request
-): Promise<NextResponse<FantasyDuoWinRateResponse[]>> {
+export async function GET(req: Request): Promise<NextResponse<FantasyDuoWinRateResponse[]>> {
   const { limit, minCount, unit } = parseQueryParams(req.url);
 
   const playerMap = await fetchPlayerMap();
-  const duoMap =
-    unit === "game"
-      ? await calculateDuoStatsByGame(playerMap)
-      : await calculateDuoStatsByMatch(playerMap);
+  const duoMap = unit === "game" ? await calculateDuoStatsByGame(playerMap) : await calculateDuoStatsByMatch(playerMap);
 
   const response: FantasyDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
@@ -78,24 +73,15 @@ function parseQueryParams(url: string): {
   const { searchParams } = new URL(url);
   const limitParam = parseNumber(searchParams.get("limit"));
   const unitParam = searchParams.get("unit");
-  const minCountParam = parseNumber(
-    searchParams.get("minCount") ?? searchParams.get("minGames")
-  );
+  const minCountParam = parseNumber(searchParams.get("minCount") ?? searchParams.get("minGames"));
 
   const unit: UnitType = unitParam === "game" ? "game" : "match";
 
-  const limit =
-    typeof limitParam === "number"
-      ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
-      : DEFAULT_LIMIT;
+  const limit = typeof limitParam === "number" ? clamp(Math.floor(limitParam), 1, MAX_LIMIT) : DEFAULT_LIMIT;
 
-  const defaultMinCount =
-    unit === "match" ? DEFAULT_MIN_MATCHES : DEFAULT_MIN_GAMES;
+  const defaultMinCount = unit === "match" ? DEFAULT_MIN_MATCHES : DEFAULT_MIN_GAMES;
 
-  const minCount =
-    typeof minCountParam === "number"
-      ? clamp(Math.floor(minCountParam), 1, 10_000)
-      : defaultMinCount;
+  const minCount = typeof minCountParam === "number" ? clamp(Math.floor(minCountParam), 1, 10_000) : defaultMinCount;
 
   return { limit, minCount, unit };
 }
@@ -117,10 +103,7 @@ function createAccumulator(input: {
   };
 }
 
-function getMatchTeamResult(
-  winnerTeamNumber: number | null,
-  teamNumber: number
-): MatchTeamResult {
+function getMatchTeamResult(winnerTeamNumber: number | null, teamNumber: number): MatchTeamResult {
   if (winnerTeamNumber === null) {
     return "DRAW";
   }
@@ -142,9 +125,7 @@ function updateResultCounts(acc: DuoAccumulator, result: MatchTeamResult) {
   acc.draws++;
 }
 
-async function calculateDuoStatsByMatch(
-  playerMap: PlayerMap
-): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<string, DuoAccumulator>> {
   const matchTeams = await prisma.matchTeam.findMany({
     select: {
       teamNumber: true,
@@ -173,10 +154,7 @@ async function calculateDuoStatsByMatch(
       continue;
     }
 
-    const result = getMatchTeamResult(
-      matchTeam.match.winnerTeamNumber,
-      matchTeam.teamNumber
-    );
+    const result = getMatchTeamResult(matchTeam.match.winnerTeamNumber, matchTeam.teamNumber);
 
     for (let i = 0; i < players.length - 1; i++) {
       for (let j = i + 1; j < players.length; j++) {
@@ -210,9 +188,7 @@ async function calculateDuoStatsByMatch(
   return duoMap;
 }
 
-async function calculateDuoStatsByGame(
-  playerMap: PlayerMap
-): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByGame(playerMap: PlayerMap): Promise<Map<string, DuoAccumulator>> {
   const gameTeams = await prisma.gameTeam.findMany({
     select: {
       result: true,

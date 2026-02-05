@@ -7,12 +7,9 @@ export function usePlayerHeroWinRate(nickname: string) {
   const { data, error } = useSuspenseQuery<PlayerHeroWinRateResponse>({
     queryKey: statsQueryKeys.stats.players.heroStats(nickname),
     queryFn: async () => {
-      const response = await fetch(
-        `${SITE_URL}/api/stats/players/${encodeURIComponent(nickname)}/heroes`
-      );
+      const response = await fetch(`${SITE_URL}/api/stats/players/${encodeURIComponent(nickname)}/heroes`);
 
-      if (response.ok)
-        return (await response.json()) as PlayerHeroWinRateResponse;
+      if (response.ok) return (await response.json()) as PlayerHeroWinRateResponse;
 
       if (response.status === 404) {
         throw new Error("플레이어를 찾을 수 없습니다.");

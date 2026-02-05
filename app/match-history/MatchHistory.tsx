@@ -7,7 +7,6 @@ import { statsQueryKeys } from "@/config/query-keys";
 import { MatchCard } from "./components/MatchCard";
 import { SITE_URL } from "@/config/url";
 
-
 export function MatchHistory() {
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
   const { data: matches = [], error } = useSuspenseQuery<MatchHistoryItem[]>({
@@ -20,7 +19,6 @@ export function MatchHistory() {
       return (await response.json()) as MatchHistoryItem[];
     },
   });
-
 
   const toggleMatch = (matchId: string) => {
     setExpandedMap((prev) => ({

@@ -73,9 +73,7 @@ type SaveResult =
 
 const DEFAULT_BAN_SLOTS: BanSlots = [null, null, null] as const;
 
-function createBanSlotsFromResponse(
-  response: MatchBansResponse
-): Record<string, BanSlots> {
+function createBanSlotsFromResponse(response: MatchBansResponse): Record<string, BanSlots> {
   const result: Record<string, BanSlots> = {};
 
   for (const game of response.games) {
@@ -110,13 +108,8 @@ function formatPlayedAt(iso: string): string {
 
 function getMatchLabel(match: MatchHistoryItem): string {
   const typeLabel = match.type === "LUNCH" ? "점심" : "저녁";
-  const winnerLabel =
-    match.winnerTeamNumber === null
-      ? "무승부"
-      : `${match.winnerTeamNumber}팀 승`;
-  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${
-    match.games.length
-  }경기 · ${winnerLabel}`;
+  const winnerLabel = match.winnerTeamNumber === null ? "무승부" : `${match.winnerTeamNumber}팀 승`;
+  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
 }
 
 function getTeamMembersLabel(team: MatchHistoryGameTeam): string {
@@ -137,12 +130,8 @@ function validateTeamSlots(slots: BanSlots): string | null {
 export default function MatchBansPage() {
   const [matches, setMatches] = useState<MatchHistoryItem[]>([]);
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
-  const [selectedMatch, setSelectedMatch] = useState<MatchHistoryItem | null>(
-    null
-  );
-  const [banSlotsByGameTeamId, setBanSlotsByGameTeamId] = useState<
-    Record<string, BanSlots>
-  >({});
+  const [selectedMatch, setSelectedMatch] = useState<MatchHistoryItem | null>(null);
+  const [banSlotsByGameTeamId, setBanSlotsByGameTeamId] = useState<Record<string, BanSlots>>({});
   const [saveResult, setSaveResult] = useState<SaveResult>({ status: "idle" });
   const [isLoadingMatches, setIsLoadingMatches] = useState<boolean>(false);
   const [isLoadingBans, setIsLoadingBans] = useState<boolean>(false);
@@ -198,11 +187,9 @@ export default function MatchBansPage() {
         const response = await fetch(`/api/matches/${selectedMatchId}/bans`, {
           cache: "no-store",
         });
-        const data: MatchBansResponse | { error: string } =
-          await response.json();
+        const data: MatchBansResponse | { error: string } = await response.json();
         if (!response.ok) {
-          const message =
-            "error" in data ? data.error : "밴 조회에 실패했습니다.";
+          const message = "error" in data ? data.error : "밴 조회에 실패했습니다.";
           throw new Error(message);
         }
 
@@ -219,18 +206,10 @@ export default function MatchBansPage() {
     run();
   }, [matches, selectedMatchId]);
 
-  const handleChangeBanSlot = (
-    gameTeamId: string,
-    index: 0 | 1 | 2,
-    hero: Hero | null
-  ) => {
+  const handleChangeBanSlot = (gameTeamId: string, index: 0 | 1 | 2, hero: Hero | null) => {
     setBanSlotsByGameTeamId((prev) => {
       const current = prev[gameTeamId] ?? DEFAULT_BAN_SLOTS;
-      const next: [Hero | null, Hero | null, Hero | null] = [
-        current[0],
-        current[1],
-        current[2],
-      ];
+      const next: [Hero | null, Hero | null, Hero | null] = [current[0], current[1], current[2]];
       next[index] = hero;
       return { ...prev, [gameTeamId]: next };
     });
@@ -275,7 +254,7 @@ export default function MatchBansPage() {
               { banOrder: 3 as const, hero: slots[2] },
             ],
           };
-        })
+        }),
       );
 
       const response = await fetch(`/api/matches/${selectedMatch.id}/bans`, {
@@ -309,9 +288,7 @@ export default function MatchBansPage() {
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-4">
             <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between">
               <div className="space-y-2 w-full">
-                <label className="text-sm font-medium text-gray-400">
-                  내전 선택
-                </label>
+                <label className="text-sm font-medium text-gray-400">내전 선택</label>
                 <select
                   value={selectedMatchId}
                   onChange={(e) => setSelectedMatchId(e.target.value)}
@@ -330,9 +307,7 @@ export default function MatchBansPage() {
               </div>
 
               <div className="space-y-2 w-full md:max-w-sm">
-                <label className="text-sm font-medium text-gray-400">
-                  검색(라벨)
-                </label>
+                <label className="text-sm font-medium text-gray-400">검색(라벨)</label>
                 <input
                   value={matchSearchText}
                   onChange={(e) => setMatchSearchText(e.target.value)}
@@ -344,34 +319,24 @@ export default function MatchBansPage() {
 
             {selectedMatch && (
               <div className="text-sm text-gray-400">
-                선택됨:{" "}
-                <span className="text-gray-200">
-                  {getMatchLabel(selectedMatch)}
-                </span>{" "}
-                <span className="text-gray-600">
-                  (matchId: {selectedMatch.id})
-                </span>
+                선택됨: <span className="text-gray-200">{getMatchLabel(selectedMatch)}</span>{" "}
+                <span className="text-gray-600">(matchId: {selectedMatch.id})</span>
               </div>
             )}
 
             {(isLoadingBans || isLoadingMatches) && selectedMatchId && (
               <div className="text-sm text-gray-400 flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                밴 정보를 불러오는 중...
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />밴
+                정보를 불러오는 중...
               </div>
             )}
           </div>
 
           {selectedMatch?.games?.map((game) => (
-            <div
-              key={game.id}
-              className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-6"
-            >
+            <div key={game.id} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-6">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold">
-                    {game.gameNumber}번째 경기
-                  </h2>
+                  <h2 className="text-xl font-bold">{game.gameNumber}번째 경기</h2>
                   <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-sm">
                     {game.map}
                   </span>
@@ -379,32 +344,22 @@ export default function MatchBansPage() {
                 <div className="text-sm text-gray-400">
                   승리:{" "}
                   <span className="text-gray-200">
-                    {game.winnerTeamNumber === null
-                      ? "무승부"
-                      : `${game.winnerTeamNumber}팀`}
+                    {game.winnerTeamNumber === null ? "무승부" : `${game.winnerTeamNumber}팀`}
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {game.teams.map((team) => {
-                  const slots =
-                    banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
+                  const slots = banSlotsByGameTeamId[team.id] ?? DEFAULT_BAN_SLOTS;
                   const teamError = validateTeamSlots(slots);
 
                   return (
-                    <div
-                      key={team.id}
-                      className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4"
-                    >
+                    <div key={team.id} className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                          <div className="text-lg font-bold">
-                            {team.teamNumber}팀 밴
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            gameTeamId: {team.id}
-                          </div>
+                          <div className="text-lg font-bold">{team.teamNumber}팀 밴</div>
+                          <div className="text-xs text-gray-500">gameTeamId: {team.id}</div>
                         </div>
                         <button
                           onClick={() => handleClearTeamBans(team.id)}
@@ -416,10 +371,7 @@ export default function MatchBansPage() {
                       </div>
 
                       <div className="text-sm text-gray-400">
-                        멤버:{" "}
-                        <span className="text-gray-200">
-                          {getTeamMembersLabel(team)}
-                        </span>
+                        멤버: <span className="text-gray-200">{getTeamMembersLabel(team)}</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -428,18 +380,12 @@ export default function MatchBansPage() {
 
                           return (
                             <div key={i} className="space-y-2">
-                              <label className="text-xs text-gray-500">
-                                {i + 1}밴
-                              </label>
+                              <label className="text-xs text-gray-500">{i + 1}밴</label>
                               <select
                                 value={value ?? ""}
                                 onChange={(e) => {
                                   const v = e.target.value;
-                                  handleChangeBanSlot(
-                                    team.id,
-                                    i,
-                                    v === "" ? null : (v as Hero)
-                                  );
+                                  handleChangeBanSlot(team.id, i, v === "" ? null : (v as Hero));
                                 }}
                                 className="w-full px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                               >
@@ -447,11 +393,7 @@ export default function MatchBansPage() {
                                   선택 안 함
                                 </option>
                                 {heroOptions.map((hero) => (
-                                  <option
-                                    key={hero}
-                                    value={hero}
-                                    className="bg-[#1a1a2e]"
-                                  >
+                                  <option key={hero} value={hero} className="bg-[#1a1a2e]">
                                     {HeroMap[hero]} ({hero})
                                   </option>
                                 ))}
@@ -475,21 +417,20 @@ export default function MatchBansPage() {
 
           {selectedMatch && (
             <div className="space-y-4">
-              {saveResult.status !== "idle" &&
-                saveResult.status !== "saving" && (
-                  <div
-                    className={`p-4 rounded-xl border ${
-                      saveResult.status === "success"
-                        ? "bg-green-500/10 border-green-500/30 text-green-400"
-                        : "bg-red-500/10 border-red-500/30 text-red-400"
-                    }`}
-                  >
-                    <p className="font-medium">
-                      {saveResult.status === "success" ? "✅ " : "❌ "}
-                      {saveResult.message}
-                    </p>
-                  </div>
-                )}
+              {saveResult.status !== "idle" && saveResult.status !== "saving" && (
+                <div
+                  className={`p-4 rounded-xl border ${
+                    saveResult.status === "success"
+                      ? "bg-green-500/10 border-green-500/30 text-green-400"
+                      : "bg-red-500/10 border-red-500/30 text-red-400"
+                  }`}
+                >
+                  <p className="font-medium">
+                    {saveResult.status === "success" ? "✅ " : "❌ "}
+                    {saveResult.message}
+                  </p>
+                </div>
+              )}
 
               <button
                 onClick={handleSave}

@@ -4,23 +4,19 @@ import { GameResult } from "@/generated/prisma/client";
 import { HeroPopularityResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { Hero } from "@/domain/hots/models";
+import { groupBy } from "@/utils/groupBy";
 
 /**
  * 밴/픽이 많이 된 영웅 통계 조회
  * GET /api/stats/heroes/popular
  */
 export async function GET(): Promise<NextResponse<HeroPopularityResponse[]>> {
-  const [pickStats, banCounts] = await Promise.all([
-    fetchPickStats(),
-    fetchBanCounts(),
-  ]);
+  const [pickStats, banCounts] = await Promise.all([fetchPickStats(), fetchBanCounts()]);
 
   const heroPopularity = buildHeroPopularity(pickStats, banCounts);
 
   // 총 등장 횟수(픽 + 밴) 순으로 정렬
-  return NextResponse.json(
-    heroPopularity.toSorted((a, b) => b.totalAppearance - a.totalAppearance)
-  );
+  return NextResponse.json(heroPopularity.toSorted((a, b) => b.totalAppearance - a.totalAppearance));
 }
 
 type PickStat = {
@@ -54,23 +50,16 @@ async function fetchBanCounts(): Promise<Map<Hero, number>> {
     },
   });
 
-  const banMap = new Map<Hero, number>();
-  for (const ban of bans) {
-    banMap.set(ban.hero, ban._count.hero);
-  }
-
-  return banMap;
+  return groupBy(
+    bans,
+    (ban) => ban.hero,
+    (ban) => ban._count.hero,
+  );
 }
 
-function buildHeroPopularity(
-  pickStats: PickStat[],
-  banCounts: Map<Hero, number>
-): HeroPopularityResponse[] {
+function buildHeroPopularity(pickStats: PickStat[], banCounts: Map<Hero, number>): HeroPopularityResponse[] {
   // 영웅별 픽 통계 집계
-  const heroPickMap = new Map<
-    Hero,
-    { total: number; wins: number; losses: number; draws: number }
-  >();
+  const heroPickMap = new Map<Hero, { total: number; wins: number; losses: number; draws: number }>();
 
   for (const pick of pickStats) {
     const current = heroPickMap.get(pick.hero) ?? {
@@ -110,11 +99,7 @@ function buildHeroPopularity(
       pickCount: pickStat.total,
       banCount,
       totalAppearance: pickStat.total + banCount,
-      pickWinRate: calculateWinRate(
-        pickStat.wins,
-        pickStat.losses,
-        pickStat.draws
-      ),
+      pickWinRate: calculateWinRate(pickStat.wins, pickStat.losses, pickStat.draws),
     };
   });
 }

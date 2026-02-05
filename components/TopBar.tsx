@@ -7,8 +7,7 @@ interface TopBarProps {
 }
 
 const selectedStyle = "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25";
-const unselectedStyle =
-  "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all";
+const unselectedStyle = "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all";
 
 export function TopBar({
   value = "home",
@@ -37,9 +36,12 @@ export function TopBar({
   );
 }
 
-function NavLink({ href, label, isSelected }: { href: string; label: string, isSelected: boolean }) {
+function NavLink({ href, label, isSelected }: { href: string; label: string; isSelected: boolean }) {
   return (
-    <Link href={href} className={`px-4 py-2 rounded-lg text-sm font-medium ${isSelected ? selectedStyle : unselectedStyle}`}>
+    <Link
+      href={href}
+      className={`px-4 py-2 rounded-lg text-sm font-medium ${isSelected ? selectedStyle : unselectedStyle}`}
+    >
       {label}
     </Link>
   );

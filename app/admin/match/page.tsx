@@ -18,9 +18,7 @@ export default function MatchInputPage() {
   const [matchType, setMatchType] = useState<MatchType>("LUNCH");
   const [team1Leader, setTeam1Leader] = useState<string>("");
   const [team2Leader, setTeam2Leader] = useState<string>("");
-  const [games, setGames] = useState<GameInput[]>([
-    { statsText: "", winnerTeamNumber: null },
-  ]);
+  const [games, setGames] = useState<GameInput[]>([{ statsText: "", winnerTeamNumber: null }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
@@ -37,15 +35,10 @@ export default function MatchInputPage() {
     }
   };
 
-  const handleGameChange = (
-    index: number,
-    field: keyof GameInput,
-    value: string | number | null
-  ) => {
+  const handleGameChange = (index: number, field: keyof GameInput, value: string | number | null) => {
     const newGames = [...games];
     if (field === "winnerTeamNumber") {
-      newGames[index].winnerTeamNumber =
-        value === "draw" ? null : Number(value);
+      newGames[index].winnerTeamNumber = value === "draw" ? null : Number(value);
     } else {
       newGames[index][field] = value as string;
     }
@@ -131,9 +124,7 @@ export default function MatchInputPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  내전 날짜
-                </label>
+                <label className="text-sm font-medium text-gray-400">내전 날짜</label>
                 <input
                   type="text"
                   value={playedAt}
@@ -141,15 +132,11 @@ export default function MatchInputPage() {
                   placeholder="20251212"
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                 />
-                <p className="text-xs text-gray-500">
-                  yyyyMMdd 형식 (예: 20251212)
-                </p>
+                <p className="text-xs text-gray-500">yyyyMMdd 형식 (예: 20251212)</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  내전 종류
-                </label>
+                <label className="text-sm font-medium text-gray-400">내전 종류</label>
                 <select
                   value={matchType}
                   onChange={(e) => setMatchType(e.target.value as MatchType)}
@@ -165,9 +152,7 @@ export default function MatchInputPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  팀 1 리더
-                </label>
+                <label className="text-sm font-medium text-gray-400">팀 1 리더</label>
                 <input
                   type="text"
                   value={team1Leader}
@@ -178,9 +163,7 @@ export default function MatchInputPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  팀 2 리더
-                </label>
+                <label className="text-sm font-medium text-gray-400">팀 2 리더</label>
                 <input
                   type="text"
                   value={team2Leader}
@@ -194,10 +177,7 @@ export default function MatchInputPage() {
 
           {/* 경기 입력 카드들 */}
           {games.map((game, index) => (
-            <div
-              key={index}
-              className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10"
-            >
+            <div key={index} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -218,22 +198,10 @@ export default function MatchInputPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400">
-                    승리 팀
-                  </label>
+                  <label className="text-sm font-medium text-gray-400">승리 팀</label>
                   <select
-                    value={
-                      game.winnerTeamNumber === null
-                        ? "draw"
-                        : String(game.winnerTeamNumber)
-                    }
-                    onChange={(e) =>
-                      handleGameChange(
-                        index,
-                        "winnerTeamNumber",
-                        e.target.value
-                      )
-                    }
+                    value={game.winnerTeamNumber === null ? "draw" : String(game.winnerTeamNumber)}
+                    onChange={(e) => handleGameChange(index, "winnerTeamNumber", e.target.value)}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                   >
                     <option value="1" className="bg-[#1a1a2e]">
@@ -249,14 +217,10 @@ export default function MatchInputPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400">
-                    게임 스탯
-                  </label>
+                  <label className="text-sm font-medium text-gray-400">게임 스탯</label>
                   <textarea
                     value={game.statsText}
-                    onChange={(e) =>
-                      handleGameChange(index, "statsText", e.target.value)
-                    }
+                    onChange={(e) => handleGameChange(index, "statsText", e.target.value)}
                     placeholder={`[영원의 전쟁터]
 <Team 1: Level 19>
 [닉네임 (영웅)]
@@ -268,9 +232,7 @@ Kill: 0 / Death: 0 / Takedown: 0
 ...`}
                     className="w-full h-64 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-mono text-sm resize-y"
                   />
-                  <p className="text-xs text-gray-500">
-                    게임 결과 화면의 스탯을 복사하여 붙여넣기 해주세요
-                  </p>
+                  <p className="text-xs text-gray-500">게임 결과 화면의 스탯을 복사하여 붙여넣기 해주세요</p>
                 </div>
               </div>
             </div>
@@ -287,10 +249,11 @@ Kill: 0 / Death: 0 / Takedown: 0
           {/* 결과 메시지 */}
           {result && (
             <div
-              className={`p-4 rounded-xl border ${result.success
+              className={`p-4 rounded-xl border ${
+                result.success
                   ? "bg-green-500/10 border-green-500/30 text-green-400"
                   : "bg-red-500/10 border-red-500/30 text-red-400"
-                }`}
+              }`}
             >
               <p className="font-medium">
                 {result.success ? "✅ " : "❌ "}
@@ -303,10 +266,11 @@ Kill: 0 / Death: 0 / Takedown: 0
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`w-full px-6 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${isSubmitting
+            className={`w-full px-6 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${
+              isSubmitting
                 ? "bg-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-cyan-500/25"
-              }`}
+            }`}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">

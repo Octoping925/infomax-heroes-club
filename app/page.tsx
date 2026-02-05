@@ -18,9 +18,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-6">
             <div className="inline-flex px-6 py-2 rounded-full bg-linear-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 backdrop-blur-xl">
-              <span className="text-sm font-medium">
-                🎮 Heroes of the Storm Community
-              </span>
+              <span className="text-sm font-medium">🎮 Heroes of the Storm Community</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold bg-linear-to-r from-cyan-400 via-purple-500 to-orange-500 bg-clip-text text-transparent">
               함께 만드는 승리의 역사
@@ -88,13 +86,10 @@ export default function Home() {
           <div className="bg-linear-to-r from-cyan-500/10 to-purple-500/10 backdrop-blur-xl rounded-2xl p-12 border border-cyan-500/30 text-center space-y-6">
             <h3 className="text-4xl font-bold">함께 플레이하고 싶으신가요?</h3>
             <p className="text-xl text-gray-400">
-              연합인포맥스 히오스 동호회에 가입하여 즐거운 게임 문화를
-              경험하세요!
+              연합인포맥스 히오스 동호회에 가입하여 즐거운 게임 문화를 경험하세요!
             </p>
             <blockquote className="border-l-4 border-cyan-500 pl-6 py-4 bg-white/5 rounded-r-xl">
-              <p className="text-lg italic text-gray-300">
-                &quot;승리에 우연은 없습니다.&quot;
-              </p>
+              <p className="text-lg italic text-gray-300">&quot;승리에 우연은 없습니다.&quot;</p>
               <footer className="text-sm text-gray-500 mt-2">- 채수관</footer>
             </blockquote>
           </div>
@@ -112,22 +107,14 @@ type StatCardProps = {
   gradient: string;
 };
 
-function StatCard({
-  title,
-  value,
-  description,
-  icon,
-  gradient,
-}: StatCardProps) {
+function StatCard({ title, value, description, icon, gradient }: StatCardProps) {
   return (
     <div
       className={`bg-linear-to-br ${gradient} backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-white/20 transition-all hover:scale-105 duration-300`}
     >
       <div className="space-y-4">
         <div className="text-5xl">{icon}</div>
-        <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
-          {title}
-        </div>
+        <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">{title}</div>
         <div className="text-4xl font-bold bg-linear-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
           {value}
         </div>
@@ -142,9 +129,8 @@ function AboutSection() {
     <div className="space-y-8">
       <h3 className="text-3xl font-bold">동호회 소개</h3>
       <p className="text-lg text-gray-400 leading-relaxed">
-        연합인포맥스 히어로즈 동호회는 히어로즈 오브 더 스톰을 사랑하는
-        임직원들이 모여 만든 게임 커뮤니티입니다. 실력 향상과 즐거운 게임 문화를
-        목표로 정기적인 게임 세션과 소통의 장을 마련하고 있습니다.
+        연합인포맥스 히어로즈 동호회는 히어로즈 오브 더 스톰을 사랑하는 임직원들이 모여 만든 게임 커뮤니티입니다. 실력
+        향상과 즐거운 게임 문화를 목표로 정기적인 게임 세션과 소통의 장을 마련하고 있습니다.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FeatureCard
@@ -157,16 +143,8 @@ function AboutSection() {
           description="전략 공유와 리플레이 분석으로 실력을 키워갑니다"
           icon="📈"
         />
-        <FeatureCard
-          title="친목 활동"
-          description="게임 외에도 다양한 친목 활동으로 유대감을 형성합니다"
-          icon="🤝"
-        />
-        <FeatureCard
-          title="자유로운 분위기"
-          description="초보자부터 고수까지 모두 환영하는 열린 커뮤니티"
-          icon="✨"
-        />
+        <FeatureCard title="친목 활동" description="게임 외에도 다양한 친목 활동으로 유대감을 형성합니다" icon="🤝" />
+        <FeatureCard title="자유로운 분위기" description="초보자부터 고수까지 모두 환영하는 열린 커뮤니티" icon="✨" />
       </div>
     </div>
   );
@@ -239,10 +217,7 @@ function ActivityCard({ title, time, description, type }: ActivityCardProps) {
       이벤트: "bg-purple-500/20 text-purple-400 border-purple-500/30",
       교육: "bg-orange-500/20 text-orange-400 border-orange-500/30",
     };
-    return (
-      styles[activityType as keyof typeof styles] ||
-      "bg-gray-500/20 text-gray-400 border-gray-500/30"
-    );
+    return styles[activityType as keyof typeof styles] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
   };
 
   return (
@@ -250,13 +225,7 @@ function ActivityCard({ title, time, description, type }: ActivityCardProps) {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-xl font-bold">{title}</h4>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium border ${getBadgeStyle(
-              type
-            )}`}
-          >
-            {type}
-          </span>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getBadgeStyle(type)}`}>{type}</span>
         </div>
         <p className="text-sm text-cyan-400">⏰ {time}</p>
         <p className="text-gray-400">{description}</p>

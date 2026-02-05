@@ -1,9 +1,4 @@
-export type HeroRole =
-  | "TANKER"
-  | "OFFLANER"
-  | "MAIN_DEALER"
-  | "SUB_DEALER"
-  | "HEALER"
+export type HeroRole = "TANKER" | "OFFLANER" | "MAIN_DEALER" | "SUB_DEALER" | "HEALER";
 
 export const HeroRoleMap = {
   TANKER: "TANKER",

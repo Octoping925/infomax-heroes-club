@@ -1,17 +1,12 @@
 "use client";
 
 import { useMemo, useState, type ChangeEvent, type ReactElement } from "react";
-import {
-  GLOSSARY_ENTRIES,
-  GLOSSARY_TAGS,
-  type GlossaryEntry,
-  type GlossaryTag,
-} from "../glossary-data";
+import { GLOSSARY_ENTRIES, GLOSSARY_TAGS, type GlossaryEntry, type GlossaryTag } from "../glossary-data";
 
-const ALL_TAG = "전체" as const;
+const ALL_TAG = "전체";
 type TagFilter = GlossaryTag | typeof ALL_TAG;
 
-function normalizeText(value: string): string {
+function normalizeText(value: string) {
   return value.trim().toLowerCase();
 }
 
@@ -24,7 +19,7 @@ function getEntrySearchText(entry: GlossaryEntry): string {
       entry.details ?? "",
       entry.tags.join(" "),
       ...(entry.exampleCalls ?? []),
-    ].join(" ")
+    ].join(" "),
   );
 }
 
@@ -48,19 +43,17 @@ export default function GlossaryClient(): ReactElement {
 
   const normalizedQuery = useMemo<string>(() => normalizeText(query), [query]);
 
-  const filteredEntries = useMemo<readonly GlossaryEntry[]>(() => {
+  const filteredEntries = useMemo(() => {
     const entriesByTag =
-      tag === ALL_TAG
-        ? GLOSSARY_ENTRIES
-        : GLOSSARY_ENTRIES.filter((entry) => entry.tags.includes(tag));
+      tag === ALL_TAG ? GLOSSARY_ENTRIES : GLOSSARY_ENTRIES.filter((entry) => entry.tags.includes(tag));
 
     if (!normalizedQuery) {
-      return [...entriesByTag].sort((a, b) => a.term.localeCompare(b.term, "ko"));
+      return entriesByTag.toSorted((a, b) => a.term.localeCompare(b.term, "ko"));
     }
 
     return entriesByTag
       .filter((entry) => getEntrySearchText(entry).includes(normalizedQuery))
-      .sort((a, b) => a.term.localeCompare(b.term, "ko"));
+      .toSorted((a, b) => a.term.localeCompare(b.term, "ko"));
   }, [normalizedQuery, tag]);
 
   const handleQueryChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -72,9 +65,7 @@ export default function GlossaryClient(): ReactElement {
       <section className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-3xl font-bold">히오스 초보 단어장</h2>
-          <p className="text-sm text-gray-400">
-            게임 중 자주 나오는 용어/콜을 빠르게 찾아보세요.
-          </p>
+          <p className="text-sm text-gray-400">게임 중 자주 나오는 용어/콜을 빠르게 찾아보세요.</p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-4">
@@ -92,9 +83,7 @@ export default function GlossaryClient(): ReactElement {
               />
             </div>
 
-            <div className="text-sm text-gray-400">
-              {filteredEntries.length}개 표시
-            </div>
+            <div className="text-sm text-gray-400">{filteredEntries.length}개 표시</div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -138,9 +127,7 @@ export default function GlossaryClient(): ReactElement {
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold">{entry.term}</h3>
                   {entry.aliases.length > 0 && (
-                    <p className="text-xs text-gray-400">
-                      별칭: {entry.aliases.join(", ")}
-                    </p>
+                    <p className="text-xs text-gray-400">별칭: {entry.aliases.join(", ")}</p>
                   )}
                 </div>
               </div>
@@ -149,9 +136,7 @@ export default function GlossaryClient(): ReactElement {
                 {entry.tags.map((t) => (
                   <span
                     key={t}
-                    className={`px-2 py-1 rounded-full text-[11px] font-medium border ${getTagBadgeStyle(
-                      t
-                    )}`}
+                    className={`px-2 py-1 rounded-full text-[11px] font-medium border ${getTagBadgeStyle(t)}`}
                   >
                     {t}
                   </span>
@@ -162,17 +147,11 @@ export default function GlossaryClient(): ReactElement {
             <div className="mt-4 space-y-3">
               <p className="text-gray-200 leading-relaxed">{entry.description}</p>
 
-              {entry.details && (
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  {entry.details}
-                </p>
-              )}
+              {entry.details && <p className="text-sm text-gray-400 leading-relaxed">{entry.details}</p>}
 
               {entry.exampleCalls && entry.exampleCalls.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
-                    예시 콜
-                  </div>
+                  <div className="text-xs uppercase tracking-widest text-gray-500 font-semibold">예시 콜</div>
                   <ul className="space-y-1">
                     {entry.exampleCalls.map((call) => (
                       <li
@@ -192,9 +171,7 @@ export default function GlossaryClient(): ReactElement {
         {filteredEntries.length === 0 && (
           <div className="md:col-span-2 bg-white/5 backdrop-blur-xl rounded-2xl p-10 border border-white/10 text-center">
             <p className="text-gray-300 font-medium">검색 결과가 없어요.</p>
-            <p className="text-sm text-gray-500 mt-2">
-              다른 키워드로 검색하거나 태그를 바꿔보세요.
-            </p>
+            <p className="text-sm text-gray-500 mt-2">다른 키워드로 검색하거나 태그를 바꿔보세요.</p>
           </div>
         )}
       </section>

@@ -24,9 +24,7 @@ const DEFAULT_LIMIT = 50;
  */
 export function FantasyDuoRankingChart() {
   const [unit, setUnit] = useState<LunchDinnerUnit>("game");
-  const [minCountByUnit, setMinCountByUnit] = useState<
-    Record<LunchDinnerUnit, number>
-  >({
+  const [minCountByUnit, setMinCountByUnit] = useState<Record<LunchDinnerUnit, number>>({
     match: DEFAULT_MIN_MATCHES,
     game: DEFAULT_MIN_GAMES,
   });
@@ -47,14 +45,11 @@ export function FantasyDuoRankingChart() {
       limit,
     }),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({
-        unit,
-        minCount: String(minCount),
-        limit: String(limit),
-      });
-      const response = await fetch(
-        `${SITE_URL}/api/stats/players/fantasy-duo?${searchParams.toString()}`
-      );
+      const url = new URL(SITE_URL, "/api/stats/players/fantasy-duo");
+      url.searchParams.set("unit", unit);
+      url.searchParams.set("minCount", String(minCount));
+      url.searchParams.set("limit", String(limit));
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
@@ -85,21 +80,19 @@ export function FantasyDuoRankingChart() {
         <p className="text-gray-400">
           {unit === "match" ? (
             <>
-              <span className="text-white">내전 1건을 1경기</span>로 보고,{" "}
-              <span className="text-white">같은 팀</span>이었던 2인 조합의
-              승률을 집계합니다.
+              <span className="text-white">내전 1건을 1경기</span>로 보고, <span className="text-white">같은 팀</span>
+              이었던 2인 조합의 승률을 집계합니다.
             </>
           ) : (
             <>
-              <span className="text-white">게임 1판을 1경기</span>로 보고,{" "}
-              <span className="text-white">같은 팀</span>이었던 2인 조합의
-              승률을 집계합니다.
+              <span className="text-white">게임 1판을 1경기</span>로 보고, <span className="text-white">같은 팀</span>
+              이었던 2인 조합의 승률을 집계합니다.
             </>
           )}
         </p>
         <p className="text-xs text-gray-500">
-          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은{" "}
-          <span className="text-gray-300">승 / (승+패+무)</span> 기준입니다.
+          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은 <span className="text-gray-300">승 / (승+패+무)</span>{" "}
+          기준입니다.
         </p>
       </div>
 
@@ -108,9 +101,7 @@ export function FantasyDuoRankingChart() {
           <span className="text-xs text-gray-400">기준</span>
           <select
             value={unit}
-            onChange={(e) =>
-              setUnit(e.target.value === "game" ? "game" : "match")
-            }
+            onChange={(e) => setUnit(e.target.value === "game" ? "game" : "match")}
             className="w-40 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-cyan-500/60"
           >
             <option className="text-black" value="game">
@@ -123,9 +114,7 @@ export function FantasyDuoRankingChart() {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-gray-400">
-            {unit === "match" ? "최소 내전 수" : "최소 경기 수"}
-          </span>
+          <span className="text-xs text-gray-400">{unit === "match" ? "최소 내전 수" : "최소 경기 수"}</span>
           <input
             type="number"
             min={1}
@@ -173,17 +162,9 @@ export function FantasyDuoRankingChart() {
                   className="border-t border-white/10 hover:bg-white/[0.06] transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-400">{index + 1}</td>
-                  <td className="px-4 py-3 font-medium text-white">
-                    {row.duoName}
-                  </td>
+                  <td className="px-4 py-3 font-medium text-white">{row.duoName}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={
-                        row.winRate >= 50 ? "text-green-400" : "text-red-400"
-                      }
-                    >
-                      {row.winRate}%
-                    </span>
+                    <span className={row.winRate >= 50 ? "text-green-400" : "text-red-400"}>{row.winRate}%</span>
                   </td>
                   <td className="px-4 py-3 text-gray-200">{row.totalGames}</td>
                   <td className="px-4 py-3 text-gray-200">{row.wins}</td>

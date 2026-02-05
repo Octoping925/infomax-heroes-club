@@ -29,13 +29,11 @@ export function HeroDuoRankingChart() {
   const { data, error } = useSuspenseQuery<HeroDuoWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit }),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({
-        minCount: String(minCount),
-        limit: String(limit),
-      });
-      const response = await fetch(
-        `${SITE_URL}/api/stats/heroes/fantasy-duo?${searchParams.toString()}`
-      );
+      const url = new URL(SITE_URL, "/api/stats/heroes/fantasy-duo");
+      url.searchParams.set("minCount", String(minCount));
+      url.searchParams.set("limit", String(limit));
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
@@ -68,13 +66,12 @@ export function HeroDuoRankingChart() {
     <div className="space-y-6">
       <div className="space-y-1">
         <p className="text-gray-400">
-          <span className="text-white">경기 1판을 1경기</span>로 보고,{" "}
-          <span className="text-white">같은 팀</span>이었던 영웅 2개 조합의
-          승률을 집계합니다.
+          <span className="text-white">경기 1판을 1경기</span>로 보고, <span className="text-white">같은 팀</span>이었던
+          영웅 2개 조합의 승률을 집계합니다.
         </p>
         <p className="text-xs text-gray-500">
-          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은{" "}
-          <span className="text-gray-300">승 / (승+패+무)</span> 기준입니다.
+          무승부는 분모(총 경기 수)에 포함되며, 승률 계산은 <span className="text-gray-300">승 / (승+패+무)</span>{" "}
+          기준입니다.
         </p>
       </div>
 
@@ -105,9 +102,7 @@ export function HeroDuoRankingChart() {
 
       {rows.length === 0 ? (
         <div className="flex justify-center py-12">
-          <p className="text-gray-500">
-            조건에 맞는 영웅 듀오 데이터가 없습니다.
-          </p>
+          <p className="text-gray-500">조건에 맞는 영웅 듀오 데이터가 없습니다.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -130,17 +125,9 @@ export function HeroDuoRankingChart() {
                   className="border-t border-white/10 hover:bg-white/6 transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-400">{index + 1}</td>
-                  <td className="px-4 py-3 font-medium text-white">
-                    {row.duoName}
-                  </td>
+                  <td className="px-4 py-3 font-medium text-white">{row.duoName}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={
-                        row.winRate >= 50 ? "text-green-400" : "text-red-400"
-                      }
-                    >
-                      {row.winRate}%
-                    </span>
+                    <span className={row.winRate >= 50 ? "text-green-400" : "text-red-400"}>{row.winRate}%</span>
                   </td>
                   <td className="px-4 py-3 text-gray-200">{row.totalGames}</td>
                   <td className="px-4 py-3 text-gray-200">{row.wins}</td>

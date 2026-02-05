@@ -26,9 +26,7 @@ const MAX_LIMIT = 200;
  * - 같은 GameTeam(같은 팀) 안에서 함께 나온 영웅 2개 조합을 집계합니다.
  * - gameTeam.result 기준으로 승/패/무를 계산합니다.
  */
-export async function GET(
-  req: Request
-): Promise<NextResponse<HeroDuoWinRateResponse[]>> {
+export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResponse[]>> {
   const { limit, minCount } = parseQueryParams(req.url);
 
   const gameTeams = await prisma.gameTeam.findMany({
@@ -45,9 +43,9 @@ export async function GET(
   const duoMap = new Map<string, DuoAccumulator>();
 
   for (const gameTeam of gameTeams) {
-    const uniqueHeroes = Array.from(
-      new Set<Hero>(gameTeam.members.map((m) => m.hero))
-    ).sort((a, b) => String(a).localeCompare(String(b)));
+    const uniqueHeroes = Array.from(new Set<Hero>(gameTeam.members.map((m) => m.hero))).sort((a, b) =>
+      a.localeCompare(b),
+    );
 
     if (uniqueHeroes.length < 2) {
       continue;
@@ -106,14 +104,8 @@ function parseQueryParams(url: string): {
   const limitParam = parseNumber(searchParams.get("limit"));
   const minCountParam = parseNumber(searchParams.get("minCount"));
 
-  const limit =
-    typeof limitParam === "number"
-      ? clamp(Math.floor(limitParam), 1, MAX_LIMIT)
-      : DEFAULT_LIMIT;
-  const minCount =
-    typeof minCountParam === "number"
-      ? clamp(Math.floor(minCountParam), 1, 10_000)
-      : DEFAULT_MIN_GAMES;
+  const limit = typeof limitParam === "number" ? clamp(Math.floor(limitParam), 1, MAX_LIMIT) : DEFAULT_LIMIT;
+  const minCount = typeof minCountParam === "number" ? clamp(Math.floor(minCountParam), 1, 10_000) : DEFAULT_MIN_GAMES;
 
   return { limit, minCount };
 }
@@ -122,10 +114,7 @@ function buildDuoKey(heroA: Hero, heroB: Hero): string {
   return `${heroA}:${heroB}`;
 }
 
-function createAccumulator(input: {
-  heroA: Hero;
-  heroB: Hero;
-}): DuoAccumulator {
+function createAccumulator(input: { heroA: Hero; heroB: Hero }): DuoAccumulator {
   return {
     heroA: input.heroA,
     heroB: input.heroB,

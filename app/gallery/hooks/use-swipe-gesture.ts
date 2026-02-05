@@ -61,7 +61,7 @@ export function useSwipeGesture<TElement extends HTMLElement>({
         isSwipeCandidate: true,
       };
     },
-    [isEnabled]
+    [isEnabled],
   );
 
   const onTouchMove = useCallback<TouchEventHandler<TElement>>(
@@ -84,7 +84,7 @@ export function useSwipeGesture<TElement extends HTMLElement>({
         currentTrackingState.isSwipeCandidate = false;
       }
     },
-    [directionTolerancePx, isEnabled]
+    [directionTolerancePx, isEnabled],
   );
 
   const onTouchEnd = useCallback<TouchEventHandler<TElement>>(() => {

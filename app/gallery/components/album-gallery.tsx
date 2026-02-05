@@ -87,9 +87,7 @@ export function AlbumGallery({ images }: AlbumGalleryProps) {
           <div className="relative z-10 w-full max-w-6xl">
             <div className="mb-3 flex items-center justify-between">
               <div className="text-sm text-gray-200">
-                <span className="font-semibold">
-                  {carousel.activeIndex + 1}
-                </span>
+                <span className="font-semibold">{carousel.activeIndex + 1}</span>
                 <span className="text-gray-400"> / {totalImages}</span>
               </div>
               <button

@@ -39,7 +39,7 @@ export type MatchBansResponse = {
  */
 export async function GET(
   _request: NextRequest,
-  context: { params: Promise<{ matchId: string }> }
+  context: { params: Promise<{ matchId: string }> },
 ): Promise<NextResponse<MatchBansResponse | { error: string }>> {
   try {
     const { matchId } = await context.params;
@@ -74,10 +74,7 @@ export async function GET(
     });
 
     if (!match) {
-      return NextResponse.json(
-        { error: "존재하지 않는 내전입니다." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "존재하지 않는 내전입니다." }, { status: 404 });
     }
 
     return NextResponse.json(
@@ -101,7 +98,7 @@ export async function GET(
         headers: {
           "Cache-Control": "no-store",
         },
-      }
+      },
     );
   } catch (err) {
     console.error("내전 밴 조회 오류:", err);
@@ -116,7 +113,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ matchId: string }> }
+  context: { params: Promise<{ matchId: string }> },
 ): Promise<NextResponse<{ success: true } | { error: string }>> {
   try {
     const { matchId } = await context.params;
@@ -124,10 +121,7 @@ export async function PUT(
 
     const updates = body.updates ?? [];
     if (updates.length === 0) {
-      return NextResponse.json(
-        { error: "업데이트할 데이터가 없습니다." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "업데이트할 데이터가 없습니다." }, { status: 400 });
     }
 
     for (const update of updates) {
@@ -151,32 +145,21 @@ export async function PUT(
       },
     });
 
-    const gameTeamMatchIdMap = new Map(
-      gameTeams.map((gt) => [gt.id, gt.game.matchId] as const)
-    );
+    const gameTeamMatchIdMap = new Map(gameTeams.map((gt) => [gt.id, gt.game.matchId] as const));
 
-    const missingGameTeams = targetGameTeamIds.filter(
-      (id) => !gameTeamMatchIdMap.has(id)
-    );
+    const missingGameTeams = targetGameTeamIds.filter((id) => !gameTeamMatchIdMap.has(id));
     if (missingGameTeams.length > 0) {
       return NextResponse.json(
         {
-          error: `존재하지 않는 gameTeamId가 포함되어 있습니다: ${missingGameTeams.join(
-            ", "
-          )}`,
+          error: `존재하지 않는 gameTeamId가 포함되어 있습니다: ${missingGameTeams.join(", ")}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const invalidScopeGameTeams = targetGameTeamIds.filter(
-      (id) => gameTeamMatchIdMap.get(id) !== matchId
-    );
+    const invalidScopeGameTeams = targetGameTeamIds.filter((id) => gameTeamMatchIdMap.get(id) !== matchId);
     if (invalidScopeGameTeams.length > 0) {
-      return NextResponse.json(
-        { error: "요청한 내전에 속하지 않는 gameTeamId가 포함되어 있습니다." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "요청한 내전에 속하지 않는 gameTeamId가 포함되어 있습니다." }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -204,10 +187,7 @@ export async function PUT(
       }
     });
 
-    return NextResponse.json(
-      { success: true },
-      { headers: { "Cache-Control": "no-store" } }
-    );
+    return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("내전 밴 저장 오류:", err);
     const message = err instanceof Error ? err.message : "알 수 없는 오류";
@@ -226,16 +206,11 @@ function validateUpdate(update: UpdateGameTeamBansInput): string | null {
 
   const orders = update.bans.map((b) => b.banOrder);
   const orderSet = new Set(orders);
-  if (
-    orderSet.size !== 3 ||
-    !orders.every((o) => o === 1 || o === 2 || o === 3)
-  ) {
+  if (orderSet.size !== 3 || !orders.every((o) => o === 1 || o === 2 || o === 3)) {
     return "banOrder는 1,2,3을 각각 한 번씩 포함해야 합니다.";
   }
 
-  const heroes = update.bans
-    .map((b) => b.hero)
-    .filter((h): h is Hero => h !== null);
+  const heroes = update.bans.map((b) => b.hero).filter((h): h is Hero => h !== null);
   const heroSet = new Set(heroes);
   if (heroSet.size !== heroes.length) {
     return "같은 팀에서 동일 영웅을 중복 밴할 수 없습니다.";
