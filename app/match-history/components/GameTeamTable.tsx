@@ -16,6 +16,7 @@ type MemberWithRank = MatchHistoryItem["games"][number]["teams"][number]["member
 
 interface GameTeamTableProps {
   readonly title: string;
+  readonly level: number | undefined;
   readonly result: string | null;
   readonly bans: GameTeamBan[];
   readonly members: MemberWithRank[];
@@ -33,7 +34,7 @@ function getPositionLabel(position: HeroRole): string {
   return positionMap[position] ?? position;
 }
 
-export function GameTeamTable({ title, result, bans, members, accent }: GameTeamTableProps) {
+export function GameTeamTable({ title, level, result, bans, members, accent }: GameTeamTableProps) {
   const totalKill = sumBy(members, (m) => m.kills);
   const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage));
   const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken));
@@ -43,7 +44,9 @@ export function GameTeamTable({ title, result, bans, members, accent }: GameTeam
       className={`p-4 pb-1 border-t shrink-0 lg:border-t-0 lg:border-l border-white/10 ${accent} ${getTeamBackgroundClass(result)}`}
     >
       <div className="flex items-center justify-between text-sm mb-3 gap-3 text-gray-300 font-bold">
-        <span>{title}</span>
+        <span>
+          {title} {level ? `- 레벨 ${level}` : ""}
+        </span>
         <span>팀 킬: {totalKill}</span>
       </div>
 
@@ -79,7 +82,9 @@ export function GameTeamTable({ title, result, bans, members, accent }: GameTeam
                   </div>
                 </td>
                 <td className="py-2.5 px-2">
-                  <div className="font-bold text-gray-200 text-sm">{member.player.nickname}</div>
+                  <div className="font-bold text-gray-200 text-sm overflow-hidden text-ellipsis whitespace-nowrap">
+                    {member.player.nickname}
+                  </div>
                   <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
                 </td>
 
@@ -139,13 +144,13 @@ export function GameTeamTable({ title, result, bans, members, accent }: GameTeam
   );
 }
 
-function getTeamBackgroundClass(result: string | null): string {
+function getTeamBackgroundClass(result: string | null) {
   if (result === "WIN") return "bg-blue-500/10";
   if (result === "LOSE") return "bg-red-500/10";
   return "bg-white/0";
 }
 
-function getPositionColorClass(position: string): string {
+function getPositionColorClass(position: string) {
   switch (position) {
     case "TANKER":
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";

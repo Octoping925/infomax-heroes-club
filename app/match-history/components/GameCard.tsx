@@ -21,8 +21,6 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   const gameLengthSeconds = game.gameLength % 60;
   const formattedGameLength = `${gameLengthMinutes}:${gameLengthSeconds.toString().padStart(2, "0")}`;
 
-  const maxTeamLevel = Math.max(team1?.teamLevel ?? 0, team2?.teamLevel ?? 0);
-
   // 전체 게임 플레이어를 정렬하여 등수 계산 (가라로 1~10등)
   const allMembers = [
     ...(team1?.members.map((m) => ({ ...m, teamNumber: 1 })) ?? []),
@@ -48,7 +46,6 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
           </h5>
           <div className="flex items-center gap-3 text-sm text-gray-400">
             <span>⏱️ {formattedGameLength}</span>
-            <span>📊 레벨 {maxTeamLevel}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -73,6 +70,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2">
         <GameTeamTable
           title={team1Name}
+          level={team1?.teamLevel}
           result={team1?.result ?? null}
           bans={team1?.bans ?? []}
           members={team1MembersWithRank}
@@ -80,6 +78,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
         />
         <GameTeamTable
           title={team2Name}
+          level={team2?.teamLevel}
           result={team2?.result ?? null}
           bans={team2?.bans ?? []}
           members={team2MembersWithRank}
