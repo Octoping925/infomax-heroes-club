@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { HeroMap } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
 import { Hero } from "@/domain/hots/models";
+import dayjs from "dayjs";
+import { compact, uniq } from "es-toolkit";
 
 type MatchType = "LUNCH" | "DINNER";
 
@@ -85,7 +87,7 @@ function createBanSlotsFromResponse(response: MatchBansResponse): Record<string,
           slots[index] = ban.hero;
         }
       }
-      result[team.id] = [slots[0], slots[1], slots[2]] as BanSlots;
+      result[team.id] = [slots[0], slots[1], slots[2]];
     }
   }
 
@@ -96,32 +98,23 @@ function isValidHeroKey(input: string): input is Hero {
   return Object.hasOwn(HeroMap, input);
 }
 
-function formatPlayedAt(iso: string): string {
-  // ISO → YYYY-MM-DD
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function getMatchLabel(match: MatchHistoryItem): string {
+  const playedAt = dayjs(match.playedAt).format("YYYY-MM-DD");
   const typeLabel = match.type === "LUNCH" ? "점심" : "저녁";
   const winnerLabel = match.winnerTeamNumber === null ? "무승부" : `${match.winnerTeamNumber}팀 승`;
-  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
+  return `${playedAt} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
 }
 
-function getTeamMembersLabel(team: MatchHistoryGameTeam): string {
-  const nicknames = team.members.map((m) => m.player.nickname).join(", ");
-  return nicknames.length > 0 ? nicknames : "-";
+function getTeamMembersLabel(members: MatchHistoryGameTeamMember[]): string {
+  if (members.length === 0) return "-";
+  return members.map((m) => m.player.nickname).join(", ");
 }
 
 function validateTeamSlots(slots: BanSlots): string | null {
-  const heroes = slots.filter((h) => h !== null);
+  const heroes = compact(slots);
+  const uniqueHeroes = uniq(heroes);
 
-  const set = new Set(heroes);
-  if (set.size !== heroes.length) {
+  if (heroes.length !== uniqueHeroes.length) {
     return "동일 팀에서 같은 영웅을 중복 밴할 수 없습니다.";
   }
   return null;
@@ -148,7 +141,7 @@ export default function MatchBansPage() {
   })();
 
   useEffect(() => {
-    const run = async (): Promise<void> => {
+    const run = async () => {
       setIsLoadingMatches(true);
       try {
         const response = await fetch("/api/matches?take=80", {
@@ -371,7 +364,7 @@ export default function MatchBansPage() {
                       </div>
 
                       <div className="text-sm text-gray-400">
-                        멤버: <span className="text-gray-200">{getTeamMembersLabel(team)}</span>
+                        멤버: <span className="text-gray-200">{getTeamMembersLabel(team.members)}</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

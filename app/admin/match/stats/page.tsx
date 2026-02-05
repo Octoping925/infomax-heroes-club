@@ -6,6 +6,7 @@ import { HeroPositionMap } from "@/domain/hots/constants";
 import { Hero } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/app/api/matches/route";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
+import dayjs from "dayjs";
 
 type EditableStatValue = number | "";
 
@@ -31,19 +32,11 @@ const DEFAULT_MEMBER_STATS: MemberStatInput = {
   healingDone: 0,
 };
 
-function formatPlayedAt(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function getMatchLabel(match: MatchHistoryItem): string {
+  const playedAt = dayjs(match.playedAt).format("YYYY-MM-DD");
   const typeLabel = match.type === "LUNCH" ? "점심" : "저녁";
   const winnerLabel = match.winnerTeamNumber === null ? "무승부" : `${match.winnerTeamNumber}팀 승`;
-  return `${formatPlayedAt(match.playedAt)} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
+  return `${playedAt} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
 }
 
 function getHeroLabel(hero: Hero): string {
