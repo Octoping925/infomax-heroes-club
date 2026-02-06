@@ -11,7 +11,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white">
-      <TopBar value="home" />
+      <TopBar title="연합인포맥스 히오스 동호회" value="home" />
 
       {/* 히어로 섹션 */}
       <section className="w-full px-6 py-16">

@@ -101,10 +101,10 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                 <td className="py-2.5 text-center">
                   <div className="flex flex-col items-center">
                     <div>
-                      <span className="text-sm font-bold text-gray-300 tabular-nums">
+                      <span className="text-xs md:text-sm font-bold text-gray-300 tabular-nums">
                         {member.kills} / {member.deaths} / {member.takedowns}
                       </span>
-                      <span className="ml-2 text-xs text-gray-500 font-bold">
+                      <span className="ml-2 text-xs md:text-sm text-gray-500 font-bold">
                         ({totalKill > 0 ? `${Math.round((member.takedowns / totalKill) * 100)}%` : "0%"})
                       </span>
                     </div>
