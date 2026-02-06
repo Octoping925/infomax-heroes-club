@@ -7,6 +7,7 @@ import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
 import { commarize } from "@/utils/commarize";
 import { HeroImage, HeroMap } from "@/domain/hots/constants";
 import { Hero } from "@/domain/hots/models";
+import dayjs from "dayjs";
 
 type Props = {
   readonly playerId: string;
@@ -245,7 +246,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
 
   ctx.fillStyle = "#64748b";
   ctx.font = "500 16px sans-serif";
-  ctx.fillText(`생성일: ${formatDate(new Date())}`, 70, CARD_HEIGHT - 8);
+  ctx.fillText(`생성일: ${dayjs().format("YYYY.MM.DD")}`, 70, CARD_HEIGHT - 8);
 }
 
 function drawStatBlock(
@@ -457,11 +458,4 @@ function downloadCanvas(canvas: HTMLCanvasElement | null, nickname: string) {
 
 function roundToOneDecimal(value: number): number {
   return Math.round(value * 10) / 10;
-}
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}.${month}.${day}`;
 }
