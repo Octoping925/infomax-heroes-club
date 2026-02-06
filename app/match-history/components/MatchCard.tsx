@@ -25,14 +25,15 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const isTeam1Winner = match.winnerTeamNumber === 1;
   const isTeam2Winner = match.winnerTeamNumber === 2;
   const isDraw = match.winnerTeamNumber === null;
+  const winnerLabel = isDraw ? "무승부" : `${isTeam1Winner ? team1Name : team2Name} 승`;
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden transition-all hover:border-white/20">
+    <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.08] to-white/[0.03] overflow-hidden transition-all hover:border-white/20">
       {/* Header Info */}
-      <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between bg-white/5">
-        <div className="flex items-center gap-3">
+      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <span
-            className={`px-3 py-0.5 rounded-full text-sm font-bold border ${
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
               match.type === "LUNCH"
                 ? "bg-orange-500/10 text-orange-400 border-orange-500/30"
                 : "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
@@ -42,36 +43,38 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           </span>
           <span className="text-sm font-medium text-gray-400">{dayjs(match.playedAt).format("YYYY년 MM월 DD일")}</span>
         </div>
-
-        {/* Action Button */}
         <button
           onClick={onToggle}
-          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-            isExpanded ? "bg-gray-700 text-gray-300" : "bg-white/10 text-white hover:bg-white/20"
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-300 ${
+            isExpanded
+              ? "bg-white/15 text-gray-200 border-white/20"
+              : "bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white"
           }`}
         >
-          <span className="relative z-10 flex items-center gap-2">{isExpanded ? "닫기" : "열기"}</span>
+          {isExpanded ? "접기" : "상세"}
         </button>
       </div>
 
       {/* Match Content */}
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Team 1 */}
+      <div className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 md:items-stretch">
           <div
-            className={`flex-1 w-full flex flex-col items-center md:items-end text-center md:text-right transition-opacity ${
-              isTeam2Winner ? "opacity-60" : "opacity-100"
-            }`}
+            className={`rounded-xl border p-3 transition-colors ${
+              isTeam1Winner ? "bg-cyan-500/10 border-cyan-400/30" : "bg-white/[0.03] border-white/10"
+            } ${isTeam2Winner ? "opacity-65" : "opacity-100"} `}
           >
-            <div className="mb-2">
-              <span className="text-xs font-bold text-cyan-400/80 uppercase tracking-tighter block mb-1">TEAM 1</span>
-              <h3 className="text-2xl font-black text-white">{team1Name}</h3>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold tracking-[0.18em] text-cyan-300/90">TEAM 1</span>
+              {isTeam1Winner && !isDraw && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-200 font-bold">WIN</span>
+              )}
             </div>
-            <div className="flex flex-wrap justify-center md:justify-end gap-1.5 mt-2">
+            <p className="text-base font-black text-white leading-none mb-2">{team1Name}</p>
+            <div className="flex flex-wrap justify-center md:justify-start gap-1.5 mt-2">
               {team1.members.map((m) => (
                 <span
                   key={m.id}
-                  className={`px-2 py-0.5 rounded text-sm font-medium ${
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${
                     m.id === team1.leader.id
                       ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                       : "bg-white/5 text-gray-400 border border-white/5"
@@ -83,47 +86,50 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
             </div>
           </div>
 
-          {/* Score Center */}
-          <div className="flex flex-col items-center shrink-0 px-4">
-            <div className="flex items-center gap-4">
-              <span className={`text-5xl font-black tabular-nums ${isTeam1Winner ? "text-cyan-400" : "text-gray-600"}`}>
+          <div className="min-w-[130px] md:min-w-[150px] rounded-xl px-3 py-2.5 flex md:flex-col items-center justify-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className={`text-3xl font-black tabular-nums ${isTeam1Winner ? "text-cyan-300" : "text-gray-500"}`}>
                 {team1Wins}
               </span>
-              <span className="text-2xl font-bold text-gray-700">:</span>
+              <span className="text-gray-600 font-bold">:</span>
               <span
-                className={`text-5xl font-black tabular-nums ${isTeam2Winner ? "text-purple-400" : "text-gray-600"}`}
+                className={`text-3xl font-black tabular-nums ${isTeam2Winner ? "text-fuchsia-300" : "text-gray-500"}`}
               >
                 {team2Wins}
               </span>
             </div>
-            <div className="mt-2 px-4 py-1 rounded-lg bg-white/5 border border-white/10">
-              <span className="text-sm font-bold text-gray-400">
-                {isDraw ? (
-                  "DRAW"
-                ) : (
-                  <span className={isTeam1Winner ? "text-cyan-400" : "text-purple-400"}>
-                    {isTeam1Winner ? team1Name : team2Name} WIN
-                  </span>
-                )}
-              </span>
-            </div>
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full border font-bold ${
+                isDraw
+                  ? "border-white/15 bg-white/5 text-gray-300"
+                  : isTeam1Winner
+                    ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+                    : "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-200"
+              }`}
+            >
+              {winnerLabel}
+            </span>
           </div>
 
-          {/* Team 2 */}
           <div
-            className={`flex-1 w-full flex flex-col items-center md:items-start text-center md:text-left transition-opacity ${
-              isTeam1Winner ? "opacity-60" : "opacity-100"
-            }`}
+            className={`rounded-xl border p-3 transition-colors ${
+              isTeam2Winner ? "bg-fuchsia-500/10 border-fuchsia-400/30" : "bg-white/[0.03] border-white/10"
+            } ${isTeam1Winner ? "opacity-65" : "opacity-100"} `}
           >
-            <div className="mb-2">
-              <span className="text-xs font-bold text-purple-400/80 uppercase tracking-tighter block mb-1">TEAM 2</span>
-              <h3 className="text-2xl font-black text-white">{team2Name}</h3>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold tracking-[0.18em] text-fuchsia-300/90">TEAM 2</span>
+              {isTeam2Winner && !isDraw && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-400/20 text-fuchsia-200 font-bold">
+                  WIN
+                </span>
+              )}
             </div>
+            <p className="text-base font-black text-white leading-none mb-2">{team2Name}</p>
             <div className="flex flex-wrap justify-center md:justify-start gap-1.5 mt-2">
               {team2.members.map((m) => (
                 <span
                   key={m.id}
-                  className={`px-2 py-0.5 rounded text-sm font-medium ${
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${
                     m.id === team2.leader.id
                       ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                       : "bg-white/5 text-gray-400 border border-white/5"
