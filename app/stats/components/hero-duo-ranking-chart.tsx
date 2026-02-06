@@ -29,7 +29,7 @@ export function HeroDuoRankingChart() {
   const { data, error } = useSuspenseQuery<HeroDuoWinRateResponse[]>({
     queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit }),
     queryFn: async () => {
-      const url = new URL(SITE_URL, "/api/stats/heroes/fantasy-duo");
+      const url = new URL(`${SITE_URL}/api/stats/heroes/fantasy-duo`);
       url.searchParams.set("minCount", String(minCount));
       url.searchParams.set("limit", String(limit));
 

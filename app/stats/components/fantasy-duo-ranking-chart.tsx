@@ -45,7 +45,7 @@ export function FantasyDuoRankingChart() {
       limit,
     }),
     queryFn: async () => {
-      const url = new URL(SITE_URL, "/api/stats/players/fantasy-duo");
+      const url = new URL(`${SITE_URL}/api/stats/players/fantasy-duo`);
       url.searchParams.set("unit", unit);
       url.searchParams.set("minCount", String(minCount));
       url.searchParams.set("limit", String(limit));
