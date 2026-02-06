@@ -1,6 +1,5 @@
 import type { Hero, HeroRole } from "@/domain/hots/models";
 import type { GameResult, MatchType } from "@/generated/prisma/client";
-import type { StatWeights } from "@/domain/hots/service/match/types";
 
 export type MatchHistoryPlayer = {
   readonly id: string;
@@ -33,10 +32,7 @@ export type MatchHistoryGameTeamMember = {
   mercCampCaptures: number;
   watchTowerCaptures: number;
   rank: number;
-  baseScore: number;
-  bonusScore: number;
-  totalScore: number;
-  weightedScores: StatWeights;
+  rankScore: number;
 };
 
 export type MatchHistoryGameTeamBan = {

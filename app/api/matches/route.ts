@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  createMatch,
-  getMatchHistory,
-  MatchServiceError,
-  parseTakeParam,
-} from "@/domain/hots/service/match-service";
-import type {
-  CreateMatchRequest,
-  CreateMatchResponse,
-  MatchHistoryItem,
-} from "@/domain/hots/types/match-contract";
+import { createMatch, getMatchHistory, MatchServiceError, parseTakeParam } from "@/domain/hots/service/match-service";
+import type { CreateMatchRequest, CreateMatchResponse, MatchHistoryItem } from "@/domain/hots/types/match-contract";
 
 /**
  * 역대 내전(match) 전적 조회

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Kda } from "./Kda";
 import { Ban } from "./Ban";
 import { DamageBar } from "@/components/DamageBar";
+import { Rank } from "./Rank";
 
 type GameTeamBan = MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
 
@@ -58,81 +59,90 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
             <tr className="text-sm text-gray-300 tracking-tighter border-b border-white/5">
               <th className="pb-2 text-left font-bold w-8"></th>
               <th className="pb-2 text-left font-bold w-auto"></th>
-              <th className="pb-2 text-center font-bold w-20">포지션</th>
-              <th className="pb-2 text-center font-bold w-16">등수</th>
+              <th className="pb-2 text-center font-bold w-22">포지션</th>
+              <th className="pb-2 text-center font-bold w-26">OP Score</th>
               <th className="pb-2 text-center font-bold w-38">K/D/T</th>
               <th className="pb-2 text-center font-bold w-20">피해량</th>
               <th className="pb-2 text-center font-bold w-20">받은 피해량</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {members.map((member) => (
-              <tr key={member.player.id}>
-                <td className="py-2.5">
-                  <div className="relative w-8 h-8 rounded-lg overflow-hidden">
-                    <Image
-                      src={HeroImage[member.hero]}
-                      alt={member.hero}
-                      width={30}
-                      height={30}
-                      className="object-cover"
-                    />
-                  </div>
-                </td>
-                <td className="py-2.5 px-2">
-                  <div className="font-bold text-gray-200 text-sm whitespace-nowrap">{member.player.nickname}</div>
-                  <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
-                </td>
+            {members.map((member) => {
+              const isBestOnTeam = Math.min(...members.map((m) => m.rank)) === member.rank;
 
-                <td className="py-2.5 text-center">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded ${getPositionColorClass(member.position)}`}>
-                    {getPositionLabel(member.position)}
-                  </span>
-                </td>
-
-                <td className="py-2.5 text-center">
-                  <span className="text-sm font-bold text-gray-300 tabular-nums">{member.rank}등</span>
-                </td>
-
-                <td className="py-2.5 text-center">
-                  <div className="flex flex-col items-center">
-                    <div>
-                      <span className="text-xs md:text-sm font-bold text-gray-300 tabular-nums">
-                        {member.kills} / {member.deaths} / {member.takedowns}
-                      </span>
-                      <span className="ml-2 text-xs md:text-sm text-gray-500 font-bold">
-                        ({totalKill > 0 ? `${Math.round((member.takedowns / totalKill) * 100)}%` : "0%"})
-                      </span>
+              return (
+                <tr key={member.player.id}>
+                  <td className="py-2.5">
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden">
+                      <Image
+                        src={HeroImage[member.hero]}
+                        alt={member.hero}
+                        width={30}
+                        height={30}
+                        className="object-cover"
+                      />
                     </div>
-                    <Kda deaths={member.deaths} takedowns={member.takedowns} />
-                  </div>
-                </td>
-                <td className="py-2.5 text-right">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="tabular-nums text-sm font-bold text-gray-300">
-                      {member.heroDamage ? commarize(member.heroDamage) : "-"}
+                  </td>
+                  <td className="py-2.5 px-2">
+                    <div className="font-bold text-gray-200 text-sm whitespace-nowrap">{member.player.nickname}</div>
+                    <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
+                  </td>
+
+                  <td className="py-2.5 text-center">
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${getPositionColorClass(member.position)}`}
+                    >
+                      {getPositionLabel(member.position)}
                     </span>
-                    {typeof member.heroDamage === "number" && maxHeroDamage > 0 ? (
-                      <DamageBar damage={member.heroDamage} maxDamage={maxHeroDamage} color="bg-red-500/50" />
-                    ) : (
-                      <div className="w-16 h-1 bg-white/5 rounded" />
-                    )}
-                  </div>
-                </td>
-                <td className="py-2.5 text-right">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="tabular-nums text-sm font-bold text-gray-300">
-                      {member.damageTaken ? commarize(member.damageTaken) : "-"}
+                  </td>
+
+                  <td className="py-2.5 text-center">
+                    <span className="text-xs text-gray-300 font-bold tabular-nums mx-2">
+                      {Math.round(member.rankScore * 10) / 10}
                     </span>
-                    {maxDamageTaken > 0 ? (
-                      <DamageBar damage={member.damageTaken} maxDamage={maxDamageTaken} color="bg-gray-100/50" />
-                    ) : (
-                      <div className="w-16 h-1 bg-white/5 rounded" />
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    <Rank rank={member.rank} isWinnerTeam={result === "WIN"} isBestOnTeam={isBestOnTeam} />
+                  </td>
+
+                  <td className="py-2.5 text-center">
+                    <div className="flex flex-col items-center">
+                      <div>
+                        <span className="text-xs md:text-sm font-bold text-gray-300 tabular-nums">
+                          {member.kills} / {member.deaths} / {member.takedowns}
+                        </span>
+                        <span className="ml-2 text-xs md:text-sm text-gray-500 font-bold">
+                          ({totalKill > 0 ? `${Math.round((member.takedowns / totalKill) * 100)}%` : "0%"})
+                        </span>
+                      </div>
+                      <Kda deaths={member.deaths} takedowns={member.takedowns} />
+                    </div>
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="tabular-nums text-sm font-bold text-gray-300">
+                        {member.heroDamage ? commarize(member.heroDamage) : "-"}
+                      </span>
+                      {typeof member.heroDamage === "number" && maxHeroDamage > 0 ? (
+                        <DamageBar damage={member.heroDamage} maxDamage={maxHeroDamage} color="bg-red-500/50" />
+                      ) : (
+                        <div className="w-16 h-1 bg-white/5 rounded" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="tabular-nums text-sm font-bold text-gray-300">
+                        {member.damageTaken ? commarize(member.damageTaken) : "-"}
+                      </span>
+                      {maxDamageTaken > 0 ? (
+                        <DamageBar damage={member.damageTaken} maxDamage={maxDamageTaken} color="bg-gray-100/50" />
+                      ) : (
+                        <div className="w-16 h-1 bg-white/5 rounded" />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

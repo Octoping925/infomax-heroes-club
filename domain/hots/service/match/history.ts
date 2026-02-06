@@ -1,7 +1,7 @@
 import { prisma } from "@/config/prisma";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
-import { DEFAULT_STAT_WEIGHTS, buildRankedPlayerMap } from "./score";
+import { buildRankedPlayerMap } from "./score";
 import { toPlayerStats } from "./common";
 
 export async function getMatchHistory(take: number): Promise<MatchHistoryItem[]> {
@@ -127,10 +127,7 @@ export async function getMatchHistory(take: number): Promise<MatchHistoryItem[]>
               player: playerMap.get(member.playerId)!,
               hero: member.hero,
               rank: ranked?.rank ?? 0,
-              baseScore: ranked?.baseScore ?? 0,
-              bonusScore: ranked?.bonusScore ?? 0,
-              totalScore: ranked?.totalScore ?? 0,
-              weightedScores: ranked?.weightedScores ?? DEFAULT_STAT_WEIGHTS,
+              rankScore: ranked?.totalScore ?? 0,
             };
           }),
         })),

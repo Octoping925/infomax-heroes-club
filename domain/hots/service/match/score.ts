@@ -14,17 +14,17 @@ export const DEFAULT_STAT_WEIGHTS: StatWeights = {
 
 const POSITION_WEIGHTS: Record<HeroRole, StatWeights> = {
   TANKER: {
-    heroDamage: 1,
+    heroDamage: 2,
     siegeDamage: 0.5,
     healingDone: 0.5,
     experienceContribution: 1,
-    damageTaken: 5,
-    timeCCdEnemyHeroes: 5,
-    takedowns: 2,
+    damageTaken: 8,
+    timeCCdEnemyHeroes: 6,
+    takedowns: 3,
     kills: 1,
   },
   OFFLANER: {
-    heroDamage: 2,
+    heroDamage: 5,
     siegeDamage: 4,
     healingDone: 0.5,
     experienceContribution: 5.5,
@@ -34,18 +34,18 @@ const POSITION_WEIGHTS: Record<HeroRole, StatWeights> = {
     kills: 1,
   },
   MAIN_DEALER: {
-    heroDamage: 6,
-    siegeDamage: 1.5,
+    heroDamage: 10,
+    siegeDamage: 2.5,
     healingDone: 0,
     experienceContribution: 1.5,
     damageTaken: 0,
     timeCCdEnemyHeroes: 0.5,
-    takedowns: 2.5,
+    takedowns: 3.5,
     kills: 1.5,
   },
   SUB_DEALER: {
-    heroDamage: 6,
-    siegeDamage: 1.5,
+    heroDamage: 9,
+    siegeDamage: 3.5,
     healingDone: 0,
     experienceContribution: 2,
     damageTaken: 0,
@@ -56,7 +56,7 @@ const POSITION_WEIGHTS: Record<HeroRole, StatWeights> = {
   HEALER: {
     heroDamage: 0.5,
     siegeDamage: 0.5,
-    healingDone: 5,
+    healingDone: 7,
     experienceContribution: 1,
     damageTaken: 0.5,
     timeCCdEnemyHeroes: 2,
@@ -100,7 +100,7 @@ export function calculatePlayerRankings(players: PlayerStats[]): RankedPlayer[] 
     const baseScore = sumScores(weightedScores);
     const bonusScore = player.mercCampCaptures * 5 + player.watchTowerCaptures * 5;
     const penaltyMultiplier = isTankPenaltyReduced(player.position) ? 0.6 : 1;
-    const penaltyScore = (player.deaths * 50 + player.timeSpentDead * 1.5) * penaltyMultiplier;
+    const penaltyScore = (player.timeSpentDead * 0.5 + player.deaths) * penaltyMultiplier;
     const totalScore = baseScore + bonusScore - penaltyScore;
 
     return {
