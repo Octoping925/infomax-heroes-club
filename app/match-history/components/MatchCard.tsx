@@ -1,4 +1,4 @@
-import { MatchHistoryItem } from "@/app/api/matches/route";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import dayjs from "dayjs";
 import { GameCard } from "./GameCard";
 

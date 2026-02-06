@@ -1,4 +1,4 @@
-import { MatchHistoryItem } from "@/app/api/matches/route";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { MAPS } from "@/domain/hots/constants/maps";
 import { GameTeamTable } from "./GameTeamTable";
 

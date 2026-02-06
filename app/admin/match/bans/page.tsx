@@ -4,49 +4,9 @@ import { useEffect, useState } from "react";
 import { HeroMap } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
 import { Hero } from "@/domain/hots/models";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import dayjs from "dayjs";
 import { compact, uniq } from "es-toolkit";
-
-type MatchType = "LUNCH" | "DINNER";
-
-type MatchHistoryPlayer = {
-  readonly id: string;
-  readonly name: string;
-  readonly nickname: string;
-};
-
-type MatchHistoryGameTeamMember = {
-  readonly player: MatchHistoryPlayer;
-  readonly hero: string;
-  readonly kills: number | null;
-  readonly deaths: number | null;
-  readonly takedowns: number | null;
-  readonly heroDamage: number | null;
-  readonly damageTaken: number | null;
-};
-
-type MatchHistoryGameTeam = {
-  readonly id: string; // gameTeamId
-  readonly teamNumber: number;
-  readonly result: string;
-  readonly members: MatchHistoryGameTeamMember[];
-};
-
-type MatchHistoryGame = {
-  readonly id: string;
-  readonly gameNumber: number;
-  readonly map: string;
-  readonly winnerTeamNumber: number | null;
-  readonly teams: MatchHistoryGameTeam[];
-};
-
-type MatchHistoryItem = {
-  readonly id: string;
-  readonly playedAt: string;
-  readonly type: MatchType;
-  readonly winnerTeamNumber: number | null;
-  readonly games: MatchHistoryGame[];
-};
 
 type MatchBansResponse = {
   matchId: string;
@@ -105,7 +65,7 @@ function getMatchLabel(match: MatchHistoryItem): string {
   return `${playedAt} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
 }
 
-function getTeamMembersLabel(members: MatchHistoryGameTeamMember[]): string {
+function getTeamMembersLabel(members: MatchHistoryItem["games"][number]["teams"][number]["members"]): string {
   if (members.length === 0) return "-";
   return members.map((m) => m.player.nickname).join(", ");
 }

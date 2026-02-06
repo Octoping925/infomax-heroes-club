@@ -1,4 +1,4 @@
-import { MatchHistoryItem } from "@/app/api/matches/route";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { HeroImage } from "@/domain/hots/constants";
 import { HeroRole } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
@@ -82,7 +82,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                   </div>
                 </td>
                 <td className="py-2.5 px-2">
-                  <div className="font-bold text-gray-200 text-sm overflow-hidden text-ellipsis whitespace-nowrap">
+                  <div className="font-bold text-gray-200 text-sm overflow-hidden w-12 md:w-auto text-ellipsis whitespace-nowrap">
                     {member.player.nickname}
                   </div>
                   <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>

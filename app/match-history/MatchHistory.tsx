@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import type { MatchHistoryItem } from "@/app/api/matches/route";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { statsQueryKeys } from "@/config/query-keys";
 import { MatchCard } from "./components/MatchCard";
 import { SITE_URL } from "@/config/url";

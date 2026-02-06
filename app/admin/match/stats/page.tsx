@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { HeroPositionMap } from "@/domain/hots/constants";
 import { Hero } from "@/domain/hots/models";
-import type { MatchHistoryItem } from "@/app/api/matches/route";
+import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
 import dayjs from "dayjs";
 
