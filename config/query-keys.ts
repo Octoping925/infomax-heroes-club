@@ -26,6 +26,7 @@ export const statsQueryKeys = {
   stats: {
     heroes: {
       tier: () => ["stats", "heroes", "tier"],
+      counterPicks: () => ["stats", "heroes", "counter-picks"],
       fantasyDuo: (params: HeroDuoParams) => ["stats", "heroes", "fantasy-duo", params],
     },
     players: {

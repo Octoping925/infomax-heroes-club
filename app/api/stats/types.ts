@@ -99,6 +99,26 @@ export interface HeroTierResponse {
   readonly winRateText: string;
 }
 
+export interface HeroCounterPickItemResponse {
+  readonly opponentHero: Hero;
+  readonly opponentHeroName: string;
+  readonly games: number;
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  readonly winRate: number;
+  readonly dropPercentPoint: number;
+}
+
+export interface HeroCounterPickResponse {
+  readonly hero: Hero;
+  readonly heroName: string;
+  readonly position: HeroRole;
+  readonly totalGames: number;
+  readonly baseWinRate: number;
+  readonly counters: ReadonlyArray<HeroCounterPickItemResponse>;
+}
+
 /** 맵별 플레이어 승률 응답 */
 export interface MapPlayerWinRateResponse {
   readonly map: GameMap;
