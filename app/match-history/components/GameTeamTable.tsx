@@ -50,19 +50,17 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
         <span>팀 킬: {totalKill}</span>
       </div>
 
-      <div className="flex items-start gap-2 mb-3">
-        <Ban bans={bans} />
-      </div>
+      <Ban bans={bans} />
 
-      <div className="overflow-x-auto overflow-y-hidden">
-        <table className="w-full text-md min-w-[360px]">
+      <div className="overflow-x-auto">
+        <table className="w-full text-md min-w-[500px]">
           <thead>
             <tr className="text-sm text-gray-300 tracking-tighter border-b border-white/5">
               <th className="pb-2 text-left font-bold w-8"></th>
-              <th className="pb-2 text-left font-bold"></th>
+              <th className="pb-2 text-left font-bold w-auto"></th>
               <th className="pb-2 text-center font-bold w-20">포지션</th>
               <th className="pb-2 text-center font-bold w-16">등수</th>
-              <th className="pb-2 text-center font-bold w-30">K/D/T</th>
+              <th className="pb-2 text-center font-bold w-38">K/D/T</th>
               <th className="pb-2 text-center font-bold w-20">피해량</th>
               <th className="pb-2 text-center font-bold w-20">받은 피해량</th>
             </tr>
@@ -82,9 +80,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                   </div>
                 </td>
                 <td className="py-2.5 px-2">
-                  <div className="font-bold text-gray-200 text-sm overflow-hidden w-12 md:w-auto text-ellipsis whitespace-nowrap">
-                    {member.player.nickname}
-                  </div>
+                  <div className="font-bold text-gray-200 text-sm whitespace-nowrap">{member.player.nickname}</div>
                   <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
                 </td>
 

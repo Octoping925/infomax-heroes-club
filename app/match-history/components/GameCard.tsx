@@ -25,12 +25,10 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
     <div className="bg-white/5 border border-white/10 overflow-hidden transition-all">
       <div className="px-4 py-3 flex items-center justify-between bg-white/5 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <h5 className="flex items-center justify-center h-8 text-sm font-black text-gray-200">
+          <h5 className="flex items-center justify-center h-8 text-base font-black text-gray-200">
             Game {game.gameNumber} · {mapName}
           </h5>
-          <div className="flex items-center gap-3 text-sm text-gray-400">
-            <span>⏱️ {formattedGameLength}</span>
-          </div>
+          <span className="text-sm text-gray-400 font-bold">⏱️ {formattedGameLength}</span>
         </div>
         <div className="flex items-center gap-2">
           {game.winnerTeamNumber === null ? (
