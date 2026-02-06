@@ -5,7 +5,7 @@ import { SelectedPlayerContext } from "../StatsPage";
 import { Loading } from "@/components/Loading";
 import { ScrimWinRate } from "./ScrimWinRate";
 import { Title } from "../Title";
-import { HeroPopularityChart } from "./HeroPopularityChart";
+import { HeroTierList } from "./HeroTierList";
 
 export function ScrimStatTab() {
   const selectedPlayer = useContext(SelectedPlayerContext);
@@ -26,7 +26,7 @@ export function ScrimStatTab() {
           <ScrimWinRate />
         </Suspense>
         <Suspense fallback={<Loading />}>
-          <HeroPopularityChart />
+          <HeroTierList />
         </Suspense>
       </div>
     </section>

@@ -8,6 +8,7 @@ import {
   ResultCounts,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
+import { round } from "es-toolkit";
 
 export type LunchDinnerUnit = "game" | "match";
 
@@ -52,8 +53,8 @@ export async function fetchPlayerLunchDinnerWinRate(
       playerNickname: acc.playerNickname,
       lunchStats,
       dinnerStats,
-      dinnerWinRateDiff: roundToTwoDecimals(dinnerWinRateDiff),
-      absWinRateDiff: roundToTwoDecimals(Math.abs(dinnerWinRateDiff)),
+      dinnerWinRateDiff: round(dinnerWinRateDiff, 2),
+      absWinRateDiff: round(Math.abs(dinnerWinRateDiff), 2),
     };
   });
 }
@@ -163,8 +164,4 @@ function toResultByWinnerTeamNumber(winnerTeamNumber: number | null, teamNumber:
   if (winnerTeamNumber === null) return GameResult.DRAW;
   if (winnerTeamNumber === teamNumber) return GameResult.WIN;
   return GameResult.LOSE;
-}
-
-function roundToTwoDecimals(value: number): number {
-  return Math.round(value * 100) / 100;
 }

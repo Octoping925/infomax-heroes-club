@@ -25,7 +25,7 @@ export const statsQueryKeys = {
   },
   stats: {
     heroes: {
-      popular: () => ["stats", "heroes", "popular"],
+      tier: () => ["stats", "heroes", "tier"],
       fantasyDuo: (params: HeroDuoParams) => ["stats", "heroes", "fantasy-duo", params],
     },
     players: {

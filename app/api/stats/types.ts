@@ -1,4 +1,5 @@
-import { GameMap, Hero } from "@domain/hots/models";
+import { GameMap, Hero, HeroRole } from "@domain/hots/models";
+import { round } from "es-toolkit";
 
 /** 승률 통계 기본 타입 */
 export interface WinRateStats {
@@ -77,13 +78,25 @@ export interface TeamSwitchWinRateResponse {
   readonly switchedWinRateDiff: number; // 팀 변경 시 승률 차이
 }
 
-/** 영웅 픽/밴 통계 응답 */
-export interface HeroPopularityResponse {
+export type HeroTierLabel = "OP" | "1티어" | "2티어" | "3티어" | "4티어";
+
+export interface HeroTierResponse {
   readonly hero: Hero;
+  readonly heroName: string;
+  readonly tier: HeroTierLabel;
+  readonly position: HeroRole;
+  readonly isHoneyPick: boolean;
+  readonly honeyScore: number;
+  readonly tierScore: number;
   readonly pickCount: number;
   readonly banCount: number;
-  readonly totalAppearance: number;
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  readonly pickRate: number;
+  readonly banRate: number;
   readonly pickWinRate: number;
+  readonly winRateText: string;
 }
 
 /** 맵별 플레이어 승률 응답 */
@@ -213,5 +226,5 @@ export interface RivalryListResponse {
  */
 export function calculateAverage(total: number, count: number): number {
   if (count === 0) return 0;
-  return Math.round((total / count) * 100) / 100;
+  return round(total / count, 2);
 }

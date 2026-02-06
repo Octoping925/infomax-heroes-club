@@ -9,7 +9,7 @@ import type {
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Hero, MatchType } from "@/generated/prisma/client";
-import { clamp, sum, sumBy } from "es-toolkit";
+import { clamp, round, sum, sumBy } from "es-toolkit";
 
 type PlayerInfo = {
   readonly playerId: string;
@@ -607,5 +607,5 @@ function clamp01(v: number) {
 }
 
 function round3(v: number): number {
-  return Math.round(v * 1000) / 1000;
+  return round(v, 3);
 }

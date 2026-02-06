@@ -8,6 +8,7 @@ import { commarize } from "@/utils/commarize";
 import { HeroImage, HeroMap } from "@/domain/hots/constants";
 import { Hero } from "@/domain/hots/models";
 import dayjs from "dayjs";
+import { round } from "es-toolkit";
 
 type Props = {
   readonly playerId: string;
@@ -175,7 +176,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
 
   const winRateText = `${data.winRate}%`;
   const recordText = `${data.wins}승 ${data.losses}패 ${data.draws}무`;
-  const kdaText = `${roundToOneDecimal(data.averageKills)} / ${roundToOneDecimal(data.averageDeaths)} / ${roundToOneDecimal(data.averageTakedowns)}`;
+  const kdaText = `${round(data.averageKills, 1)} / ${round(data.averageDeaths, 1)} / ${round(data.averageTakedowns, 1)}`;
   const damageText = commarize(Math.floor(data.averageHeroDamage));
 
   const leftX = 70;
@@ -454,8 +455,4 @@ function downloadCanvas(canvas: HTMLCanvasElement | null, nickname: string) {
   link.href = dataUrl;
   link.download = `${nickname}-stat-card.png`;
   link.click();
-}
-
-function roundToOneDecimal(value: number): number {
-  return Math.round(value * 10) / 10;
 }

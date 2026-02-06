@@ -4,6 +4,7 @@ import { usePlayerCombinedWinRate } from "../../hooks/usePlayerCombinedWinRate";
 import { useScrimWinRateTier } from "../../hooks/useScrimWinRateTier";
 import { useMemo, useState } from "react";
 import { LunchDinnerOption } from "@/components/LunchDinnerOption";
+import { round } from "es-toolkit";
 
 export function ScrimWinRate() {
   const { overallData, matchData, gameData } = usePlayerCombinedWinRate();
@@ -122,7 +123,7 @@ function formatRecord(stats: WinRateStats): string {
 }
 
 function formatTierScore(score: number): string {
-  const normalized = Math.round(score * 10) / 10;
+  const normalized = round(score, 1);
   const display = Number.isInteger(normalized) ? normalized.toFixed(0) : normalized.toFixed(1);
 
   return `${display}%`;

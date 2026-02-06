@@ -2,6 +2,7 @@ import { WinRateStats } from "@/app/api/stats/types";
 import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { commarize } from "@/utils/commarize";
+import { round } from "es-toolkit";
 
 type Props = {
   readonly playerId: string;
@@ -90,14 +91,9 @@ function AverageStatsSummary({ title, stats, accent }: AverageStatsSummaryProps)
     <div className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}>
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
-        {roundToOneDecimal(stats.averageKills)} / {roundToOneDecimal(stats.averageDeaths)} /{" "}
-        {roundToOneDecimal(stats.averageTakedowns)}
+        {round(stats.averageKills, 1)} / {round(stats.averageDeaths, 1)} / {round(stats.averageTakedowns, 1)}
       </p>
       <p className="text-md text-gray-400 mt-3">평균 딜량: {commarize(Math.floor(stats.averageHeroDamage))}</p>
     </div>
   );
-}
-
-function roundToOneDecimal(value: number): number {
-  return Math.round(value * 10) / 10;
 }

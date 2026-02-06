@@ -1,4 +1,5 @@
 import { WinRateStats } from "@/app/api/stats/types";
+import { calculateCompositeConservativeScore } from "@/app/stats/utils/conservative-win-rate";
 import { useCallback } from "react";
 
 export type ScrimTier = {
@@ -59,43 +60,9 @@ const FALLBACK_TIER = TIER_RULES.at(-1)!;
 
 export function useScrimWinRateTier() {
   return useCallback((matchStats: WinRateStats, gameStats: WinRateStats): ScrimTierResult => {
-    const score = calculateCompositeScore(matchStats, gameStats);
+    const score = calculateCompositeConservativeScore(matchStats, gameStats);
     const tier = TIER_RULES.find((entry) => score >= entry.min) ?? FALLBACK_TIER;
 
     return { tier, score };
   }, []);
-}
-
-function calculateCompositeScore(matchStats: WinRateStats, gameStats: WinRateStats) {
-  // ---- tunables ----
-  const PRIOR_GAMES_K = 15; // 베이지안 프라이어 강도
-  const Z = 1.28; // 보수성 (≈90% 하한)
-  const MATCH_WEIGHT = 0.7;
-  const GAME_WEIGHT = 0.35;
-
-  const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-
-  const conservativeBayesScore = (s: WinRateStats): number => {
-    const total = s.totalGames > 0 ? s.totalGames : s.wins + s.losses + s.draws;
-
-    if (total <= 0) return 50;
-
-    const effectiveWins = s.wins + 0.5 * s.draws;
-    const p0 = 0.5;
-
-    // posterior mean
-    const p = (effectiveWins + PRIOR_GAMES_K * p0) / (total + PRIOR_GAMES_K);
-
-    // uncertainty penalty (lower bound)
-    const nEff = total + PRIOR_GAMES_K;
-    const se = Math.sqrt((p * (1 - p)) / nEff);
-    const lower = clamp01(p - Z * se);
-
-    return lower * 100;
-  };
-
-  const matchScore = conservativeBayesScore(matchStats);
-  const gameScore = conservativeBayesScore(gameStats);
-
-  return MATCH_WEIGHT * matchScore + GAME_WEIGHT * gameScore;
 }
