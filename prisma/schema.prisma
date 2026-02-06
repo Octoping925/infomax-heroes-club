@@ -276,6 +276,7 @@ model GameTeamMember {
   siegeDamage Int @default(0) // 공성 피해량
   damageTaken Int @default(0) // 받은 피해량
   healingDone Int @default(0) // 힐해준 량
+  experienceContribution Int @default(0) // 경험치 기여량
   timeSpentDead Int @default(0) // 죽은 시간 (초)
   timeCCdEnemyHeroes Int @default(0) // 적 영웅 얼린 시간 (초)
   dpm Int @default(0) // 분당 딜
