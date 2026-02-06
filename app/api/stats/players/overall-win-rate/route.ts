@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { PlayerCombinedWinRateResponse, WinRateStats } from "@/app/api/stats/types";
+import { PlayerCombinedWinRateResponse } from "@/app/api/stats/types";
 import { GameResult } from "@/generated/prisma/client";
 import { fetchPlayerMap } from "../../utils/player";
 import {
