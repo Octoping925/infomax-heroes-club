@@ -30,7 +30,28 @@ type MatchHistoryGameTeamMember = {
   heroDamage: number;
   siegeDamage: number;
   healingDone: number;
+  experienceContribution: number;
   damageTaken: number;
+  timeCCdEnemyHeroes: number;
+  timeSpentDead: number;
+  mercCampCaptures: number;
+  watchTowerCaptures: number;
+  rank: number;
+  baseScore: number;
+  bonusScore: number;
+  totalScore: number;
+  weightedScores: StatWeights;
+};
+
+type StatWeights = {
+  heroDamage: number;
+  siegeDamage: number;
+  healingDone: number;
+  experienceContribution: number;
+  damageTaken: number;
+  timeCCdEnemyHeroes: number;
+  takedowns: number;
+  kills: number;
 };
 
 type MatchHistoryGameTeamBan = {
@@ -142,7 +163,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<MatchHisto
                     heroDamage: true,
                     siegeDamage: true,
                     healingDone: true,
+                    experienceContribution: true,
                     damageTaken: true,
+                    timeCCdEnemyHeroes: true,
+                    timeSpentDead: true,
+                    mercCampCaptures: true,
+                    watchTowerCaptures: true,
                     playerId: true,
                   },
                 },
@@ -179,19 +205,59 @@ export async function GET(request: NextRequest): Promise<NextResponse<MatchHisto
             banOrder: ban.banOrder,
             hero: ban.hero,
           })),
-          members: team.members.map((member) => ({
-            id: member.id,
-            player: playerMap.get(member.playerId)!,
-            position: member.position,
-            hero: member.hero,
-            kills: member.kills,
-            deaths: member.deaths,
-            takedowns: member.takedowns,
-            heroDamage: member.heroDamage,
-            siegeDamage: member.siegeDamage,
-            healingDone: member.healingDone,
-            damageTaken: member.damageTaken,
-          })),
+          members: (() => {
+            const rankedPlayers = calculatePlayerRankings(
+              game.teams.flatMap((gameTeam) =>
+                gameTeam.members.map((member) => ({
+                  id: member.id,
+                  position: member.position,
+                  kills: member.kills,
+                  deaths: member.deaths,
+                  takedowns: member.takedowns,
+                  heroDamage: member.heroDamage,
+                  siegeDamage: member.siegeDamage,
+                  healingDone: member.healingDone,
+                  experienceContribution: member.experienceContribution,
+                  damageTaken: member.damageTaken,
+                  timeCCdEnemyHeroes: member.timeCCdEnemyHeroes,
+                  timeSpentDead: member.timeSpentDead,
+                  mercCampCaptures: member.mercCampCaptures,
+                  watchTowerCaptures: member.watchTowerCaptures,
+                })),
+              ),
+            );
+
+            const rankedMap = new Map(rankedPlayers.map((player) => [player.id, player]));
+
+            return team.members.map((member) => {
+              const ranked = rankedMap.get(member.id);
+
+              return {
+                id: member.id,
+                player: playerMap.get(member.playerId)!,
+                position: member.position,
+                hero: member.hero,
+                kills: member.kills,
+                deaths: member.deaths,
+                takedowns: member.takedowns,
+                heroDamage: member.heroDamage,
+                siegeDamage: member.siegeDamage,
+                healingDone: member.healingDone,
+                experienceContribution: member.experienceContribution,
+                damageTaken: member.damageTaken,
+                timeCCdEnemyHeroes: member.timeCCdEnemyHeroes,
+                timeSpentDead: member.timeSpentDead,
+                mercCampCaptures: member.mercCampCaptures,
+                watchTowerCaptures: member.watchTowerCaptures,
+                rank: ranked?.rank ?? 0,
+                baseScore: ranked?.baseScore ?? 0,
+                bonusScore: ranked?.bonusScore ?? 0,
+                penaltyScore: ranked?.penaltyScore ?? 0,
+                totalScore: ranked?.totalScore ?? 0,
+                weightedScores: ranked?.weightedScores ?? DEFAULT_STAT_WEIGHTS,
+              };
+            });
+          })(),
         })),
       })),
     }));
@@ -211,12 +277,182 @@ export async function GET(request: NextRequest): Promise<NextResponse<MatchHisto
 const DEFAULT_TAKE = 50;
 const MAX_TAKE = 200;
 
+type PlayerStats = {
+  id: string;
+  position: HeroRole;
+  kills: number;
+  deaths: number;
+  takedowns: number;
+  heroDamage: number;
+  siegeDamage: number;
+  healingDone: number;
+  experienceContribution: number;
+  damageTaken: number;
+  timeCCdEnemyHeroes: number;
+  timeSpentDead: number;
+  mercCampCaptures: number;
+  watchTowerCaptures: number;
+};
+
+type RankedPlayer = PlayerStats & {
+  rank: number;
+  baseScore: number;
+  bonusScore: number;
+  penaltyScore: number;
+  totalScore: number;
+  weightedScores: StatWeights;
+};
+
+const DEFAULT_STAT_WEIGHTS: StatWeights = {
+  heroDamage: 1,
+  siegeDamage: 1,
+  healingDone: 1,
+  experienceContribution: 1,
+  damageTaken: 1,
+  timeCCdEnemyHeroes: 1,
+  takedowns: 1,
+  kills: 1,
+};
+
+const POSITION_WEIGHTS: Record<HeroRole, StatWeights> = {
+  TANKER: {
+    heroDamage: 1,
+    siegeDamage: 0.5,
+    healingDone: 0.5,
+    experienceContribution: 1,
+    damageTaken: 5,
+    timeCCdEnemyHeroes: 5,
+    takedowns: 2,
+    kills: 1,
+  },
+  OFFLANER: {
+    heroDamage: 2,
+    siegeDamage: 4,
+    healingDone: 0.5,
+    experienceContribution: 5.5,
+    damageTaken: 3.5,
+    timeCCdEnemyHeroes: 2.5,
+    takedowns: 3,
+    kills: 1,
+  },
+  MAIN_DEALER: {
+    heroDamage: 6,
+    siegeDamage: 1.5,
+    healingDone: 0,
+    experienceContribution: 1.5,
+    damageTaken: 0,
+    timeCCdEnemyHeroes: 0.5,
+    takedowns: 2.5,
+    kills: 1.5,
+  },
+  SUB_DEALER: {
+    heroDamage: 6,
+    siegeDamage: 1.5,
+    healingDone: 0,
+    experienceContribution: 2,
+    damageTaken: 0,
+    timeCCdEnemyHeroes: 1.5,
+    takedowns: 3,
+    kills: 1.5,
+  },
+  HEALER: {
+    heroDamage: 0.5,
+    siegeDamage: 0.5,
+    healingDone: 5,
+    experienceContribution: 1,
+    damageTaken: 0.5,
+    timeCCdEnemyHeroes: 2,
+    takedowns: 1.5,
+    kills: 0.5,
+  },
+};
+
 function parseTakeParam(input: string | null): number {
   if (!input) return DEFAULT_TAKE;
   const parsed = Number(input);
   if (!Number.isFinite(parsed)) return DEFAULT_TAKE;
   if (parsed <= 0) return DEFAULT_TAKE;
   return Math.min(Math.floor(parsed), MAX_TAKE);
+}
+
+function calculatePlayerRankings(players: PlayerStats[]): RankedPlayer[] {
+  const maxValues = {
+    heroDamage: maxBy(players, (player) => player.heroDamage),
+    siegeDamage: maxBy(players, (player) => player.siegeDamage),
+    healingDone: maxBy(players, (player) => player.healingDone),
+    experienceContribution: maxBy(players, (player) => player.experienceContribution),
+    damageTaken: maxBy(players, (player) => player.damageTaken),
+    timeCCdEnemyHeroes: maxBy(players, (player) => player.timeCCdEnemyHeroes),
+    takedowns: maxBy(players, (player) => player.takedowns),
+    kills: maxBy(players, (player) => player.kills),
+  };
+
+  const scored = players.map((player) => {
+    const weights = POSITION_WEIGHTS[player.position] ?? DEFAULT_STAT_WEIGHTS;
+    const weightedScores: StatWeights = {
+      heroDamage: normalizeScore(player.heroDamage, maxValues.heroDamage) * weights.heroDamage,
+      siegeDamage: normalizeScore(player.siegeDamage, maxValues.siegeDamage) * weights.siegeDamage,
+      healingDone: normalizeScore(player.healingDone, maxValues.healingDone) * weights.healingDone,
+      experienceContribution:
+        normalizeScore(player.experienceContribution, maxValues.experienceContribution) *
+        weights.experienceContribution,
+      damageTaken: normalizeScore(player.damageTaken, maxValues.damageTaken) * weights.damageTaken,
+      timeCCdEnemyHeroes:
+        normalizeScore(player.timeCCdEnemyHeroes, maxValues.timeCCdEnemyHeroes) * weights.timeCCdEnemyHeroes,
+      takedowns: normalizeScore(player.takedowns, maxValues.takedowns) * weights.takedowns,
+      kills: normalizeScore(player.kills, maxValues.kills) * weights.kills,
+    };
+
+    const baseScore = sumScores(weightedScores);
+    const bonusScore = player.mercCampCaptures * 5 + player.watchTowerCaptures * 5;
+    const penaltyMultiplier = isTankPenaltyReduced(player.position) ? 0.6 : 1;
+    const penaltyScore = (player.deaths * 50 + player.timeSpentDead * 1.5) * penaltyMultiplier;
+    const totalScore = baseScore + bonusScore - penaltyScore;
+
+    return {
+      ...player,
+      baseScore,
+      bonusScore,
+      penaltyScore,
+      totalScore,
+      weightedScores,
+      rank: 0,
+    };
+  });
+
+  return scored
+    .toSorted((a, b) => b.totalScore - a.totalScore)
+    .map((player, index) => ({
+      ...player,
+      rank: index + 1,
+    }));
+}
+
+function normalizeScore(value: number, maxValue: number): number {
+  if (maxValue <= 0) return 0;
+  return value / maxValue;
+}
+
+function maxBy(players: PlayerStats[], selector: (player: PlayerStats) => number): number {
+  if (players.length === 0) return 0;
+  return Math.max(...players.map(selector));
+}
+
+function sumScores(scores: StatWeights): number {
+  return (
+    scores.heroDamage +
+    scores.siegeDamage +
+    scores.healingDone +
+    scores.experienceContribution +
+    scores.damageTaken +
+    scores.timeCCdEnemyHeroes +
+    scores.takedowns +
+    scores.kills
+  );
+}
+
+function isTankPenaltyReduced(position: HeroRole): boolean {
+  return position === "TANKER" || position === "OFFLANER";
 }
 
 /** 게임 입력 데이터 */

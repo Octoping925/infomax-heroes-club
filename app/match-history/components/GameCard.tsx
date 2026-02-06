@@ -21,22 +21,6 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
   const gameLengthSeconds = game.gameLength % 60;
   const formattedGameLength = `${gameLengthMinutes}:${gameLengthSeconds.toString().padStart(2, "0")}`;
 
-  // 전체 게임 플레이어를 정렬하여 등수 계산 (가라로 1~10등)
-  const allMembers = [
-    ...(team1?.members.map((m) => ({ ...m, teamNumber: 1 })) ?? []),
-    ...(team2?.members.map((m) => ({ ...m, teamNumber: 2 })) ?? []),
-  ];
-
-  // 가라 등수: 각 플레이어에 1~10등 할당
-  const membersWithRank = allMembers.map((member, index) => ({
-    ...member,
-    rank: index + 1,
-  }));
-
-  // 팀별로 분리
-  const team1MembersWithRank = membersWithRank.filter((m) => m.teamNumber === 1);
-  const team2MembersWithRank = membersWithRank.filter((m) => m.teamNumber === 2);
-
   return (
     <div className="bg-white/5 border border-white/10 overflow-hidden transition-all">
       <div className="px-4 py-3 flex items-center justify-between bg-white/5 border-b border-white/5">
@@ -73,7 +57,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
           level={team1?.teamLevel}
           result={team1?.result ?? null}
           bans={team1?.bans ?? []}
-          members={team1MembersWithRank}
+          members={team1?.members ?? []}
           accent="border-cyan-500/30"
         />
         <GameTeamTable
@@ -81,7 +65,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
           level={team2?.teamLevel}
           result={team2?.result ?? null}
           bans={team2?.bans ?? []}
-          members={team2MembersWithRank}
+          members={team2?.members ?? []}
           accent="border-purple-500/30"
         />
       </div>
