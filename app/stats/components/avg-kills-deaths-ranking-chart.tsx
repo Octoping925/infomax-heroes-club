@@ -58,7 +58,7 @@ export function AvgStatsRankingChart() {
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">평균 킬 TOP 20</h3>
         <div className="w-full max-h-[420px]" style={{ height: avgKillsData.length * 34 }}>
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} minHeight={0}>
             <BarChart data={avgKillsData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" stroke="#888" />
@@ -84,7 +84,7 @@ export function AvgStatsRankingChart() {
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">평균 데스 TOP 20</h3>
         <div className="w-full max-h-[420px]" style={{ height: avgDeathsData.length * 34 }}>
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} minHeight={0}>
             <BarChart data={avgDeathsData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" stroke="#888" />

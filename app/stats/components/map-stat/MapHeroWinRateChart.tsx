@@ -69,7 +69,7 @@ export function MapHeroWinRateChart({ map }: { map: string }) {
 
   return (
     <div className="w-full max-h-[300px]" style={{ height: chartData.length * 35 }}>
-      <ResponsiveContainer>
+      <ResponsiveContainer minWidth={0} minHeight={0}>
         <BarChart data={chartData} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" stroke="#333" />
           <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />

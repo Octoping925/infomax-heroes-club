@@ -51,7 +51,7 @@ export function HeroStats({ nickname }: Props) {
               height: Math.max(300, (chartData?.length ?? 0) * 35),
             }}
           >
-            <ResponsiveContainer>
+            <ResponsiveContainer minWidth={0} minHeight={0}>
               <BarChart data={chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" stroke="#888" />
@@ -72,7 +72,7 @@ export function HeroStats({ nickname }: Props) {
               height: Math.max(300, chartData.length * 35),
             }}
           >
-            <ResponsiveContainer>
+            <ResponsiveContainer minWidth={0} minHeight={0}>
               <BarChart data={chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
