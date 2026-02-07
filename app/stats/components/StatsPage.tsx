@@ -107,7 +107,14 @@ export function StatsPageLayout({ players }: Props) {
               <Suspense fallback={<Loading />}>
                 {/* 각 탭별 차트 */}
                 {activeTab === "personalStats" && <PersonalStatTab />}
-                {activeTab === "scrimStats" && <ScrimStatTab />}
+                {activeTab === "scrimStats" && (
+                  <ScrimStatTab
+                    onPlayerRowClick={(playerId) => {
+                      handleSelectPlayer(playerId);
+                      handleTabSelect("personalStats");
+                    }}
+                  />
+                )}
                 {activeTab === "rivalry" && <RivalryTab />}
                 {activeTab === "mapStats" && <MapStatTab />}
                 {activeTab === "teamSwitch" && <TeamSwitchChart />}

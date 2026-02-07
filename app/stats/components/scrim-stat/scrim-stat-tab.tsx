@@ -7,7 +7,11 @@ import { ScrimWinRate } from "./ScrimWinRate";
 import { Title } from "../Title";
 import { HeroTierList } from "./HeroTierList";
 
-export function ScrimStatTab() {
+interface ScrimStatTabProps {
+  readonly onPlayerRowClick: (playerId: string) => void;
+}
+
+export function ScrimStatTab({ onPlayerRowClick }: ScrimStatTabProps) {
   const selectedPlayer = useContext(SelectedPlayerContext);
 
   if (!selectedPlayer) {
@@ -23,7 +27,7 @@ export function ScrimStatTab() {
       <Title title="내전 상세" />
       <div className="w-full flex flex-col gap-12">
         <Suspense fallback={<Loading />}>
-          <ScrimWinRate />
+          <ScrimWinRate onPlayerRowClick={onPlayerRowClick} />
         </Suspense>
         <Suspense fallback={<Loading />}>
           <HeroTierList />

@@ -6,7 +6,11 @@ import { useMemo, useState } from "react";
 import { LunchDinnerOption } from "@/components/LunchDinnerOption";
 import { round } from "es-toolkit";
 
-export function ScrimWinRate() {
+interface ScrimWinRateProps {
+  readonly onPlayerRowClick: (playerId: string) => void;
+}
+
+export function ScrimWinRate({ onPlayerRowClick }: ScrimWinRateProps) {
   const { overallData, matchData, gameData } = usePlayerCombinedWinRate();
   const [unit, setUnit] = useState<"all" | "lunch" | "dinner">("all");
   const getTier = useScrimWinRateTier();
@@ -68,7 +72,11 @@ export function ScrimWinRate() {
             const tierScore = formatTierScore(tier.score);
 
             return (
-              <tr key={row.playerId} className="border-t border-white/10 transition-colors hover:bg-white/6">
+              <tr
+                key={row.playerId}
+                className="border-t border-white/10 transition-colors hover:bg-white/6 cursor-pointer"
+                onClick={() => onPlayerRowClick(row.playerId)}
+              >
                 <td className="px-4 py-2 font-medium text-white">
                   <div className="flex flex-wrap items-center gap-2">
                     <span>{row.playerName}</span>
