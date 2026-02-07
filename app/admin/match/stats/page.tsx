@@ -3,15 +3,18 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { HeroPositionMap } from "@/domain/hots/constants";
-import { Hero } from "@/domain/hots/models";
+import { Hero, HeroRole } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
+import type { PlayerListItem } from "@/app/api/players/route";
 import dayjs from "dayjs";
 
 type EditableStatValue = number | "";
 
 type MemberStatInput = {
+  readonly playerId: string;
   readonly hero: Hero;
+  readonly position: HeroRole;
   readonly heroDamage: EditableStatValue;
   readonly siegeDamage: EditableStatValue;
   readonly damageTaken: EditableStatValue;
@@ -25,7 +28,9 @@ type SaveResult =
   | { readonly status: "error"; readonly message: string };
 
 const DEFAULT_MEMBER_STATS: MemberStatInput = {
+  playerId: "",
   hero: "Abathur",
+  position: "TANKER",
   heroDamage: 0,
   siegeDamage: 0,
   damageTaken: 0,
@@ -39,10 +44,6 @@ function getMatchLabel(match: MatchHistoryItem): string {
   return `${playedAt} · ${typeLabel} · ${match.games.length}경기 · ${winnerLabel}`;
 }
 
-function getHeroLabel(hero: Hero): string {
-  return HeroPositionMap[hero] ? `${HeroPositionMap[hero]} (${hero})` : hero;
-}
-
 function getTeamMembersLabel(team: MatchStatsResponse["games"][number]["teams"][number]): string {
   const nicknames = team.members.map((m) => m.player.nickname).join(", ");
   return nicknames.length > 0 ? nicknames : "-";
@@ -54,7 +55,9 @@ function createStatMapFromResponse(response: MatchStatsResponse): Record<string,
     for (const team of game.teams) {
       for (const member of team.members) {
         result[member.id] = {
+          playerId: member.player.id,
           hero: member.hero,
+          position: member.position,
           heroDamage: member.heroDamage,
           siegeDamage: member.siegeDamage,
           damageTaken: member.damageTaken,
@@ -84,14 +87,24 @@ export default function MatchStatsPage() {
   const [selectedMatch, setSelectedMatch] = useState<MatchHistoryItem | null>(null);
   const [statsData, setStatsData] = useState<MatchStatsResponse | null>(null);
   const [statsByMemberId, setStatsByMemberId] = useState<Record<string, MemberStatInput>>({});
+  const [players, setPlayers] = useState<PlayerListItem[]>([]);
   const [saveResult, setSaveResult] = useState<SaveResult>({ status: "idle" });
   const [isLoadingMatches, setIsLoadingMatches] = useState<boolean>(false);
   const [isLoadingStats, setIsLoadingStats] = useState<boolean>(false);
+  const [isLoadingPlayers, setIsLoadingPlayers] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
   const heroOptions = Object.keys(HeroPositionMap)
     .filter((hero): hero is Hero => hero in HeroPositionMap)
     .toSorted((a, b) => HeroPositionMap[a].localeCompare(HeroPositionMap[b], "ko"));
+  const positionOptions: HeroRole[] = ["TANKER", "OFFLANER", "MAIN_DEALER", "SUB_DEALER", "HEALER"];
+  const positionLabelMap: Record<HeroRole, string> = {
+    TANKER: "탱커",
+    OFFLANER: "오프레이너",
+    MAIN_DEALER: "메인딜러",
+    SUB_DEALER: "서브딜러",
+    HEALER: "힐러",
+  };
 
   const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
@@ -116,6 +129,29 @@ export default function MatchStatsPage() {
         setSaveResult({ status: "error", message });
       } finally {
         setIsLoadingMatches(false);
+      }
+    };
+
+    void run();
+  }, []);
+
+  useEffect(() => {
+    const run = async (): Promise<void> => {
+      setIsLoadingPlayers(true);
+      try {
+        const response = await fetch("/api/players", {
+          cache: "no-store",
+        });
+        const data: PlayerListItem[] = await response.json();
+        if (!response.ok) {
+          throw new Error("플레이어 목록 조회에 실패했습니다.");
+        }
+        setPlayers(data);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "알 수 없는 오류";
+        setSaveResult({ status: "error", message });
+      } finally {
+        setIsLoadingPlayers(false);
       }
     };
 
@@ -163,11 +199,17 @@ export default function MatchStatsPage() {
   const handleStatChange = (memberId: string, field: keyof MemberStatInput, value: string) => {
     setStatsByMemberId((prev) => {
       const current = prev[memberId] ?? DEFAULT_MEMBER_STATS;
+      const parsedValue = (() => {
+        if (field === "hero") return value as Hero;
+        if (field === "position") return value as HeroRole;
+        if (field === "playerId") return value;
+        return parseStatValue(value);
+      })();
       return {
         ...prev,
         [memberId]: {
           ...current,
-          [field]: field === "hero" ? (value as Hero) : parseStatValue(value),
+          [field]: parsedValue,
         },
       };
     });
@@ -185,7 +227,9 @@ export default function MatchStatsPage() {
             const stats = statsByMemberId[member.id] ?? DEFAULT_MEMBER_STATS;
             return {
               gameTeamMemberId: member.id,
+              playerId: stats.playerId,
               hero: stats.hero,
+              position: stats.position,
               heroDamage: normalizeStatValue(stats.heroDamage),
               siegeDamage: normalizeStatValue(stats.siegeDamage),
               damageTaken: normalizeStatValue(stats.damageTaken),
@@ -222,7 +266,7 @@ export default function MatchStatsPage() {
       <TopBar title="📊 내전 전적 입력/수정" value="match-stats" />
 
       <main className="w-full px-6 py-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="mx-auto space-y-6">
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-4">
             <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between">
               <div className="space-y-2 w-full">
@@ -309,6 +353,7 @@ export default function MatchStatsPage() {
                           <tr className="text-xs text-gray-300 tracking-tight border-b border-white/5">
                             <th className="pb-2 text-left font-semibold">플레이어</th>
                             <th className="pb-2 text-left font-semibold">영웅</th>
+                            <th className="pb-2 text-left font-semibold">포지션</th>
                             <th className="pb-2 text-center font-semibold">가한 피해량</th>
                             <th className="pb-2 text-center font-semibold">공성 피해량</th>
                             <th className="pb-2 text-center font-semibold">받은 피해량</th>
@@ -321,8 +366,23 @@ export default function MatchStatsPage() {
                             return (
                               <tr key={member.id}>
                                 <td className="py-2.5">
-                                  <div className="font-semibold text-gray-200">{member.player.nickname}</div>
-                                  <div className="text-xs text-gray-500">{member.player.name}</div>
+                                  <select
+                                    value={stats.playerId}
+                                    onChange={(e) => handleStatChange(member.id, "playerId", e.target.value)}
+                                    disabled={isLoadingPlayers}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    {players.length === 0 && (
+                                      <option value="" className="bg-[#1a1a2e]">
+                                        {isLoadingPlayers ? "불러오는 중..." : "플레이어 없음"}
+                                      </option>
+                                    )}
+                                    {players.map((player) => (
+                                      <option key={player.id} value={player.id} className="bg-[#1a1a2e]">
+                                        {player.nickname} ({player.name})
+                                      </option>
+                                    ))}
+                                  </select>
                                 </td>
                                 <td className="py-2.5">
                                   <select
@@ -332,7 +392,20 @@ export default function MatchStatsPage() {
                                   >
                                     {heroOptions.map((hero) => (
                                       <option key={hero} value={hero} className="bg-[#1a1a2e]">
-                                        {getHeroLabel(hero)}
+                                        {hero}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="py-2.5">
+                                  <select
+                                    value={stats.position}
+                                    onChange={(e) => handleStatChange(member.id, "position", e.target.value)}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                  >
+                                    {positionOptions.map((position) => (
+                                      <option key={position} value={position} className="bg-[#1a1a2e]">
+                                        {positionLabelMap[position]}
                                       </option>
                                     ))}
                                   </select>
