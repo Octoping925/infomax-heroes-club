@@ -60,6 +60,29 @@ export interface PlayerHeroWinRateResponse {
   readonly heroStats: ReadonlyArray<HeroWinRateResponse>;
 }
 
+export type PlayerFormResult = "WIN" | "LOSE" | "DRAW";
+
+export interface PlayerFormPointResponse {
+  readonly gameId: string;
+  readonly playedAt: string;
+  readonly gameNumber: number;
+  readonly map: GameMap;
+  readonly hero: Hero;
+  readonly result: PlayerFormResult;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly takedowns: number;
+  readonly dpm: number;
+}
+
+export interface PlayerFormTrendResponse {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly totalGames: number;
+  readonly points: ReadonlyArray<PlayerFormPointResponse>;
+}
+
 export interface PlayerCombinedWinRateResponse {
   readonly playerId: string;
   readonly playerName: string;
