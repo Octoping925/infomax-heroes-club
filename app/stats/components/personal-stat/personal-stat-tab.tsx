@@ -7,6 +7,7 @@ import { HeroStats } from "./HeroStats";
 import { Loading } from "@/components/Loading";
 import { PersonalMapWinRateChart } from "./PersonalMapWinRateChart";
 import { StatCardGenerator } from "./StatCardGenerator";
+import { PlayerFormTrendChart } from "./PlayerFormTrendChart";
 
 /**
  * 플레이어 승률 차트
@@ -67,6 +68,9 @@ export function PersonalStatTab() {
         )}
         <Suspense fallback={<Loading />}>
           <OverallStats playerId={selectedPlayer.id} />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <PlayerFormTrendChart nickname={selectedPlayer.nickname} />
         </Suspense>
         <Suspense fallback={<Loading />}>
           <HeroStats nickname={selectedPlayer.nickname} />

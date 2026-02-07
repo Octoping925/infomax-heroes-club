@@ -32,6 +32,7 @@ export const statsQueryKeys = {
     players: {
       winRate: (nickname: string) => ["stats", "players", "win-rate", nickname],
       heroStats: (nickname: string) => ["stats", "players", "hero-stats", nickname],
+      formTrend: (nickname: string, take: number) => ["stats", "players", "form-trend", nickname, take],
       lunchDinner: (unit: LunchDinnerUnit) => ["stats", "players", "lunch-dinner", unit],
       fantasyDuo: (params: FantasyDuoParams) => ["stats", "players", "fantasy-duo", params],
       matchWinRate: () => ["stats", "players", "match-win-rate"],
