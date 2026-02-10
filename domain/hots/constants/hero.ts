@@ -360,7 +360,7 @@ export const HeroPositionMap = {
   Stukov: HeroRole.HEALER,
   Sylvanas: HeroRole.MAIN_DEALER,
   Tassadar: HeroRole.SUB_DEALER,
-  TheButcher: HeroRole.TANKER,
+  TheButcher: HeroRole.SUB_DEALER,
   TheLostVikings: HeroRole.OFFLANER,
   Thrall: HeroRole.OFFLANER,
   Tracer: HeroRole.SUB_DEALER,

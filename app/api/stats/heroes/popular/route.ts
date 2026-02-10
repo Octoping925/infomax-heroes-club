@@ -88,7 +88,10 @@ async function fetchBanStats(): Promise<BanStats> {
 }
 
 function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResponse[] {
-  const heroPickMap = new Map<Hero, { total: number; wins: number; losses: number; draws: number; gameIds: Set<string> }>();
+  const heroPickMap = new Map<
+    Hero,
+    { total: number; wins: number; losses: number; draws: number; gameIds: Set<string> }
+  >();
   const gameIds = new Set<string>();
 
   for (const pick of pickStats) {
@@ -146,7 +149,7 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
         zScore: 1.645,
       },
     );
-    const tierScore = conservativeWinRateScore * 0.5 + pickRate * 0.3 + banRate * 0.2;
+    const tierScore = conservativeWinRateScore * 0.7 + pickRate * 0.15 + banRate * 0.3;
     const position = HeroPositionMap[hero];
 
     return {
@@ -210,8 +213,8 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
 
 function resolveTier(rankRatio: number): HeroTierLabel {
   if (rankRatio <= 0.08) return "OP";
-  if (rankRatio <= 0.28) return "1티어";
-  if (rankRatio <= 0.5) return "2티어";
+  if (rankRatio <= 0.2) return "1티어";
+  if (rankRatio <= 0.4) return "2티어";
   if (rankRatio <= 0.75) return "3티어";
 
   return "4티어";
