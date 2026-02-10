@@ -74,7 +74,7 @@ export function HeroTierList() {
           <div className="px-3 py-3 text-base text-gray-300">조건에 맞는 영웅이 없습니다.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[860px] w-full text-base">
+            <table className="min-w-[980px] w-full text-base">
               <thead className="bg-white/6 text-sm text-gray-100">
                 <tr>
                   <th className="px-3 py-2.5 text-left font-semibold">순위</th>
@@ -82,6 +82,7 @@ export function HeroTierList() {
                   <th className="px-3 py-2.5 text-center font-semibold">티어</th>
                   <th className="px-3 py-2.5 text-center font-semibold">포지션</th>
                   <th className="px-3 py-2.5 text-center font-semibold">승률</th>
+                  <th className="px-3 py-2.5 text-center font-semibold">픽률</th>
                   <th className="px-3 py-2.5 text-center font-semibold">밴률</th>
                   <th className="px-3 py-2.5 text-center font-semibold">티어 점수</th>
                 </tr>
@@ -123,8 +124,9 @@ export function HeroTierList() {
                     >
                       {hero.winRateText}
                     </td>
+                    <td className="px-3 py-2.5 text-center text-base text-cyan-100">{Math.floor(hero.pickRate)}%</td>
                     <td className="px-3 py-2.5 text-center text-base text-red-100">
-                      {hero.banCount > 0 ? `${hero.banRate.toFixed(1)}% (${hero.banCount}회)` : "-"}
+                      {hero.banCount > 0 ? `${Math.floor(hero.banRate)}% (${hero.banCount}회)` : "-"}
                     </td>
                     <td className="px-3 py-2.5 text-center font-bold text-white">{hero.tierScore.toFixed(1)}</td>
                   </tr>

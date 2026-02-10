@@ -15,14 +15,15 @@ import { round } from "es-toolkit";
  * GET /api/stats/heroes/popular
  */
 export async function GET(): Promise<NextResponse<HeroTierResponse[]>> {
-  const [pickStats, banCounts] = await Promise.all([fetchPickStats(), fetchBanCounts()]);
-  const heroTiers = buildHeroTiers(pickStats, banCounts);
+  const [pickStats, banStats] = await Promise.all([fetchPickStats(), fetchBanStats()]);
+  const heroTiers = buildHeroTiers(pickStats, banStats);
   return NextResponse.json(heroTiers);
 }
 
 type PickStat = {
   hero: Hero;
   result: GameResult;
+  gameId: string;
 };
 
 async function fetchPickStats(): Promise<PickStat[]> {
@@ -32,6 +33,7 @@ async function fetchPickStats(): Promise<PickStat[]> {
       gameTeam: {
         select: {
           result: true,
+          gameId: true,
         },
       },
     },
@@ -40,36 +42,67 @@ async function fetchPickStats(): Promise<PickStat[]> {
   return picks.map((pick) => ({
     hero: pick.hero,
     result: pick.gameTeam.result,
+    gameId: pick.gameTeam.gameId,
   }));
 }
 
-async function fetchBanCounts(): Promise<Map<Hero, number>> {
-  const bans = await prisma.gameTeamBan.groupBy({
-    by: ["hero"],
-    _count: {
+type BanStats = {
+  banCounts: Map<Hero, number>;
+  gamesWithBanCount: number;
+};
+
+async function fetchBanStats(): Promise<BanStats> {
+  const bans = await prisma.gameTeamBan.findMany({
+    select: {
       hero: true,
+      gameTeam: {
+        select: {
+          gameId: true,
+        },
+      },
     },
   });
 
-  return groupBy(
-    bans,
-    (ban) => ban.hero,
-    (ban) => ban._count.hero,
+  const gamesWithBan = new Set<string>();
+  const heroBanGameMap = new Map<Hero, Set<string>>();
+
+  for (const ban of bans) {
+    const gameId = ban.gameTeam.gameId;
+    gamesWithBan.add(gameId);
+
+    const heroBanGames = heroBanGameMap.get(ban.hero) ?? new Set<string>();
+    heroBanGames.add(gameId);
+    heroBanGameMap.set(ban.hero, heroBanGames);
+  }
+
+  const banCounts = groupBy(
+    Array.from(heroBanGameMap.entries()),
+    ([hero]) => hero,
+    ([, gameIds]) => gameIds.size,
   );
+
+  return {
+    banCounts,
+    gamesWithBanCount: gamesWithBan.size,
+  };
 }
 
-function buildHeroTiers(pickStats: PickStat[], banCounts: Map<Hero, number>): HeroTierResponse[] {
-  const heroPickMap = new Map<Hero, { total: number; wins: number; losses: number; draws: number }>();
+function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResponse[] {
+  const heroPickMap = new Map<Hero, { total: number; wins: number; losses: number; draws: number; gameIds: Set<string> }>();
+  const gameIds = new Set<string>();
 
   for (const pick of pickStats) {
+    gameIds.add(pick.gameId);
     const current = heroPickMap.get(pick.hero) ?? {
       total: 0,
       wins: 0,
       draws: 0,
       losses: 0,
+      gameIds: new Set<string>(),
     };
 
     current.total++;
+    current.gameIds.add(pick.gameId);
 
     if (pick.result === GameResult.WIN) {
       current.wins++;
@@ -82,9 +115,9 @@ function buildHeroTiers(pickStats: PickStat[], banCounts: Map<Hero, number>): He
     heroPickMap.set(pick.hero, current);
   }
 
-  const allHeroes = new Set<Hero>([...heroPickMap.keys(), ...banCounts.keys()]);
-  const totalPickCount = pickStats.length;
-  const totalBanCount = Array.from(banCounts.values()).reduce((sum, count) => sum + count, 0);
+  const allHeroes = new Set<Hero>([...heroPickMap.keys(), ...banStats.banCounts.keys()]);
+  const totalGameCount = gameIds.size;
+  const totalBanGames = banStats.gamesWithBanCount;
 
   const rows = Array.from(allHeroes, (hero) => {
     const pickStat = heroPickMap.get(hero) ?? {
@@ -92,11 +125,13 @@ function buildHeroTiers(pickStats: PickStat[], banCounts: Map<Hero, number>): He
       wins: 0,
       losses: 0,
       draws: 0,
+      gameIds: new Set<string>(),
     };
 
-    const banCount = banCounts.get(hero) ?? 0;
-    const pickRate = totalPickCount === 0 ? 0 : (pickStat.total / totalPickCount) * 100;
-    const banRate = totalBanCount === 0 ? 0 : (banCount / totalBanCount) * 100;
+    const pickCount = pickStat.gameIds.size;
+    const banCount = banStats.banCounts.get(hero) ?? 0;
+    const pickRate = totalGameCount === 0 ? 0 : (pickCount / totalGameCount) * 100;
+    const banRate = totalBanGames === 0 ? 0 : (banCount / totalBanGames) * 100;
     const pickWinRate = calculateWinRate(pickStat.wins, pickStat.losses, pickStat.draws);
     const conservativeWinRateScore = calculateConservativeWinRateScore(
       {
@@ -118,7 +153,7 @@ function buildHeroTiers(pickStats: PickStat[], banCounts: Map<Hero, number>): He
       hero,
       heroName: HeroMap[hero],
       position,
-      pickCount: pickStat.total,
+      pickCount,
       banCount,
       wins: pickStat.wins,
       losses: pickStat.losses,
