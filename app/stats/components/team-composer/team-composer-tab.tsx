@@ -2,8 +2,10 @@
 
 import type { TeamingPairStatResponse, TeamingPlayerProfileResponse, TeamingWindowStats } from "@/app/api/stats/types";
 import { HeroRoleMap, type HeroRole } from "@/domain/hots/models";
-import { useTeamComposerData } from "../hooks/useTeamComposerData";
+import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
+import { chooseCombinations } from "@/utils/combination";
+import { round } from "es-toolkit";
 
 const ROLE_ORDER = Object.values(HeroRoleMap);
 const ROLE_LABEL: Record<HeroRole, string> = {
@@ -21,6 +23,7 @@ type TeamSuggestion = {
   readonly pairPenalty: number;
   readonly rolePenalty: number;
   readonly healerPenalty: number;
+  readonly winRatePenalty: number;
 };
 
 export function TeamComposerTab() {
@@ -73,12 +76,12 @@ export function TeamComposerTab() {
         return {
           other,
           allTime: pair?.allTime ?? emptyWindowStats(),
-          recent5: pair?.recent5 ?? emptyWindowStats(),
+          recent6: pair?.recent6 ?? emptyWindowStats(),
         };
       })
       .toSorted((a, b) => {
-        if (a.recent5.sameTeamRate !== b.recent5.sameTeamRate) {
-          return b.recent5.sameTeamRate - a.recent5.sameTeamRate;
+        if (a.recent6.sameTeamRate !== b.recent6.sameTeamRate) {
+          return b.recent6.sameTeamRate - a.recent6.sameTeamRate;
         }
         if (a.allTime.sameTeamRate !== b.allTime.sameTeamRate) {
           return b.allTime.sameTeamRate - a.allTime.sameTeamRate;
@@ -97,19 +100,10 @@ export function TeamComposerTab() {
       return [];
     }
 
-    const splits = buildTeamSplits(knownCandidates);
-    const ranked = splits
-      .map((split) =>
-        evaluateTeamSplit({
-          teamA: split.teamA,
-          teamB: split.teamB,
-          playerById,
-          pairByKey,
-        }),
-      )
-      .toSorted((a, b) => a.score - b.score);
-
-    return ranked.slice(0, 3);
+    return buildTeamSplits(knownCandidates)
+      .map((split) => evaluateTeamSplit(split.teamA, split.teamB, playerById, pairByKey))
+      .toSorted((a, b) => a.score - b.score)
+      .slice(0, 3);
   }, [effectiveCandidateIds, pairByKey, playerById]);
 
   const isOddSelection = effectiveCandidateIds.length % 2 !== 0;
@@ -141,8 +135,10 @@ export function TeamComposerTab() {
               <article key={player.playerId} className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-bold text-white">{player.playerNickname}</p>
-                  <span className="text-xs text-cyan-200">
+                  <span className="text-xs text-cyan-200 text-right">
                     주포지션 {player.primaryRole ? ROLE_LABEL[player.primaryRole] : "-"} / 유연성 {player.flexibility}
+                    <br />
+                    최근승률 {player.recentWinRate.toFixed(1)}% ({player.recentGames}경기)
                   </span>
                 </div>
                 <div className="space-y-1.5">
@@ -204,9 +200,9 @@ export function TeamComposerTab() {
                   </td>
                   <td className="px-3 py-2 text-right text-cyan-200">{row.allTime.sameTeamRate.toFixed(1)}%</td>
                   <td className="px-3 py-2 text-right text-gray-100">
-                    {row.recent5.sameTeamMatches}/{row.recent5.encounterMatches}
+                    {row.recent6.sameTeamMatches}/{row.recent6.encounterMatches}
                   </td>
-                  <td className="px-3 py-2 text-right text-amber-200">{row.recent5.sameTeamRate.toFixed(1)}%</td>
+                  <td className="px-3 py-2 text-right text-amber-200">{row.recent6.sameTeamRate.toFixed(1)}%</td>
                   <td className="px-3 py-2 text-gray-200">
                     {row.other.primaryRole ? ROLE_LABEL[row.other.primaryRole] : "-"}
                   </td>
@@ -274,7 +270,8 @@ export function TeamComposerTab() {
                 </p>
                 <div className="text-xs text-gray-300">
                   총점 {suggestion.score.toFixed(2)} / 동팀반복 {suggestion.pairPenalty.toFixed(2)} / 포지션{" "}
-                  {suggestion.rolePenalty.toFixed(2)} / 힐러과밀 {suggestion.healerPenalty.toFixed(2)}
+                  {suggestion.rolePenalty.toFixed(2)} / 힐러과밀 {suggestion.healerPenalty.toFixed(2)} / 승률밸런스{" "}
+                  {suggestion.winRatePenalty.toFixed(2)}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-md border border-white/10 bg-black/30 p-2">
@@ -315,17 +312,12 @@ function normalizeCandidateIds(candidateIds: string[] | null, playerById: Map<st
   return Array.from(new Set(candidateIds.filter((playerId) => playerById.has(playerId))));
 }
 
-function evaluateTeamSplit({
-  teamA,
-  teamB,
-  playerById,
-  pairByKey,
-}: {
-  teamA: string[];
-  teamB: string[];
-  playerById: Map<string, TeamingPlayerProfileResponse>;
-  pairByKey: Map<string, TeamingPairStatResponse>;
-}): TeamSuggestion {
+function evaluateTeamSplit(
+  teamA: string[],
+  teamB: string[],
+  playerById: Map<string, TeamingPlayerProfileResponse>,
+  pairByKey: Map<string, TeamingPairStatResponse>,
+): TeamSuggestion {
   const pairPenalty = getTeamPairPenalty(teamA, pairByKey) + getTeamPairPenalty(teamB, pairByKey);
   const teamARolePenalty = getRoleBalancePenalty(teamA, playerById);
   const teamBRolePenalty = getRoleBalancePenalty(teamB, playerById);
@@ -333,7 +325,8 @@ function evaluateTeamSplit({
   const rolePenalty = teamARolePenalty + teamBRolePenalty + crossRolePenalty;
   const healerPenalty =
     getHealerConcentrationPenalty(teamA, playerById) + getHealerConcentrationPenalty(teamB, playerById);
-  const score = pairPenalty + rolePenalty + healerPenalty;
+  const winRatePenalty = getWinRateBalancePenalty(teamA, teamB, playerById);
+  const score = pairPenalty + rolePenalty + healerPenalty + winRatePenalty;
 
   return {
     teamA,
@@ -342,6 +335,7 @@ function evaluateTeamSplit({
     pairPenalty,
     rolePenalty,
     healerPenalty,
+    winRatePenalty,
   };
 }
 
@@ -355,9 +349,9 @@ function getTeamPairPenalty(team: string[], pairByKey: Map<string, TeamingPairSt
       if (!pair) continue;
 
       const allRate = pair.allTime.sameTeamRate / 100;
-      const recentRate = pair.recent5.sameTeamRate / 100;
+      const recentRate = pair.recent6.sameTeamRate / 100;
       const allCountScore = Math.min(pair.allTime.sameTeamMatches / 8, 1);
-      const recentCountScore = Math.min(pair.recent5.sameTeamMatches / 2, 1);
+      const recentCountScore = Math.min(pair.recent6.sameTeamMatches / 2, 1);
       totalPenalty += allRate * 0.8 + recentRate * 1.3 + allCountScore * 0.6 + recentCountScore * 0.8;
       pairCount += 1;
     }
@@ -417,6 +411,56 @@ function getHealerConcentrationPenalty(team: string[], playerById: Map<string, T
   return (healers.length - 1) * 2.2 + inflexibleHealers * 1.8;
 }
 
+function getWinRateBalancePenalty(
+  teamA: string[],
+  teamB: string[],
+  playerById: Map<string, TeamingPlayerProfileResponse>,
+): number {
+  const avgA = getTeamTrendWinRate(teamA, playerById);
+  const avgB = getTeamTrendWinRate(teamB, playerById);
+  const averageGapPenalty = Math.abs(avgA - avgB) / 12;
+
+  const hotA = countPlayersByTrend(teamA, playerById, "HOT");
+  const hotB = countPlayersByTrend(teamB, playerById, "HOT");
+  const coldA = countPlayersByTrend(teamA, playerById, "COLD");
+  const coldB = countPlayersByTrend(teamB, playerById, "COLD");
+  const distributionPenalty = Math.abs(hotA - hotB) * 0.9 + Math.abs(coldA - coldB) * 0.9;
+
+  return averageGapPenalty + distributionPenalty;
+}
+
+function getTeamTrendWinRate(team: string[], playerById: Map<string, TeamingPlayerProfileResponse>): number {
+  const players = team
+    .map((playerId) => playerById.get(playerId))
+    .filter((player): player is TeamingPlayerProfileResponse => Boolean(player));
+
+  if (players.length === 0) return 0;
+  const total = players.reduce((sum, player) => sum + getPlayerTrendWinRate(player), 0);
+  return total / players.length;
+}
+
+function countPlayersByTrend(
+  team: string[],
+  playerById: Map<string, TeamingPlayerProfileResponse>,
+  trend: "HOT" | "COLD",
+): number {
+  return team
+    .map((playerId) => playerById.get(playerId))
+    .filter((player): player is TeamingPlayerProfileResponse => Boolean(player))
+    .filter((player) => {
+      const winRate = getPlayerTrendWinRate(player);
+      if (trend === "HOT") return winRate >= 60;
+      return winRate <= 40;
+    }).length;
+}
+
+function getPlayerTrendWinRate(player: TeamingPlayerProfileResponse): number {
+  if (player.recentGames >= 2) {
+    return player.recentWinRate;
+  }
+  return player.allTimeWinRate;
+}
+
 function countPrimaryRoles(
   team: string[],
   playerById: Map<string, TeamingPlayerProfileResponse>,
@@ -432,8 +476,7 @@ function countPrimaryRoles(
 
 function buildTeamSplits(playerIds: string[]): Array<{ teamA: string[]; teamB: string[] }> {
   const teamSize = playerIds.length / 2;
-  const fixed = playerIds[0];
-  const rest = playerIds.slice(1);
+  const [fixed, ...rest] = playerIds;
 
   if (playerIds.length <= 14) {
     const combinations = chooseCombinations(rest, teamSize - 1);
@@ -450,7 +493,7 @@ function buildTeamSplits(playerIds: string[]): Array<{ teamA: string[]; teamB: s
   const maxSample = 4000;
 
   for (let attempt = 0; attempt < maxSample; attempt += 1) {
-    const shuffled = [...rest].toSorted(() => Math.random() - 0.5);
+    const shuffled = rest.toSorted(() => Math.random() - 0.5);
     const teamA = [fixed, ...shuffled.slice(0, teamSize - 1)].toSorted();
     const teamAKey = teamA.join("|");
     if (seen.has(teamAKey)) continue;
@@ -462,32 +505,6 @@ function buildTeamSplits(playerIds: string[]): Array<{ teamA: string[]; teamB: s
   }
 
   return splits;
-}
-
-function chooseCombinations<T>(values: T[], pick: number): T[][] {
-  const result: T[][] = [];
-  const current: T[] = [];
-
-  const traverse = (index: number) => {
-    if (current.length === pick) {
-      result.push([...current]);
-      return;
-    }
-    if (index >= values.length) return;
-
-    const remainNeed = pick - current.length;
-    const remainValues = values.length - index;
-    if (remainValues < remainNeed) return;
-
-    current.push(values[index]);
-    traverse(index + 1);
-    current.pop();
-
-    traverse(index + 1);
-  };
-
-  traverse(0);
-  return result;
 }
 
 function emptyWindowStats(): TeamingWindowStats {
@@ -505,5 +522,6 @@ function toPairKey(playerAId: string, playerBId: string): string {
 function renderPlayerBadge(player: TeamingPlayerProfileResponse | undefined): string {
   if (!player) return "알 수 없음";
   const roleText = player.primaryRole ? ROLE_LABEL[player.primaryRole] : "-";
-  return `${player.playerNickname} (${roleText}, 유연성 ${player.flexibility})`;
+  const trendWinRate = getPlayerTrendWinRate(player);
+  return `${player.playerName.slice(1)} (${roleText}, 승률 ${round(trendWinRate, 0)}%)`;
 }

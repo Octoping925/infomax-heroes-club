@@ -14,7 +14,7 @@ import { ScrimStatTab } from "./scrim-stat/scrim-stat-tab";
 import { RivalryTab } from "./rivalry-tab";
 import { MapStatTab } from "./map-stat/map-stat-tab";
 import { CounterPickTab } from "./counter-pick-tab";
-import { TeamComposerTab } from "./team-composer-tab";
+import { TeamComposerTab } from "./team-composer/team-composer-tab";
 
 type TabType =
   | "personalStats"

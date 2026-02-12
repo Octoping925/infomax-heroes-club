@@ -275,7 +275,7 @@ export interface TeamingPairStatResponse {
   readonly playerAId: string;
   readonly playerBId: string;
   readonly allTime: TeamingWindowStats;
-  readonly recent5: TeamingWindowStats;
+  readonly recent6: TeamingWindowStats;
 }
 
 export interface PlayerRoleStatResponse {
@@ -290,6 +290,11 @@ export interface TeamingPlayerProfileResponse {
   readonly playerName: string;
   readonly playerNickname: string;
   readonly totalMatches: number;
+  /** 0 ~ 100 */
+  readonly allTimeWinRate: number;
+  /** 0 ~ 100, 최근 recentMatchCount 내 개인 참여 경기 기준 */
+  readonly recentWinRate: number;
+  readonly recentGames: number;
   readonly primaryRole: HeroRole | null;
   readonly flexibility: number;
   readonly roleStats: ReadonlyArray<PlayerRoleStatResponse>;

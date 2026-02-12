@@ -2,9 +2,10 @@ import { TeamComposerResponse, TeamingPairStatResponse, TeamingWindowStats } fro
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { prisma } from "@/config/prisma";
 import { HeroRole, HeroRoleMap } from "@/domain/hots/models";
+import { round } from "es-toolkit";
 import { NextResponse } from "next/server";
 
-const RECENT_MATCH_COUNT = 5;
+const RECENT_MATCH_COUNT = 6;
 const ROLE_ORDER = Object.values(HeroRoleMap);
 
 type PairCounter = {
@@ -12,10 +13,17 @@ type PairCounter = {
     encounterMatches: number;
     sameTeamMatches: number;
   };
-  recent5: {
+  recent6: {
     encounterMatches: number;
     sameTeamMatches: number;
   };
+};
+
+type MatchResultCounter = {
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
 };
 
 /**
@@ -29,11 +37,13 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
       orderBy: [{ playedAt: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
+        winnerTeamNumber: true,
         teams: {
           orderBy: {
             teamNumber: "asc",
           },
           select: {
+            teamNumber: true,
             members: {
               select: {
                 playerId: true,
@@ -53,6 +63,9 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
 
   const pairStats = new Map<string, PairCounter>();
   const totalMatchCountByPlayer = new Map<string, number>();
+  const allTimeResultByPlayer = new Map<string, MatchResultCounter>();
+  const recentResultByPlayer = new Map<string, MatchResultCounter>();
+  const recentUsedCountByPlayer = new Map<string, number>();
 
   for (const match of matches) {
     accumulatePairStats(
@@ -65,12 +78,25 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
     for (const playerId of uniquePlayerIds) {
       totalMatchCountByPlayer.set(playerId, (totalMatchCountByPlayer.get(playerId) ?? 0) + 1);
     }
+
+    for (const team of match.teams) {
+      const result = toMatchResult(match.winnerTeamNumber, team.teamNumber);
+      for (const member of team.members) {
+        updateMatchResultCounter(allTimeResultByPlayer, member.playerId, result);
+
+        const used = recentUsedCountByPlayer.get(member.playerId) ?? 0;
+        if (used < RECENT_MATCH_COUNT) {
+          updateMatchResultCounter(recentResultByPlayer, member.playerId, result);
+          recentUsedCountByPlayer.set(member.playerId, used + 1);
+        }
+      }
+    }
   }
 
   for (const recentMatch of matches.slice(0, RECENT_MATCH_COUNT)) {
     accumulatePairStats(
       recentMatch.teams.map((team) => team.members.map((member) => member.playerId)),
-      "recent5",
+      "recent6",
       pairStats,
     );
   }
@@ -90,7 +116,7 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
 
       const roleStats = ROLE_ORDER.map((role) => {
         const games = perRoleCount.get(role) ?? 0;
-        const rate = totalGames > 0 ? roundToOne((games / totalGames) * 100) : 0;
+        const rate = totalGames > 0 ? round((games / totalGames) * 100, 1) : 0;
         return { role, games, rate };
       });
 
@@ -102,6 +128,9 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
         playerName: player.name,
         playerNickname: player.nickname,
         totalMatches: totalMatchCountByPlayer.get(player.id) ?? 0,
+        allTimeWinRate: calculateWinRate(allTimeResultByPlayer.get(player.id)),
+        recentWinRate: calculateWinRate(recentResultByPlayer.get(player.id)),
+        recentGames: recentResultByPlayer.get(player.id)?.total ?? 0,
         primaryRole: primaryRole.games > 0 ? primaryRole.role : null,
         flexibility,
         roleStats,
@@ -112,13 +141,13 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
     .map(([key, value]) => {
       const [playerAId, playerBId] = key.split("|");
       const allTime = toWindowStats(value.allTime);
-      const recent5 = toWindowStats(value.recent5);
+      const recent6 = toWindowStats(value.recent6);
 
       return {
         playerAId,
         playerBId,
         allTime,
-        recent5,
+        recent6,
       } satisfies TeamingPairStatResponse;
     })
     .toSorted((a, b) => {
@@ -148,7 +177,7 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
 
 function accumulatePairStats(
   teams: ReadonlyArray<ReadonlyArray<string>>,
-  window: "allTime" | "recent5",
+  window: "allTime" | "recent6",
   pairStats: Map<string, PairCounter>,
 ) {
   const uniquePlayers = Array.from(new Set(teams.flat()));
@@ -185,7 +214,7 @@ function ensurePairCounter(pairStats: Map<string, PairCounter>, key: string): Pa
 
   const created: PairCounter = {
     allTime: { encounterMatches: 0, sameTeamMatches: 0 },
-    recent5: { encounterMatches: 0, sameTeamMatches: 0 },
+    recent6: { encounterMatches: 0, sameTeamMatches: 0 },
   };
   pairStats.set(key, created);
   return created;
@@ -193,7 +222,7 @@ function ensurePairCounter(pairStats: Map<string, PairCounter>, key: string): Pa
 
 function toWindowStats(counter: { encounterMatches: number; sameTeamMatches: number }): TeamingWindowStats {
   const sameTeamRate =
-    counter.encounterMatches > 0 ? roundToOne((counter.sameTeamMatches / counter.encounterMatches) * 100) : 0;
+    counter.encounterMatches > 0 ? round((counter.sameTeamMatches / counter.encounterMatches) * 100, 1) : 0;
   return {
     encounterMatches: counter.encounterMatches,
     sameTeamMatches: counter.sameTeamMatches,
@@ -201,6 +230,32 @@ function toWindowStats(counter: { encounterMatches: number; sameTeamMatches: num
   };
 }
 
-function roundToOne(value: number): number {
-  return Math.round(value * 10) / 10;
+function toMatchResult(winnerTeamNumber: number | null, teamNumber: number): "WIN" | "LOSE" | "DRAW" {
+  if (winnerTeamNumber === null) return "DRAW";
+  return winnerTeamNumber === teamNumber ? "WIN" : "LOSE";
+}
+
+function updateMatchResultCounter(
+  resultByPlayer: Map<string, MatchResultCounter>,
+  playerId: string,
+  result: "WIN" | "LOSE" | "DRAW",
+) {
+  const counter = resultByPlayer.get(playerId) ?? {
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    total: 0,
+  };
+
+  if (result === "WIN") counter.wins += 1;
+  if (result === "LOSE") counter.losses += 1;
+  if (result === "DRAW") counter.draws += 1;
+  counter.total += 1;
+
+  resultByPlayer.set(playerId, counter);
+}
+
+function calculateWinRate(counter: MatchResultCounter | undefined): number {
+  if (!counter || counter.total === 0) return 0;
+  return round((counter.wins / counter.total) * 100, 1);
 }
