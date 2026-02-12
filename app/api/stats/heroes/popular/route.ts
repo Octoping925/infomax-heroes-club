@@ -222,9 +222,10 @@ function resolveTier(rankRatio: number): HeroTierLabel {
 
 function getPercentile(values: number[], percentile: number): number {
   if (values.length === 0) return 0;
+  if (percentile >= 1) return values.at(-1)!;
 
   const sorted = values.toSorted((a, b) => a - b);
-  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * percentile)));
+  const index = Math.floor((sorted.length - 1) * percentile);
   return sorted[index];
 }
 

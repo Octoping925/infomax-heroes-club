@@ -264,6 +264,45 @@ export interface RivalryListResponse {
   readonly items: ReadonlyArray<RivalryCardResponse>;
 }
 
+export interface TeamingWindowStats {
+  readonly encounterMatches: number;
+  readonly sameTeamMatches: number;
+  /** 0 ~ 100 */
+  readonly sameTeamRate: number;
+}
+
+export interface TeamingPairStatResponse {
+  readonly playerAId: string;
+  readonly playerBId: string;
+  readonly allTime: TeamingWindowStats;
+  readonly recent5: TeamingWindowStats;
+}
+
+export interface PlayerRoleStatResponse {
+  readonly role: HeroRole;
+  readonly games: number;
+  /** 0 ~ 100 */
+  readonly rate: number;
+}
+
+export interface TeamingPlayerProfileResponse {
+  readonly playerId: string;
+  readonly playerName: string;
+  readonly playerNickname: string;
+  readonly totalMatches: number;
+  readonly primaryRole: HeroRole | null;
+  readonly flexibility: number;
+  readonly roleStats: ReadonlyArray<PlayerRoleStatResponse>;
+}
+
+export interface TeamComposerResponse {
+  readonly generatedAt: string;
+  readonly recentMatchCount: number;
+  readonly defaultCandidateIds: ReadonlyArray<string>;
+  readonly players: ReadonlyArray<TeamingPlayerProfileResponse>;
+  readonly pairs: ReadonlyArray<TeamingPairStatResponse>;
+}
+
 /**
  * 평균을 계산하는 유틸리티 함수
  */

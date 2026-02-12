@@ -41,6 +41,7 @@ export const statsQueryKeys = {
     maps: () => ["stats", "maps"],
     mapsHero: () => ["stats", "maps", "hero"],
     teamSwitch: () => ["stats", "team-switch"],
+    teamComposer: () => ["stats", "team-composer"],
     rankings: {
       lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],
       avgStats: () => ["stats", "rankings", "avg-stats"],

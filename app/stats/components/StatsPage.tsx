@@ -14,6 +14,7 @@ import { ScrimStatTab } from "./scrim-stat/scrim-stat-tab";
 import { RivalryTab } from "./rivalry-tab";
 import { MapStatTab } from "./map-stat/map-stat-tab";
 import { CounterPickTab } from "./counter-pick-tab";
+import { TeamComposerTab } from "./team-composer-tab";
 
 type TabType =
   | "personalStats"
@@ -24,7 +25,8 @@ type TabType =
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
   | "heroDuo"
-  | "counterPicks";
+  | "counterPicks"
+  | "teamComposer";
 
 const TABS: { id: TabType; label: string; mobileLabel: string; icon: string }[] = [
   { id: "personalStats", label: "개인 통계", mobileLabel: "개인", icon: "👤" },
@@ -36,6 +38,7 @@ const TABS: { id: TabType; label: string; mobileLabel: string; icon: string }[] 
   { id: "fantasyDuo", label: "환상의 듀오", mobileLabel: "환상 듀오", icon: "🤝" },
   { id: "heroDuo", label: "영웅 듀오", mobileLabel: "영웅 듀오", icon: "🧩" },
   { id: "counterPicks", label: "카운터픽", mobileLabel: "카운터", icon: "⚔️" },
+  { id: "teamComposer", label: "팀 편성 도우미", mobileLabel: "팀 편성", icon: "🧠" },
 ];
 
 const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats"]);
@@ -142,6 +145,7 @@ export function StatsPageLayout({ players }: Props) {
                 {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
                 {activeTab === "heroDuo" && <HeroDuoRankingChart />}
                 {activeTab === "counterPicks" && <CounterPickTab />}
+                {activeTab === "teamComposer" && <TeamComposerTab />}
               </Suspense>
             </SelectedPlayerContext.Provider>
           </div>
