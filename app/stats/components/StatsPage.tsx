@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, Suspense, useState } from "react";
+import { createContext, Suspense, useEffect, useRef, useState } from "react";
 import { TeamSwitchChart } from "./team-switch-chart";
 import { AvgStatsRankingChart } from "./avg-kills-deaths-ranking-chart";
 import { FantasyDuoRankingChart } from "./fantasy-duo-ranking-chart";
@@ -26,16 +26,16 @@ type TabType =
   | "heroDuo"
   | "counterPicks";
 
-const TABS: { id: TabType; label: string; icon: string }[] = [
-  { id: "personalStats", label: "개인 통계", icon: "👤" },
-  { id: "scrimStats", label: "내전 통계", icon: "🥇" },
-  { id: "mapStats", label: "맵 통계", icon: "🗺️" },
-  { id: "rivalry", label: "라이벌리", icon: "🔥" },
-  { id: "teamSwitch", label: "팀 변경 효과", icon: "🔄" },
-  { id: "avgKillsDeathsRanking", label: "평균 킬/데스", icon: "💥" },
-  { id: "fantasyDuo", label: "환상의 듀오", icon: "🤝" },
-  { id: "heroDuo", label: "영웅 듀오", icon: "🧩" },
-  { id: "counterPicks", label: "카운터픽", icon: "⚔️" },
+const TABS: { id: TabType; label: string; mobileLabel: string; icon: string }[] = [
+  { id: "personalStats", label: "개인 통계", mobileLabel: "개인", icon: "👤" },
+  { id: "scrimStats", label: "내전 통계", mobileLabel: "내전", icon: "🥇" },
+  { id: "mapStats", label: "맵 통계", mobileLabel: "맵", icon: "🗺️" },
+  { id: "rivalry", label: "라이벌리", mobileLabel: "라이벌", icon: "🔥" },
+  { id: "teamSwitch", label: "팀 변경 효과", mobileLabel: "팀 변경", icon: "🔄" },
+  { id: "avgKillsDeathsRanking", label: "평균 킬/데스", mobileLabel: "킬/데스", icon: "💥" },
+  { id: "fantasyDuo", label: "환상의 듀오", mobileLabel: "환상 듀오", icon: "🤝" },
+  { id: "heroDuo", label: "영웅 듀오", mobileLabel: "영웅 듀오", icon: "🧩" },
+  { id: "counterPicks", label: "카운터픽", mobileLabel: "카운터", icon: "⚔️" },
 ];
 
 const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats"]);
@@ -50,6 +50,8 @@ interface Props {
  * 통계 대시보드 페이지
  */
 export function StatsPageLayout({ players }: Props) {
+  const tabRefs = useRef<Partial<Record<TabType, HTMLButtonElement | null>>>({});
+
   const [activeTab, handleTabSelect] = useHashSyncedTab(
     "personalStats",
     TABS.map((tab) => tab.id),
@@ -66,21 +68,39 @@ export function StatsPageLayout({ players }: Props) {
     }
   };
 
+  useEffect(() => {
+    const activeButton = tabRefs.current[activeTab];
+    if (!activeButton) {
+      return;
+    }
+
+    activeButton.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [activeTab]);
+
   return (
     <div className="w-full px-2">
-      <nav className="w-full px-6 py-3 border-b border-white/10 overflow-x-auto">
-        <div className="max-w-7xl mx-auto flex gap-2 flex-wrap">
+      <nav className="w-full px-3 md:px-6 py-3 border-b border-white/10 overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto flex w-max gap-2">
           {TABS.map((tab) => (
             <button
               key={tab.id}
+              ref={(element) => {
+                tabRefs.current[tab.id] = element;
+              }}
               onClick={() => handleTabSelect(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`shrink-0 whitespace-nowrap px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
                   : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
               }`}
+              aria-pressed={activeTab === tab.id}
             >
-              {tab.icon} {tab.label}
+              <span>{tab.icon}</span> <span className="sm:hidden">{tab.mobileLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
