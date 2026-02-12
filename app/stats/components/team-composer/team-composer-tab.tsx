@@ -19,12 +19,40 @@ const ROLE_LABEL: Record<HeroRole, string> = {
 type TeamSuggestion = {
   readonly teamA: string[];
   readonly teamB: string[];
+  readonly strategyLabel: string;
   readonly score: number;
   readonly pairPenalty: number;
   readonly rolePenalty: number;
   readonly healerPenalty: number;
   readonly winRatePenalty: number;
 };
+
+type TeamPenaltyParts = Omit<TeamSuggestion, "strategyLabel" | "score">;
+
+type Strategy = {
+  readonly label: string;
+  readonly weights: {
+    readonly pair: number;
+    readonly role: number;
+    readonly healer: number;
+    readonly winRate: number;
+  };
+};
+
+const RECOMMENDATION_STRATEGIES: readonly Strategy[] = [
+  {
+    label: "추천 1 (같이 안 해본 조합 가중)",
+    weights: { pair: 1.9, role: 1.4, healer: 1, winRate: 0.9 },
+  },
+  {
+    label: "추천 2 (승률 밸런스 가중)",
+    weights: { pair: 0.9, role: 1.4, healer: 1, winRate: 1.9 },
+  },
+  {
+    label: "추천 3 (포지션 균형 가중)",
+    weights: { pair: 0.9, role: 1.9, healer: 1.4, winRate: 0.8 },
+  },
+];
 
 export function TeamComposerTab() {
   const { data, error } = useTeamComposerData();
@@ -100,10 +128,31 @@ export function TeamComposerTab() {
       return [];
     }
 
-    return buildTeamSplits(knownCandidates)
-      .map((split) => evaluateTeamSplit(split.teamA, split.teamB, playerById, pairByKey))
-      .toSorted((a, b) => a.score - b.score)
-      .slice(0, 3);
+    const evaluated = buildTeamSplits(knownCandidates).map((split) =>
+      evaluateTeamSplit(split.teamA, split.teamB, playerById, pairByKey),
+    );
+
+    const usedSplitKeys = new Set<string>();
+    const recommendations: TeamSuggestion[] = [];
+
+    for (const strategy of RECOMMENDATION_STRATEGIES) {
+      const ranked = evaluated
+        .map((penalty) => ({
+          ...penalty,
+          strategyLabel: strategy.label,
+          score: calculateWeightedScore(penalty, strategy.weights),
+        }))
+        .toSorted((a, b) => a.score - b.score);
+
+      const picked = ranked.find((candidate) => !usedSplitKeys.has(toSplitKey(candidate.teamA, candidate.teamB)));
+      const selected = picked ?? ranked[0];
+      if (!selected) continue;
+
+      usedSplitKeys.add(toSplitKey(selected.teamA, selected.teamB));
+      recommendations.push(selected);
+    }
+
+    return recommendations;
   }, [effectiveCandidateIds, pairByKey, playerById]);
 
   const isOddSelection = effectiveCandidateIds.length % 2 !== 0;
@@ -265,9 +314,7 @@ export function TeamComposerTab() {
                   index === 0 ? "border-cyan-300/60 bg-cyan-500/10" : "border-white/15 bg-white/5"
                 }`}
               >
-                <p className="font-semibold text-white">
-                  추천 {index + 1} {index === 0 ? "(최적)" : ""}
-                </p>
+                <p className="font-semibold text-white">{suggestion.strategyLabel}</p>
                 <div className="text-xs text-gray-300">
                   총점 {suggestion.score.toFixed(2)} / 동팀반복 {suggestion.pairPenalty.toFixed(2)} / 포지션{" "}
                   {suggestion.rolePenalty.toFixed(2)} / 힐러과밀 {suggestion.healerPenalty.toFixed(2)} / 승률밸런스{" "}
@@ -317,7 +364,7 @@ function evaluateTeamSplit(
   teamB: string[],
   playerById: Map<string, TeamingPlayerProfileResponse>,
   pairByKey: Map<string, TeamingPairStatResponse>,
-): TeamSuggestion {
+): TeamPenaltyParts {
   const pairPenalty = getTeamPairPenalty(teamA, pairByKey) + getTeamPairPenalty(teamB, pairByKey);
   const teamARolePenalty = getRoleBalancePenalty(teamA, playerById);
   const teamBRolePenalty = getRoleBalancePenalty(teamB, playerById);
@@ -326,17 +373,31 @@ function evaluateTeamSplit(
   const healerPenalty =
     getHealerConcentrationPenalty(teamA, playerById) + getHealerConcentrationPenalty(teamB, playerById);
   const winRatePenalty = getWinRateBalancePenalty(teamA, teamB, playerById);
-  const score = pairPenalty + rolePenalty + healerPenalty + winRatePenalty;
-
   return {
     teamA,
     teamB,
-    score,
     pairPenalty,
     rolePenalty,
     healerPenalty,
     winRatePenalty,
   };
+}
+
+function calculateWeightedScore(
+  penalties: TeamPenaltyParts,
+  weights: {
+    pair: number;
+    role: number;
+    healer: number;
+    winRate: number;
+  },
+): number {
+  return (
+    penalties.pairPenalty * weights.pair +
+    penalties.rolePenalty * weights.role +
+    penalties.healerPenalty * weights.healer +
+    penalties.winRatePenalty * weights.winRate
+  );
 }
 
 function getTeamPairPenalty(team: string[], pairByKey: Map<string, TeamingPairStatResponse>): number {
@@ -517,6 +578,10 @@ function emptyWindowStats(): TeamingWindowStats {
 
 function toPairKey(playerAId: string, playerBId: string): string {
   return playerAId < playerBId ? `${playerAId}|${playerBId}` : `${playerBId}|${playerAId}`;
+}
+
+function toSplitKey(teamA: string[], teamB: string[]): string {
+  return `${teamA.join("|")}__${teamB.join("|")}`;
 }
 
 function renderPlayerBadge(player: TeamingPlayerProfileResponse | undefined): string {
