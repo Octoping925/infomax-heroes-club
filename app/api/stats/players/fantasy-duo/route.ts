@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
-import { GameResult } from "@/generated/prisma/client";
-import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap, PlayerMap } from "../../utils/player";
-import { parseNumber } from "@/app/api/stats/utils/query";
-import { clamp } from "es-toolkit";
+import { parseClampedIntegerParam, parseEnumParam } from "@/app/api/stats/utils/query";
+import {
+  buildWinRateStatsFromCounts,
+  calculateTotalGames,
+  toResultByWinnerTeamNumber,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 
 type DuoAccumulator = {
   readonly playerA: {
@@ -44,14 +47,15 @@ export async function GET(req: Request): Promise<NextResponse<FantasyDuoWinRateR
 
   const response: FantasyDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
+      const stats = buildWinRateStatsFromCounts(acc);
       return {
         playerA: acc.playerA,
         playerB: acc.playerB,
-        totalGames: acc.wins + acc.losses + acc.draws,
-        wins: acc.wins,
-        losses: acc.losses,
-        draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
+        totalGames: calculateTotalGames(acc),
+        wins: stats.wins,
+        losses: stats.losses,
+        draws: stats.draws,
+        winRate: stats.winRate,
       };
     })
     .filter((item) => item.totalGames >= minCount)
@@ -61,8 +65,6 @@ export async function GET(req: Request): Promise<NextResponse<FantasyDuoWinRateR
   return NextResponse.json(response);
 }
 
-type MatchTeamResult = "WIN" | "LOSE" | "DRAW";
-
 type UnitType = "match" | "game";
 
 function parseQueryParams(url: string): {
@@ -71,17 +73,20 @@ function parseQueryParams(url: string): {
   readonly unit: UnitType;
 } {
   const { searchParams } = new URL(url);
-  const limitParam = parseNumber(searchParams.get("limit"));
-  const unitParam = searchParams.get("unit");
-  const minCountParam = parseNumber(searchParams.get("minCount") ?? searchParams.get("minGames"));
-
-  const unit: UnitType = unitParam === "game" ? "game" : "match";
-
-  const limit = typeof limitParam === "number" ? clamp(Math.floor(limitParam), 1, MAX_LIMIT) : DEFAULT_LIMIT;
-
+  const unit = parseEnumParam(searchParams, "unit", ["match", "game"], "match");
+  const limit = parseClampedIntegerParam(searchParams, {
+    keys: ["limit"],
+    min: 1,
+    max: MAX_LIMIT,
+    fallback: DEFAULT_LIMIT,
+  });
   const defaultMinCount = unit === "match" ? DEFAULT_MIN_MATCHES : DEFAULT_MIN_GAMES;
-
-  const minCount = typeof minCountParam === "number" ? clamp(Math.floor(minCountParam), 1, 10_000) : defaultMinCount;
+  const minCount = parseClampedIntegerParam(searchParams, {
+    keys: ["minCount", "minGames"],
+    min: 1,
+    max: 10_000,
+    fallback: defaultMinCount,
+  });
 
   return { limit, minCount, unit };
 }
@@ -101,28 +106,6 @@ function createAccumulator(input: {
     losses: 0,
     draws: 0,
   };
-}
-
-function getMatchTeamResult(winnerTeamNumber: number | null, teamNumber: number): MatchTeamResult {
-  if (winnerTeamNumber === null) {
-    return "DRAW";
-  }
-  if (winnerTeamNumber === teamNumber) {
-    return "WIN";
-  }
-  return "LOSE";
-}
-
-function updateResultCounts(acc: DuoAccumulator, result: MatchTeamResult) {
-  if (result === "WIN") {
-    acc.wins++;
-    return;
-  }
-  if (result === "LOSE") {
-    acc.losses++;
-    return;
-  }
-  acc.draws++;
 }
 
 async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<string, DuoAccumulator>> {
@@ -154,7 +137,7 @@ async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<strin
       continue;
     }
 
-    const result = getMatchTeamResult(matchTeam.match.winnerTeamNumber, matchTeam.teamNumber);
+    const result = toResultByWinnerTeamNumber(matchTeam.match.winnerTeamNumber, matchTeam.teamNumber);
 
     for (let i = 0; i < players.length - 1; i++) {
       for (let j = i + 1; j < players.length; j++) {
@@ -179,7 +162,7 @@ async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<strin
             },
           });
 
-        updateResultCounts(current, result);
+        updateCountsByResult(current, result);
         duoMap.set(duoKey, current);
       }
     }
@@ -212,7 +195,7 @@ async function calculateDuoStatsByGame(playerMap: PlayerMap): Promise<Map<string
       continue;
     }
 
-    const result = mapGameResultToMatchTeamResult(gameTeam.result);
+    const result = gameTeam.result;
 
     for (let i = 0; i < players.length - 1; i++) {
       for (let j = i + 1; j < players.length; j++) {
@@ -238,17 +221,11 @@ async function calculateDuoStatsByGame(playerMap: PlayerMap): Promise<Map<string
             },
           });
 
-        updateResultCounts(current, result);
+        updateCountsByResult(current, result);
         duoMap.set(duoKey, current);
       }
     }
   }
 
   return duoMap;
-}
-
-function mapGameResultToMatchTeamResult(result: GameResult): MatchTeamResult {
-  if (result === GameResult.WIN) return "WIN";
-  if (result === GameResult.LOSE) return "LOSE";
-  return "DRAW";
 }

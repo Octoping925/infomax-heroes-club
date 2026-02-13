@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerCombinedWinRateResponse } from "@/app/api/stats/types";
-import { GameResult } from "@/generated/prisma/client";
 import { fetchPlayerMap } from "../../utils/player";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
+  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 
@@ -75,13 +75,8 @@ export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWi
     const entry = getOrCreate(membership.playerId, playerInfo.name, playerInfo.nickname);
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
-    if (winner === null) {
-      entry.matchStats.draws += 1;
-    } else if (winner === membership.matchTeam.teamNumber) {
-      entry.matchStats.wins += 1;
-    } else {
-      entry.matchStats.losses += 1;
-    }
+    const result = toResultByWinnerTeamNumber(winner, membership.matchTeam.teamNumber);
+    updateCountsByResult(entry.matchStats, result);
   }
 
   for (const membership of gameMemberships) {
@@ -91,10 +86,7 @@ export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWi
     }
     const entry = getOrCreate(membership.playerId, playerInfo.name, playerInfo.nickname);
 
-    const result = membership.gameTeam.result as GameResult | null;
-    if (result) {
-      updateCountsByResult(entry.gameStats, result);
-    }
+    updateCountsByResult(entry.gameStats, membership.gameTeam.result);
   }
 
   const response: PlayerCombinedWinRateResponse[] = accumulator

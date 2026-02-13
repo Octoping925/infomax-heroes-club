@@ -1,11 +1,12 @@
 import { prisma } from "@/config/prisma";
-import { GameResult, MatchType } from "@/generated/prisma/client";
+import { MatchType } from "@/generated/prisma/client";
 import { PlayerLunchDinnerWinRateResponse } from "@/app/api/stats/types";
 import { fetchPlayerMap, PlayerMap } from "./player";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
+  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { round } from "es-toolkit";
@@ -158,10 +159,4 @@ function createAccumulator(playerId: string, playerName: string, playerNickname:
     lunch: createResultCounts(),
     dinner: createResultCounts(),
   };
-}
-
-function toResultByWinnerTeamNumber(winnerTeamNumber: number | null, teamNumber: number): GameResult {
-  if (winnerTeamNumber === null) return GameResult.DRAW;
-  if (winnerTeamNumber === teamNumber) return GameResult.WIN;
-  return GameResult.LOSE;
 }

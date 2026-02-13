@@ -15,18 +15,27 @@ export function createResultCounts(): ResultCounts {
 export function updateCountsByResult(counts: ResultCounts, result: GameResult) {
   if (result === GameResult.WIN) {
     counts.wins += 1;
-    return;
-  }
-  if (result === GameResult.LOSE) {
+  } else if (result === GameResult.LOSE) {
     counts.losses += 1;
-    return;
+  } else {
+    counts.draws += 1;
   }
-  counts.draws += 1;
+}
+
+export function calculateTotalGames(counts: ResultCounts) {
+  return counts.wins + counts.losses + counts.draws;
+}
+
+export function toResultByWinnerTeamNumber(winnerTeamNumber: number | null, teamNumber: number): GameResult {
+  if (winnerTeamNumber === null) {
+    return GameResult.DRAW;
+  }
+  return winnerTeamNumber === teamNumber ? GameResult.WIN : GameResult.LOSE;
 }
 
 export function buildWinRateStatsFromCounts(counts: ResultCounts): WinRateStats {
   return {
-    totalGames: counts.wins + counts.losses + counts.draws,
+    totalGames: calculateTotalGames(counts),
     wins: counts.wins,
     losses: counts.losses,
     draws: counts.draws,

@@ -9,6 +9,7 @@ import { HeroPositionMap } from "@/domain/hots/constants/hero";
 import { HeroMap } from "@/domain/hots/constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";
+import { updateCountsByResult } from "@/app/api/stats/utils/stats";
 
 /**
  * 영웅 티어리스트 통계 조회
@@ -106,14 +107,7 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
 
     current.total++;
     current.gameIds.add(pick.gameId);
-
-    if (pick.result === GameResult.WIN) {
-      current.wins++;
-    } else if (pick.result === GameResult.LOSE) {
-      current.losses++;
-    } else {
-      current.draws++;
-    }
+    updateCountsByResult(current, pick.result);
 
     heroPickMap.set(pick.hero, current);
   }

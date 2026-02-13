@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerFormPointResponse, PlayerFormTrendResponse } from "@/app/api/stats/types";
+import { parseClampedInteger } from "@/app/api/stats/utils/query";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -15,9 +16,12 @@ export async function GET(
   { params }: RouteParams,
 ): Promise<NextResponse<PlayerFormTrendResponse | { error: string }>> {
   const { nickname } = await params;
-  const takeRaw = request.nextUrl.searchParams.get("take");
-  const takeParsed = takeRaw ? Number(takeRaw) : 20;
-  const take = Number.isFinite(takeParsed) ? Math.min(Math.max(Math.trunc(takeParsed), 1), 100) : 20;
+  const take = parseClampedInteger(request.nextUrl.searchParams.get("take"), {
+    min: 1,
+    max: 100,
+    fallback: 20,
+    round: "trunc",
+  });
 
   const player = await prisma.player.findUnique({
     where: { nickname },

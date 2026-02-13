@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult } from "@/generated/prisma/client";
 import { HeroDuoWinRateResponse } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
-import { parseNumber } from "@/app/api/stats/utils/query";
-import { clamp } from "es-toolkit";
+import { parseClampedIntegerParam } from "@/app/api/stats/utils/query";
+import { buildWinRateStatsFromCounts, calculateTotalGames, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { Hero } from "@/domain/hots/models";
 
 type DuoAccumulator = {
@@ -51,7 +49,7 @@ export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResp
       continue;
     }
 
-    const result = mapGameResultToDuoResult(gameTeam.result);
+    const result = gameTeam.result;
 
     for (let i = 0; i < uniqueHeroes.length - 1; i++) {
       for (let j = i + 1; j < uniqueHeroes.length; j++) {
@@ -69,7 +67,7 @@ export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResp
             heroB,
           });
 
-        updateResultCounts(current, result);
+        updateCountsByResult(current, result);
         duoMap.set(duoKey, current);
       }
     }
@@ -77,14 +75,15 @@ export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResp
 
   const response: HeroDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
+      const stats = buildWinRateStatsFromCounts(acc);
       return {
         heroA: acc.heroA,
         heroB: acc.heroB,
-        totalGames: acc.wins + acc.losses + acc.draws,
-        wins: acc.wins,
-        losses: acc.losses,
-        draws: acc.draws,
-        winRate: calculateWinRate(acc.wins, acc.losses, acc.draws),
+        totalGames: calculateTotalGames(acc),
+        wins: stats.wins,
+        losses: stats.losses,
+        draws: stats.draws,
+        winRate: stats.winRate,
       };
     })
     .filter((item) => item.totalGames >= minCount)
@@ -94,18 +93,23 @@ export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResp
   return NextResponse.json(response);
 }
 
-type DuoResult = "WIN" | "LOSE" | "DRAW";
-
 function parseQueryParams(url: string): {
   readonly limit: number;
   readonly minCount: number;
 } {
   const { searchParams } = new URL(url);
-  const limitParam = parseNumber(searchParams.get("limit"));
-  const minCountParam = parseNumber(searchParams.get("minCount"));
-
-  const limit = typeof limitParam === "number" ? clamp(Math.floor(limitParam), 1, MAX_LIMIT) : DEFAULT_LIMIT;
-  const minCount = typeof minCountParam === "number" ? clamp(Math.floor(minCountParam), 1, 10_000) : DEFAULT_MIN_GAMES;
+  const limit = parseClampedIntegerParam(searchParams, {
+    keys: ["limit"],
+    min: 1,
+    max: MAX_LIMIT,
+    fallback: DEFAULT_LIMIT,
+  });
+  const minCount = parseClampedIntegerParam(searchParams, {
+    keys: ["minCount"],
+    min: 1,
+    max: 10_000,
+    fallback: DEFAULT_MIN_GAMES,
+  });
 
   return { limit, minCount };
 }
@@ -122,22 +126,4 @@ function createAccumulator(input: { heroA: Hero; heroB: Hero }): DuoAccumulator 
     losses: 0,
     draws: 0,
   };
-}
-
-function mapGameResultToDuoResult(result: GameResult): DuoResult {
-  if (result === GameResult.WIN) return "WIN";
-  if (result === GameResult.LOSE) return "LOSE";
-  return "DRAW";
-}
-
-function updateResultCounts(acc: DuoAccumulator, result: DuoResult): void {
-  if (result === "WIN") {
-    acc.wins++;
-    return;
-  }
-  if (result === "LOSE") {
-    acc.losses++;
-    return;
-  }
-  acc.draws++;
 }

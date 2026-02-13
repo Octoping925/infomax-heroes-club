@@ -6,6 +6,7 @@ import { HeroMap } from "@/domain/hots/constants";
 import { HeroPositionMap } from "@/domain/hots/constants/hero";
 import { HeroCounterPickResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
+import { updateCountsByResult } from "@/app/api/stats/utils/stats";
 
 type ResultCounts = {
   total: number;
@@ -116,7 +117,7 @@ export async function GET(): Promise<NextResponse<HeroCounterPickResponse[]>> {
 function updateResultCounts(map: Map<Hero, ResultCounts>, hero: Hero, result: GameResult): void {
   const current = map.get(hero) ?? createEmptyCounts();
   current.total++;
-  incrementByResult(current, result);
+  updateCountsByResult(current, result);
   map.set(hero, current);
 }
 
@@ -129,27 +130,13 @@ function updateMatchupCounts(
   const heroMap = map.get(hero) ?? new Map<Hero, ResultCounts>();
   const current = heroMap.get(opponentHero) ?? createEmptyCounts();
   current.total++;
-  incrementByResult(current, result);
+  updateCountsByResult(current, result);
   heroMap.set(opponentHero, current);
   map.set(hero, heroMap);
 }
 
 function createEmptyCounts(): ResultCounts {
   return { total: 0, wins: 0, losses: 0, draws: 0 };
-}
-
-function incrementByResult(counts: ResultCounts, result: GameResult): void {
-  if (result === GameResult.WIN) {
-    counts.wins++;
-    return;
-  }
-
-  if (result === GameResult.LOSE) {
-    counts.losses++;
-    return;
-  }
-
-  counts.draws++;
 }
 
 function roundToOneDecimal(value: number): number {

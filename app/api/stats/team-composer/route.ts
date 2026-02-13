@@ -4,6 +4,8 @@ import { prisma } from "@/config/prisma";
 import { HeroRole, HeroRoleMap } from "@/domain/hots/models";
 import { round } from "es-toolkit";
 import { NextResponse } from "next/server";
+import { toResultByWinnerTeamNumber, updateCountsByResult } from "@/app/api/stats/utils/stats";
+import { GameResult } from "@/generated/prisma/client";
 
 const RECENT_MATCH_COUNT = 6;
 const ROLE_ORDER = Object.values(HeroRoleMap);
@@ -80,7 +82,7 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
     }
 
     for (const team of match.teams) {
-      const result = toMatchResult(match.winnerTeamNumber, team.teamNumber);
+      const result = toResultByWinnerTeamNumber(match.winnerTeamNumber, team.teamNumber);
       for (const member of team.members) {
         updateMatchResultCounter(allTimeResultByPlayer, member.playerId, result);
 
@@ -230,15 +232,10 @@ function toWindowStats(counter: { encounterMatches: number; sameTeamMatches: num
   };
 }
 
-function toMatchResult(winnerTeamNumber: number | null, teamNumber: number): "WIN" | "LOSE" | "DRAW" {
-  if (winnerTeamNumber === null) return "DRAW";
-  return winnerTeamNumber === teamNumber ? "WIN" : "LOSE";
-}
-
 function updateMatchResultCounter(
   resultByPlayer: Map<string, MatchResultCounter>,
   playerId: string,
-  result: "WIN" | "LOSE" | "DRAW",
+  result: GameResult,
 ) {
   const counter = resultByPlayer.get(playerId) ?? {
     wins: 0,
@@ -247,9 +244,7 @@ function updateMatchResultCounter(
     total: 0,
   };
 
-  if (result === "WIN") counter.wins += 1;
-  if (result === "LOSE") counter.losses += 1;
-  if (result === "DRAW") counter.draws += 1;
+  updateCountsByResult(counter, result);
   counter.total += 1;
 
   resultByPlayer.set(playerId, counter);

@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
-import { calculateWinRate } from "@/utils/win-rate";
 import { fetchPlayerMap } from "../../utils/player";
-import { createResultCounts, ResultCounts } from "@/app/api/stats/utils/stats";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  toResultByWinnerTeamNumber,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -49,28 +54,24 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
     const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
-    if (winnerTeamNumber === null) {
-      current.stats.draws++;
-    } else if (winnerTeamNumber === membership.matchTeam.teamNumber) {
-      current.stats.wins++;
-    } else {
-      current.stats.losses++;
-    }
+    const result = toResultByWinnerTeamNumber(winnerTeamNumber, membership.matchTeam.teamNumber);
+    updateCountsByResult(current.stats, result);
 
     accumulatorMap.set(playerId, current);
   }
 
   const response: PlayerWinRateResponse[] = Array.from(accumulatorMap.values())
     .map((acc) => {
+      const stats = buildWinRateStatsFromCounts(acc.stats);
       return {
         playerId: acc.playerId,
         playerName: acc.playerName,
         playerNickname: acc.playerNickname,
-        totalGames: acc.stats.wins + acc.stats.losses + acc.stats.draws,
-        wins: acc.stats.wins,
-        losses: acc.stats.losses,
-        draws: acc.stats.draws,
-        winRate: calculateWinRate(acc.stats.wins, acc.stats.losses, acc.stats.draws),
+        totalGames: stats.totalGames,
+        wins: stats.wins,
+        losses: stats.losses,
+        draws: stats.draws,
+        winRate: stats.winRate,
       };
     })
     .filter((item) => item.totalGames > 0)
