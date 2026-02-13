@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { DooraySlashCommandRequest, DooraySlashCommandResponse } from "@/domain/dooray/types";
+import { NextRequest } from "next/server";
 
 type TierLabel = "S" | "A" | "B" | "C" | "D";
 type TierTrend = "UP" | "DOWN" | "SAME";
@@ -22,20 +23,6 @@ type TierSection = {
   readonly roles: ReadonlyArray<TierRoleGroup>;
 };
 
-type TierMapResponse = {
-  readonly map: string;
-  readonly slug: string;
-  readonly sourceUrl: string;
-  readonly fetchedAt: string;
-  readonly updatedAt: string | null;
-  readonly tiers: ReadonlyArray<TierSection>;
-};
-
-type ErrorResponse = {
-  readonly error: string;
-  readonly availableMaps?: ReadonlyArray<string>;
-};
-
 type MapConfig = {
   readonly slug: string;
   readonly name: string;
@@ -46,77 +33,72 @@ const MAP_CONFIGS: ReadonlyArray<MapConfig> = [
   {
     slug: "alterac-pass",
     name: "Alterac Pass",
-    aliases: ["alterac pass", "alteracpass", "알터랙 고개", "알터랙고개"],
+    aliases: ["alterac pass", "alteracpass", "알터랙", "알터랙고개"],
   },
   {
     slug: "battlefield-of-eternity",
     name: "Battlefield of Eternity",
-    aliases: ["battlefield of eternity", "battlefieldofeternity", "영원의 전쟁터", "영원 전쟁터"],
+    aliases: ["battlefield of eternity", "battlefieldofeternity", "영전", "영원의전쟁터"],
   },
   {
     slug: "blackhearts-bay",
     name: "Blackheart's Bay",
-    aliases: ["blackhearts bay", "blackheart's bay", "blackheartsbay", "블랙하트 항만", "블랙하트항만"],
+    aliases: ["blackheartsbay", "항만", "블랙하트"],
   },
   {
     slug: "braxis-holdout",
     name: "Braxis Holdout",
-    aliases: ["braxis holdout", "braxisholdout", "브락시스 항전", "브락시스항전"],
+    aliases: ["브락", "브락시스항전", "항전", "테란"],
   },
   {
     slug: "cursed-hollow",
     name: "Cursed Hollow",
-    aliases: ["cursed hollow", "cursedhollow", "저주받은 골짜기", "저주받은골짜기"],
+    aliases: ["저골", "저주받은골짜기"],
   },
   {
     slug: "dragon-shire",
     name: "Dragon Shire",
-    aliases: ["dragon shire", "dragonshire", "용의 둥지", "용의둥지"],
+    aliases: ["용의 둥지", "용의둥지", "둥지", "용둥", "용기사"],
   },
   {
     slug: "garden-of-terror",
     name: "Garden of Terror",
-    aliases: ["garden of terror", "gardenofterror", "공포의 정원", "공포의정원", "haunted woods", "hauntedwoods"],
+    aliases: ["공포의 정원", "공포의정원", "정원", "씨앗", "공정"],
   },
   {
     slug: "hanamura-temple",
     name: "Hanamura Temple",
-    aliases: ["hanamura temple", "hanamura", "하나무라 사원", "하나무라사원", "하나무라"],
+    aliases: ["hanamura", "하나무라 사원", "하나무라사원", "하나무라"],
   },
   {
     slug: "infernal-shrines",
     name: "Infernal Shrines",
-    aliases: ["infernal shrines", "infernalshrines", "불지옥 신단", "불지옥신단"],
+    aliases: ["불지옥 신단", "불지옥신단", "신단", "불지옥"],
   },
   {
     slug: "sky-temple",
     name: "Sky Temple",
-    aliases: ["sky temple", "skytemple", "하늘 사원", "하늘사원"],
+    aliases: ["하늘 사원", "하늘사원", "하늘", "사막"],
   },
   {
     slug: "tomb-of-the-spider-queen",
     name: "Tomb of the Spider Queen",
-    aliases: [
-      "tomb of the spider queen",
-      "tombofthespiderqueen",
-      "거미 여왕의 무덤",
-      "거미여왕의무덤",
-    ],
+    aliases: ["거미 여왕의 무덤", "거미여왕의무덤", "거미", "무덤"],
   },
   {
     slug: "towers-of-doom",
     name: "Towers of Doom",
-    aliases: ["towers of doom", "towersofdoom", "파멸의 탑", "파멸의탑"],
+    aliases: ["파멸의 탑", "파멸의탑", "파탑"],
   },
   {
     slug: "volskaya-foundry",
     name: "Volskaya Foundry",
-    aliases: ["volskaya foundry", "volskayafoundry", "볼스카야 공장", "볼스카야공장"],
+    aliases: ["볼스카야 공장", "볼스카야공장", "볼스", "볼스카야"],
   },
   {
     slug: "warhead-junction",
     name: "Warhead Junction",
-    aliases: ["warhead junction", "warheadjunction", "핵탄두 격전지", "핵탄두격전지"],
+    aliases: ["핵탄두 격전지", "핵탄두격전지", "핵", "핵탄두"],
   },
 ];
 
@@ -131,30 +113,46 @@ const TIER_SECTIONS: ReadonlyArray<{ readonly id: string; readonly label: TierLa
 ];
 
 /**
- * Icy Veins 맵별 티어리스트 조회
+ * 메신저 웹훅용 맵 티어리스트 조회
+ * POST /api/tier/maps (body.text: map name)
+ */
+export async function POST(request: NextRequest): Promise<Response> {
+  const body: Partial<DooraySlashCommandRequest> = await request.json().catch(() => ({}));
+  return handleTierListRequest(body.text ?? null);
+}
+
+/**
+ * 로컬 테스트용
  * GET /api/tier/maps?map=Alterac Pass
  */
-export async function GET(request: NextRequest): Promise<NextResponse<TierMapResponse | ErrorResponse>> {
-  const mapParam = request.nextUrl.searchParams.get("map");
-  if (!mapParam?.trim()) {
-    return NextResponse.json(
-      {
-        error: "map 쿼리파라미터가 필요합니다. 예: /api/tier/maps?map=Alterac Pass",
-        availableMaps: MAP_CONFIGS.map((map) => map.name),
-      },
-      { status: 400 },
-    );
+export async function GET(request: NextRequest): Promise<Response> {
+  return handleTierListRequest(request.nextUrl.searchParams.get("map"));
+}
+
+async function handleTierListRequest(rawMapName: string | null): Promise<Response> {
+  const mapName = rawMapName?.trim();
+  if (!mapName) {
+    return webhookResponse({
+      text: [
+        "맵 이름을 입력해주세요.",
+        "예) /map-tier 알터랙",
+        "",
+        `[지원 맵] ${MAP_CONFIGS.map((map) => map.name).join(", ")}`,
+      ].join("\n"),
+      responseType: "ephemeral",
+    });
   }
 
-  const config = MAP_LOOKUP.get(normalizeMapQuery(mapParam));
+  const config = MAP_LOOKUP.get(normalizeMapQuery(mapName));
   if (!config) {
-    return NextResponse.json(
-      {
-        error: `지원하지 않는 맵 이름입니다: ${mapParam}`,
-        availableMaps: MAP_CONFIGS.map((map) => map.name),
-      },
-      { status: 400 },
-    );
+    return webhookResponse({
+      text: [
+        `지원하지 않는 맵입니다: ${mapName}`,
+        "",
+        `[지원 맵] ${MAP_CONFIGS.map((map) => map.aliases.join(", ")).join(", ")}`,
+      ].join("\n"),
+      responseType: "ephemeral",
+    });
   }
 
   const sourceUrl = buildTierListUrl(config.slug);
@@ -168,34 +166,31 @@ export async function GET(request: NextRequest): Promise<NextResponse<TierMapRes
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: `Icy Veins 요청 실패: ${response.status} ${response.statusText}`,
-        },
-        { status: 502 },
-      );
+      return webhookResponse({
+        text: `티어리스트 조회 실패: ${response.status} ${response.statusText}`,
+        responseType: "ephemeral",
+      });
     }
 
     const html = await response.text();
     const parsed = parseTierListHtml(html);
 
     if (parsed.tiers.length === 0) {
-      return NextResponse.json(
-        {
-          error: "티어리스트를 파싱하지 못했습니다. HTML 구조가 변경되었을 수 있습니다.",
-        },
-        { status: 502 },
-      );
+      return webhookResponse({
+        text: "티어리스트 파싱에 실패했습니다. (원본 HTML 구조 변경 가능성)",
+        responseType: "ephemeral",
+      });
     }
 
-    return NextResponse.json(
+    return webhookResponse(
       {
-        map: parsed.map ?? config.name,
-        slug: config.slug,
-        sourceUrl,
-        fetchedAt: new Date().toISOString(),
-        updatedAt: parsed.updatedAt,
-        tiers: parsed.tiers,
+        text: formatTierMessage({
+          map: parsed.map ?? config.name,
+          updatedAt: parsed.updatedAt,
+          tiers: parsed.tiers,
+          sourceUrl,
+        }),
+        responseType: "inChannel",
       },
       {
         headers: {
@@ -205,14 +200,64 @@ export async function GET(request: NextRequest): Promise<NextResponse<TierMapRes
     );
   } catch (error) {
     console.error("맵 티어리스트 조회 오류:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "알 수 없는 오류",
-      },
-      { status: 500 },
-    );
+    return webhookResponse({
+      text: `맵 티어리스트 조회 중 오류가 발생했습니다.\n${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      responseType: "ephemeral",
+    });
   }
 }
+
+function webhookResponse(body: DooraySlashCommandResponse, init?: ResponseInit): Response {
+  return Response.json(body, init);
+}
+
+function formatTierMessage(input: {
+  readonly map: string;
+  readonly updatedAt: string | null;
+  readonly tiers: ReadonlyArray<TierSection>;
+  readonly sourceUrl: string;
+}): string {
+  const lines: string[] = [
+    `[히오스 ${input.map} 티어리스트]`,
+    input.updatedAt ? `업데이트: ${input.updatedAt}` : "업데이트: 정보 없음",
+    "표기: BAN(밴 추천), ▲(상향), ▼(하향)",
+    "",
+  ];
+
+  for (const section of input.tiers) {
+    const totalHeroes = section.roles.reduce((sum, role) => sum + role.heroes.length, 0);
+    lines.push(`${section.tier} 티어 (${totalHeroes}명)`);
+
+    for (const role of section.roles) {
+      const roleLabel = ROLE_LABEL_MAP[role.role] ?? role.role;
+      const heroesText = role.heroes.map(formatHeroText).join(", ");
+      lines.push(`- ${roleLabel}(${role.heroes.length}): ${heroesText}`);
+    }
+
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+function formatHeroText(hero: TierHero): string {
+  const marks: string[] = [];
+  if (hero.isBanRecommended) marks.push("BAN");
+  if (hero.trend === "UP") marks.push("▲");
+  if (hero.trend === "DOWN") marks.push("▼");
+
+  if (marks.length === 0) return hero.name;
+  return `${hero.name}(${marks.join(" ")})`;
+}
+
+const ROLE_LABEL_MAP: Record<string, string> = {
+  Tank: "탱커",
+  Offlaner: "투사",
+  "Melee Assassin": "근접 암살자",
+  "Ranged Assassin": "원거리 암살자",
+  Healer: "힐러",
+  Support: "지원가",
+};
 
 function buildMapLookup(configs: ReadonlyArray<MapConfig>): ReadonlyMap<string, MapConfig> {
   const lookup = new Map<string, MapConfig>();
@@ -417,9 +462,7 @@ function extractBalancedDiv(source: string, start: number): { innerHtml: string;
 }
 
 function normalizeText(value: string): string {
-  return decodeHtmlEntities(stripHtmlTags(value))
-    .replace(/\s+/g, " ")
-    .trim();
+  return decodeHtmlEntities(stripHtmlTags(value)).replace(/\s+/g, " ").trim();
 }
 
 function stripHtmlTags(value: string): string {
@@ -430,7 +473,7 @@ function decodeHtmlEntities(value: string): string {
   const decodedNamed = value
     .replaceAll("&nbsp;", " ")
     .replaceAll("&amp;", "&")
-    .replaceAll("&quot;", "\"")
+    .replaceAll("&quot;", '"')
     .replaceAll("&apos;", "'")
     .replaceAll("&#39;", "'")
     .replaceAll("&lt;", "<")
