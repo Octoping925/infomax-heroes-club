@@ -101,13 +101,11 @@ export interface TeamSwitchWinRateResponse {
   readonly switchedWinRateDiff: number; // 팀 변경 시 승률 차이
 }
 
-export type HeroTierLabel = "OP" | "1티어" | "2티어" | "3티어" | "4티어";
+export type HeroTierLabel = "OP" | "1티어" | "2티어" | "3티어" | "4티어" | "5티어";
 
 export interface HeroTierResponse {
   readonly hero: Hero;
-  readonly heroName: string;
   readonly tier: HeroTierLabel;
-  readonly position: HeroRole;
   readonly isHoneyPick: boolean;
   readonly honeyScore: number;
   readonly tierScore: number;
@@ -119,12 +117,10 @@ export interface HeroTierResponse {
   readonly pickRate: number;
   readonly banRate: number;
   readonly pickWinRate: number;
-  readonly winRateText: string;
 }
 
 export interface HeroCounterPickItemResponse {
   readonly opponentHero: Hero;
-  readonly opponentHeroName: string;
   readonly games: number;
   readonly wins: number;
   readonly losses: number;
@@ -135,8 +131,6 @@ export interface HeroCounterPickItemResponse {
 
 export interface HeroCounterPickResponse {
   readonly hero: Hero;
-  readonly heroName: string;
-  readonly position: HeroRole;
   readonly totalGames: number;
   readonly baseWinRate: number;
   readonly counters: ReadonlyArray<HeroCounterPickItemResponse>;

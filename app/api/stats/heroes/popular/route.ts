@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult } from "@/generated/prisma/client";
-import { HeroTierLabel, HeroTierResponse } from "@/app/api/stats/types";
+import { HeroTierResponse, HeroTierLabel } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { Hero } from "@/domain/hots/models";
 import { groupBy } from "@/utils/groupBy";
-import { HERO_CATALOG } from "@/domain/hots/constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
@@ -143,12 +142,9 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
       },
     );
     const tierScore = conservativeWinRateScore * 0.7 + pickRate * 0.15 + banRate * 0.3;
-    const heroCatalogEntry = HERO_CATALOG[hero];
 
     return {
       hero,
-      heroName: heroCatalogEntry.nameKo,
-      position: heroCatalogEntry.role,
       pickCount,
       banCount,
       wins: pickStat.wins,
@@ -185,9 +181,7 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
 
     return {
       hero: row.hero,
-      heroName: row.heroName,
       tier,
-      position: row.position,
       isHoneyPick,
       honeyScore: round(honeyScore, 1),
       tierScore: round(row.tierScore, 1),
@@ -199,7 +193,6 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
       pickRate: row.pickRate,
       banRate: row.banRate,
       pickWinRate: row.pickWinRate,
-      winRateText: `${row.pickWinRate.toFixed(1)}% (${row.wins}승 ${row.losses}패)`,
     };
   });
 }
@@ -207,10 +200,11 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
 function resolveTier(rankRatio: number): HeroTierLabel {
   if (rankRatio <= 0.08) return "OP";
   if (rankRatio <= 0.2) return "1티어";
-  if (rankRatio <= 0.4) return "2티어";
-  if (rankRatio <= 0.75) return "3티어";
+  if (rankRatio <= 0.3) return "2티어";
+  if (rankRatio <= 0.55) return "3티어";
+  if (rankRatio <= 0.8) return "4티어";
 
-  return "4티어";
+  return "5티어";
 }
 
 function getPercentile(values: number[], percentile: number): number {

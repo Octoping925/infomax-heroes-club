@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { HeroTierLabel } from "@/app/api/stats/types";
 import { HeroRole } from "@/domain/hots/models";
-import { HeroImage } from "@/domain/hots/constants/hero";
 import { useHeroPopularity } from "../../hooks/useHeroPopularity";
 import { OpTier } from "./tier/OpTier";
 import { Tier1 } from "./tier/Tier1";
@@ -12,6 +11,10 @@ import { Tier2 } from "./tier/Tier2";
 import { Tier3 } from "./tier/Tier3";
 import { Tier4 } from "./tier/Tier4";
 import { Position } from "@/components/Position";
+import { HERO_CATALOG } from "@/domain/hots/constants";
+import { HoneyIcon } from "./tier/HoneyIcon";
+import { Tier5 } from "./tier/Tier5";
+import { formatNumber } from "@/utils/format";
 
 export function HeroTierList() {
   const { data } = useHeroPopularity();
@@ -20,7 +23,7 @@ export function HeroTierList() {
   const tierRows = useMemo(() => {
     return data
       .filter((row) => row.pickCount >= minPickCount)
-      .filter((row) => (positionFilter === "ALL" ? true : row.position === positionFilter))
+      .filter((row) => positionFilter === "ALL" || HERO_CATALOG[row.hero].role === positionFilter)
       .map((row, index) => ({
         ...row,
         rank: index + 1,
@@ -28,7 +31,7 @@ export function HeroTierList() {
   }, [data, minPickCount, positionFilter]);
 
   return (
-    <section className="rounded-xl border border-white/20 bg-black/35 p-5 space-y-5">
+    <section className="rounded-xl border border-white/20 bg-black/35 p-4 space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h3 className="text-xl font-bold text-white">영웅 티어리스트</h3>
 
@@ -69,72 +72,66 @@ export function HeroTierList() {
         })}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-white/15 bg-white/4">
-        {tierRows.length === 0 ? (
-          <div className="px-3 py-3 text-base text-gray-300">조건에 맞는 영웅이 없습니다.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full text-base">
-              <thead className="bg-white/6 text-sm text-gray-100">
-                <tr>
-                  <th className="px-3 py-2.5 text-left font-semibold">순위</th>
-                  <th className="px-3 py-2.5 text-left font-semibold">영웅</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">티어</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">포지션</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">승률</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">픽률</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">밴률</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">티어 점수</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tierRows.map((hero) => (
-                  <tr key={hero.hero} className="border-t border-white/10 hover:bg-white/6">
-                    <td className="px-3 py-2.5 font-semibold text-gray-100">{hero.rank}</td>
-
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Image
-                            src={HeroImage[hero.hero]}
-                            alt={hero.heroName}
-                            width={36}
-                            height={36}
-                            className="h-9 w-9 rounded-md border border-white/25 object-cover"
-                          />
-                          {hero.isHoneyPick && (
-                            <span className="absolute -right-1 -bottom-1 rounded-full bg-amber-300 p-0.5 text-[10px] text-black">
-                              🐝
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-bold text-white">{hero.heroName}</span>
+      <div className="overflow-x-auto rounded-lg border border-white/15 bg-white/4">
+        <table className="min-w-[750px] w-full text-base">
+          <thead className="bg-white/6 text-sm text-gray-100">
+            <tr>
+              <th />
+              <th />
+              <th className="px-3 py-2.5 text-center font-semibold">티어</th>
+              {positionFilter === "ALL" && <th className="px-3 py-2.5 text-center font-semibold">포지션</th>}
+              <th className="px-2 py-2.5 text-center font-semibold">승률</th>
+              <th className="px-3 py-2.5 text-center font-semibold">픽률</th>
+              <th className="px-3 py-2.5 text-center font-semibold">밴률</th>
+              <th className="px-3 py-2.5 text-center font-semibold">티어 점수</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tierRows.map((hero) => {
+              const heroEntry = HERO_CATALOG[hero.hero];
+              return (
+                <tr key={hero.hero} className="border-t border-white/10 hover:bg-white/6">
+                  <td className="pl-4 py-2.5 font-semibold text-gray-100">{hero.rank}</td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Image
+                          src={heroEntry.image}
+                          alt={hero.hero}
+                          width={36}
+                          height={36}
+                          className="h-9 w-9 rounded-md border border-white/25 object-cover"
+                        />
+                        {hero.isHoneyPick && <HoneyIcon />}
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-center">
-                        <TierIcon tier={hero.tier} />
-                      </div>
-                    </td>
+                      <span className="font-bold text-white">{heroEntry.nameKo}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center justify-center">
+                      <TierIcon tier={hero.tier} />
+                    </div>
+                  </td>
+                  {positionFilter === "ALL" && (
                     <td className="px-3 py-2.5 text-center">
-                      <Position position={hero.position} large />
+                      <Position position={heroEntry.role} large />
                     </td>
-                    <td
-                      className={`px-3 py-2.5 text-center font-bold ${hero.pickWinRate >= 50 ? "text-emerald-200" : "text-rose-200"}`}
-                    >
-                      {hero.winRateText}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-base text-cyan-100">{Math.floor(hero.pickRate)}%</td>
-                    <td className="px-3 py-2.5 text-center text-base text-red-100">
-                      {hero.banCount > 0 ? `${Math.floor(hero.banRate)}% (${hero.banCount}회)` : "-"}
-                    </td>
-                    <td className="px-3 py-2.5 text-center font-bold text-white">{hero.tierScore.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  )}
+                  <td
+                    className={`px-2 py-2.5 text-center font-bold ${hero.pickWinRate >= 50 ? "text-emerald-200" : "text-rose-200"}`}
+                  >
+                    {formatNumber(hero.pickWinRate)}% ({hero.wins}승 {hero.losses}패)
+                  </td>
+                  <td className="px-3 py-2.5 text-center text-base text-cyan-100">{Math.floor(hero.pickRate)}%</td>
+                  <td className="px-3 py-2.5 text-center text-base text-red-100">
+                    {hero.banCount > 0 ? `${Math.floor(hero.banRate)}% (${hero.banCount}회)` : "-"}
+                  </td>
+                  <td className="px-3 py-2.5 text-center font-bold text-white">{hero.tierScore.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </section>
   );
@@ -145,8 +142,9 @@ function TierIcon({ tier }: { readonly tier: HeroTierLabel }) {
   if (tier === "1티어") return <Tier1 />;
   if (tier === "2티어") return <Tier2 />;
   if (tier === "3티어") return <Tier3 />;
+  if (tier === "4티어") return <Tier4 />;
 
-  return <Tier4 />;
+  return <Tier5 />;
 }
 
 const POSITION_FILTER_TABS: ReadonlyArray<{ value: "ALL" | HeroRole; label: string }> = [
