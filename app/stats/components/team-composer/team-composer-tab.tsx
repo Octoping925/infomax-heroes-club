@@ -1,13 +1,13 @@
 "use client";
 
 import type { TeamingPairStatResponse, TeamingPlayerProfileResponse, TeamingWindowStats } from "@/app/api/stats/types";
-import { HeroRoleMap, type HeroRole } from "@/domain/hots/models";
+import { HeroRoles, type HeroRole } from "@/domain/hots/models";
 import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
 import { round } from "es-toolkit";
 
-const ROLE_ORDER = Object.values(HeroRoleMap);
+const ROLE_ORDER = Object.values(HeroRoles);
 const ROLE_LABEL: Record<HeroRole, string> = {
   TANKER: "탱커",
   OFFLANER: "투사",

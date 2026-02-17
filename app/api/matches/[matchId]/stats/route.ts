@@ -1,5 +1,5 @@
 import { prisma } from "@/config/prisma";
-import { Hero, HeroRole, HeroRoleMap } from "@/domain/hots/models";
+import { Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
 import { HeroPositionMap } from "@/domain/hots/constants";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { NextRequest, NextResponse } from "next/server";
@@ -335,7 +335,7 @@ function isValidHeroKey(input: string): input is Hero {
 }
 
 function isValidHeroRoleKey(input: string): input is HeroRole {
-  return Object.hasOwn(HeroRoleMap, input);
+  return Object.hasOwn(HeroRoles, input);
 }
 
 async function applyPlayerAssignments({
