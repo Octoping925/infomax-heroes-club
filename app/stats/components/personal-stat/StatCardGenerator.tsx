@@ -5,8 +5,7 @@ import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
 import { commarize } from "@/utils/commarize";
-import { HERO_CATALOG } from "@/domain/hots/constants";
-import { Hero } from "@/domain/hots/models";
+import { HERO_CATALOG, HeroCatalogEntry } from "@/domain/hots/constants";
 import dayjs from "dayjs";
 import { round } from "es-toolkit";
 
@@ -29,10 +28,8 @@ type CardData = {
   readonly averageTakedowns: number;
   readonly averageHeroDamage: number;
   readonly topHeroes: ReadonlyArray<{
-    name: string;
+    hero: HeroCatalogEntry;
     totalGames: number;
-    heroKey: Hero;
-    imageUrl: string | null;
   }>;
 };
 
@@ -48,38 +45,33 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
   const { data: heroData, error: heroError } = usePlayerHeroWinRate(playerNickname);
 
   const cardData: CardData | null = (() => {
-    const selectedPlayerStat = overallData.find((stat) => stat.playerId === playerId);
-    const selectedPlayerKda = kdaData.find((stat) => stat.playerId === playerId);
+    const stat = overallData.find((stat) => stat.playerId === playerId);
+    const kda = kdaData.find((stat) => stat.playerId === playerId);
 
-    if (!selectedPlayerStat || !selectedPlayerKda) {
+    if (!stat || !kda) {
       return null;
     }
 
     const topHeroes = heroData.heroStats
       .toSorted((a, b) => b.totalGames - a.totalGames)
       .slice(0, 3)
-      .map((stat) => {
-        const heroCatalogEntry = HERO_CATALOG[stat.hero];
-        return {
-          name: heroCatalogEntry?.nameKo ?? stat.hero,
-          totalGames: stat.totalGames,
-          heroKey: stat.hero,
-          imageUrl: heroCatalogEntry?.image ?? null,
-        };
-      });
+      .map((stat) => ({
+        hero: HERO_CATALOG[stat.hero],
+        totalGames: stat.totalGames,
+      }));
 
     return {
       playerName,
       playerNickname,
-      winRate: selectedPlayerStat.matchStats.winRate,
-      totalGames: selectedPlayerStat.matchStats.totalGames,
-      wins: selectedPlayerStat.matchStats.wins,
-      losses: selectedPlayerStat.matchStats.losses,
-      draws: selectedPlayerStat.matchStats.draws,
-      averageKills: selectedPlayerKda.averageKills,
-      averageDeaths: selectedPlayerKda.averageDeaths,
-      averageTakedowns: selectedPlayerKda.averageTakedowns,
-      averageHeroDamage: selectedPlayerKda.averageHeroDamage,
+      winRate: stat.matchStats.winRate,
+      totalGames: stat.matchStats.totalGames,
+      wins: stat.matchStats.wins,
+      losses: stat.matchStats.losses,
+      draws: stat.matchStats.draws,
+      averageKills: kda.averageKills,
+      averageDeaths: kda.averageDeaths,
+      averageTakedowns: kda.averageTakedowns,
+      averageHeroDamage: kda.averageHeroDamage,
       topHeroes,
     };
   })();
@@ -239,9 +231,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
     width: blockWidth * 2 + 40,
     height: 90,
     heroes: data.topHeroes,
-    heroImages: await Promise.all(
-      data.topHeroes.map((hero) => (hero.imageUrl ? loadImage(hero.imageUrl) : Promise.resolve(null))),
-    ),
+    heroImages: await Promise.all(data.topHeroes.map(({ hero }) => loadImage(hero.image))),
   });
 
   ctx.fillStyle = "#94a3b8";
@@ -310,10 +300,8 @@ function drawTopHeroesBlock(
     readonly width: number;
     readonly height: number;
     readonly heroes: ReadonlyArray<{
-      name: string;
+      hero: HeroCatalogEntry;
       totalGames: number;
-      heroKey: Hero;
-      imageUrl: string | null;
     }>;
     readonly heroImages: ReadonlyArray<HTMLImageElement | null>;
   },
@@ -355,12 +343,12 @@ function drawTopHeroesBlock(
     } else {
       ctx.fillStyle = "#cbd5f5";
       ctx.font = "700 16px sans-serif";
-      ctx.fillText(hero.name.slice(0, 2), imageX + 8, imageY + 28);
+      ctx.fillText(hero.hero.nameKo.slice(0, 2), imageX + 8, imageY + 28);
     }
 
     ctx.fillStyle = "#e2e8f0";
     ctx.font = "600 20px sans-serif";
-    ctx.fillText(hero.name, imageX + imageSize + 24, imageY + 20);
+    ctx.fillText(hero.hero.nameKo, imageX + imageSize + 24, imageY + 20);
 
     ctx.fillStyle = "#94a3b8";
     ctx.font = "500 16px sans-serif";
