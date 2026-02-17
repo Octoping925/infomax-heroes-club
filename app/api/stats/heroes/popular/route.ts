@@ -5,8 +5,7 @@ import { HeroTierLabel, HeroTierResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { Hero } from "@/domain/hots/models";
 import { groupBy } from "@/utils/groupBy";
-import { HeroPositionMap } from "@/domain/hots/constants/hero";
-import { HeroMap } from "@/domain/hots/constants";
+import { HERO_CATALOG } from "@/domain/hots/constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
@@ -144,12 +143,12 @@ function buildHeroTiers(pickStats: PickStat[], banStats: BanStats): HeroTierResp
       },
     );
     const tierScore = conservativeWinRateScore * 0.7 + pickRate * 0.15 + banRate * 0.3;
-    const position = HeroPositionMap[hero];
+    const heroCatalogEntry = HERO_CATALOG[hero];
 
     return {
       hero,
-      heroName: HeroMap[hero],
-      position,
+      heroName: heroCatalogEntry.nameKo,
+      position: heroCatalogEntry.role,
       pickCount,
       banCount,
       wins: pickStat.wins,

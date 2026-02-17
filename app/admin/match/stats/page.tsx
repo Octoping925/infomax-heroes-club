@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
-import { HeroPositionMap } from "@/domain/hots/constants";
+import { HERO_CATALOG } from "@/domain/hots/constants";
 import { Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
@@ -94,9 +94,10 @@ export default function MatchStatsPage() {
   const [isLoadingPlayers, setIsLoadingPlayers] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
-  const heroOptions = Object.keys(HeroPositionMap)
-    .filter((hero): hero is Hero => hero in HeroPositionMap)
-    .toSorted((a, b) => HeroPositionMap[a].localeCompare(HeroPositionMap[b], "ko"));
+  const heroOptions = Object.values(HERO_CATALOG)
+    .map((entry) => entry.nameKo)
+    .toSorted((a, b) => a.localeCompare(b, "ko"));
+
   const positionOptions: HeroRole[] = Object.values(HeroRoles);
   const positionLabelMap: Record<HeroRole, string> = {
     TANKER: "탱커",

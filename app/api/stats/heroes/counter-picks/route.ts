@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult } from "@/generated/prisma/client";
 import { Hero } from "@/domain/hots/models";
-import { HeroMap } from "@/domain/hots/constants";
-import { HeroPositionMap } from "@/domain/hots/constants/hero";
+import { HERO_CATALOG } from "@/domain/hots/constants";
 import { HeroCounterPickResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
@@ -82,7 +81,7 @@ export async function GET(): Promise<NextResponse<HeroCounterPickResponse[]>> {
 
               return {
                 opponentHero,
-                opponentHeroName: HeroMap[opponentHero],
+                opponentHeroName: HERO_CATALOG[opponentHero].nameKo,
                 games: counts.total,
                 wins: counts.wins,
                 losses: counts.losses,
@@ -103,8 +102,8 @@ export async function GET(): Promise<NextResponse<HeroCounterPickResponse[]>> {
 
     return {
       hero,
-      heroName: HeroMap[hero],
-      position: HeroPositionMap[hero],
+      heroName: HERO_CATALOG[hero].nameKo,
+      position: HERO_CATALOG[hero].role,
       totalGames: overall.total,
       baseWinRate: roundToOneDecimal(baseWinRate),
       counters,

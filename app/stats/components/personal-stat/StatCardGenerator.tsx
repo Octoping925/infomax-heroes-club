@@ -5,7 +5,7 @@ import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
 import { commarize } from "@/utils/commarize";
-import { HeroImage, HeroMap } from "@/domain/hots/constants";
+import { HERO_CATALOG } from "@/domain/hots/constants";
 import { Hero } from "@/domain/hots/models";
 import dayjs from "dayjs";
 import { round } from "es-toolkit";
@@ -58,12 +58,15 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
     const topHeroes = heroData.heroStats
       .toSorted((a, b) => b.totalGames - a.totalGames)
       .slice(0, 3)
-      .map((stat) => ({
-        name: HeroMap[stat.hero] || stat.hero,
-        totalGames: stat.totalGames,
-        heroKey: stat.hero,
-        imageUrl: HeroImage[stat.hero] ?? null,
-      }));
+      .map((stat) => {
+        const heroCatalogEntry = HERO_CATALOG[stat.hero];
+        return {
+          name: heroCatalogEntry?.nameKo ?? stat.hero,
+          totalGames: stat.totalGames,
+          heroKey: stat.hero,
+          imageUrl: heroCatalogEntry?.image ?? null,
+        };
+      });
 
     return {
       playerName,

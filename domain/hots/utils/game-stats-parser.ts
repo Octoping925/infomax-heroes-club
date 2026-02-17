@@ -1,4 +1,4 @@
-import { HeroMap, MAPS } from "@domain/hots/constants";
+import { HERO_CATALOG, MAPS } from "@domain/hots/constants";
 import { Hero, GameMap } from "@domain/hots/models";
 
 /** 파싱된 플레이어 스탯 */
@@ -25,7 +25,9 @@ export type ParsedGameStats = {
 };
 
 // 한글 영웅 이름 → Hero enum 매핑 (역방향)
-const koreanToHeroMap = new Map<string, Hero>(Object.entries(HeroMap).map(([key, value]) => [value, key as Hero]));
+const koreanToHeroMap = new Map<string, Hero>(
+  Object.entries(HERO_CATALOG).map(([hero, entry]) => [entry.nameKo, hero as Hero]),
+);
 
 // 한글 맵 이름 → GameMap enum 매핑 (역방향)
 const koreanToMapMap = new Map<string, GameMap>(Object.entries(MAPS).map(([key, value]) => [value, key as GameMap]));

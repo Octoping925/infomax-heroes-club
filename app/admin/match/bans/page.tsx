@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HeroMap } from "@/domain/hots/constants";
+import { HERO_CATALOG } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
 import { Hero } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
@@ -54,10 +54,6 @@ function createBanSlotsFromResponse(response: MatchBansResponse): Record<string,
   return result;
 }
 
-function isValidHeroKey(input: string): input is Hero {
-  return Object.hasOwn(HeroMap, input);
-}
-
 function getMatchLabel(match: MatchHistoryItem): string {
   const playedAt = dayjs(match.playedAt).format("YYYY-MM-DD");
   const typeLabel = match.type === "LUNCH" ? "점심" : "저녁";
@@ -90,9 +86,9 @@ export default function MatchBansPage() {
   const [isLoadingBans, setIsLoadingBans] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
-  const heroOptions = Object.keys(HeroMap)
-    .filter(isValidHeroKey)
-    .toSorted((a, b) => HeroMap[a].localeCompare(HeroMap[b], "ko"));
+  const heroOptions = Object.values(HERO_CATALOG)
+    .map((entry) => entry.nameKo)
+    .toSorted((a, b) => a.localeCompare(b, "ko"));
 
   const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
@@ -347,7 +343,7 @@ export default function MatchBansPage() {
                                 </option>
                                 {heroOptions.map((hero) => (
                                   <option key={hero} value={hero} className="bg-[#1a1a2e]">
-                                    {HeroMap[hero]} ({hero})
+                                    {hero}
                                   </option>
                                 ))}
                               </select>

@@ -1,4 +1,4 @@
-import { Hero } from "../models";
+import type { Hero } from "../models";
 import { HeroRoles, type HeroRole } from "../models/hero-role";
 
 export interface HeroCatalogEntry {
