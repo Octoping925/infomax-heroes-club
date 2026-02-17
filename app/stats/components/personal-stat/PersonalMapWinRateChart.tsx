@@ -10,7 +10,7 @@ import {
   YAxis,
   TooltipContentProps,
 } from "recharts";
-import { MAPS } from "@/domain/hots/constants/maps";
+import { MAP_CATALOG } from "@/domain/hots/constants";
 interface Props {
   nickname: string;
 }
@@ -28,14 +28,14 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
   const { data } = useMapPlayerWinRate();
 
   const chartData: ChartData[] = data
-    .map((curr) => {
+    .map<ChartData | null>((curr) => {
       const player = curr.playerStats.find((p) => p.playerNickname === nickname);
       if (!player) {
         return null;
       }
 
       return {
-        name: MAPS[curr.map],
+        name: MAP_CATALOG[curr.map].nameKo,
         winRate: player.winRate,
         totalGames: player.totalGames,
         wins: player.wins,

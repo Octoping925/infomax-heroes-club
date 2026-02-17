@@ -3,8 +3,7 @@
 import { useMemo } from "react";
 import { usePlayerFormTrend } from "../../hooks/usePlayerFormTrend";
 import dayjs from "dayjs";
-import { MAPS } from "@/domain/hots/constants/maps";
-import { HeroMap } from "@/domain/hots/constants";
+import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import {
   CartesianGrid,
   Line,
@@ -67,8 +66,8 @@ export function PlayerFormTrendChart({ nickname }: Props) {
         point,
         gameLabel: `G${index + 1}`,
         dateLabel: dayjs(point.playedAt).format("MM/DD"),
-        mapLabel: MAPS[point.map],
-        heroLabel: HeroMap[point.hero] || point.hero,
+        mapLabel: MAP_CATALOG[point.map].nameKo,
+        heroLabel: HERO_CATALOG[point.hero]?.nameKo ?? point.hero,
         winRateScore: round((wins / windowPoints.length) * 100, 1),
         rollingKda,
         rollingDpm,

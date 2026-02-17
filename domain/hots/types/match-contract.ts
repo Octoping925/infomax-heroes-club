@@ -1,4 +1,4 @@
-import type { Hero, HeroRole } from "@/domain/hots/models";
+import type { GameMap, Hero, HeroRole } from "@/domain/hots/models";
 import type { GameResult, MatchType } from "@/generated/prisma/client";
 
 export type MatchHistoryPlayer = {
@@ -53,7 +53,7 @@ export type MatchHistoryGame = {
   readonly id: string;
   readonly gameNumber: number;
   readonly gameLength: number;
-  readonly map: string;
+  readonly map: GameMap;
   readonly winnerTeamNumber: number | null;
   readonly teams: MatchHistoryGameTeam[];
 };

@@ -1,5 +1,5 @@
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
-import { MAPS } from "@/domain/hots/constants/maps";
+import { MAP_CATALOG } from "@/domain/hots/constants/maps";
 import { GameTeamTable } from "./GameTeamTable";
 
 interface GameCardProps {
@@ -9,8 +9,6 @@ interface GameCardProps {
 }
 
 export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
-  const mapName = MAPS[game.map as keyof typeof MAPS] ?? game.map;
-
   const team1 = game.teams.find((t) => t.teamNumber === 1);
   const team2 = game.teams.find((t) => t.teamNumber === 2);
 
@@ -26,7 +24,7 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
       <div className="px-4 py-3 flex items-center justify-between bg-white/5 border-b border-white/5">
         <div className="flex items-center gap-3">
           <h5 className="flex items-center justify-center h-8 text-base font-black text-gray-200">
-            Game {game.gameNumber} · {mapName}
+            Game {game.gameNumber} · {MAP_CATALOG[game.map].nameKo}
           </h5>
           <span className="text-sm text-gray-400 font-bold">⏱️ {formattedGameLength}</span>
         </div>
