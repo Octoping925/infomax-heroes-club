@@ -86,9 +86,7 @@ export default function MatchBansPage() {
   const [isLoadingBans, setIsLoadingBans] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
-  const heroOptions = Object.values(HERO_CATALOG)
-    .map((entry) => entry.nameKo)
-    .toSorted((a, b) => a.localeCompare(b, "ko"));
+  const heroOptions = Object.entries(HERO_CATALOG).toSorted((a, b) => a[1].nameKo.localeCompare(b[1].nameKo, "ko"));
 
   const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
@@ -341,9 +339,9 @@ export default function MatchBansPage() {
                                 <option value="" className="bg-[#1a1a2e]">
                                   선택 안 함
                                 </option>
-                                {heroOptions.map((hero) => (
-                                  <option key={hero} value={hero} className="bg-[#1a1a2e]">
-                                    {hero}
+                                {heroOptions.map(([key, value]) => (
+                                  <option key={key} value={key} className="bg-[#1a1a2e]">
+                                    {value.nameKo}
                                   </option>
                                 ))}
                               </select>
