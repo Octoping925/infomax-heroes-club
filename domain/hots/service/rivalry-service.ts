@@ -37,9 +37,10 @@ type PairAccumulator = {
   heroCountsA: Map<Hero, number>;
   heroCountsB: Map<Hero, number>;
   perfSamples: {
-    count: number;
     kdaGapSumNorm: number;
+    kdaSamples: number;
     dmgShareGapSumNorm: number;
+    dmgShareSamples: number;
   };
 };
 
@@ -207,7 +208,12 @@ function createPairAccumulator(id: string, a: PlayerInfo, b: PlayerInfo): PairAc
     dinner: { winsA: 0, winsB: 0, draws: 0 },
     heroCountsA: new Map(),
     heroCountsB: new Map(),
-    perfSamples: { count: 0, kdaGapSumNorm: 0, dmgShareGapSumNorm: 0 },
+    perfSamples: {
+      kdaGapSumNorm: 0,
+      kdaSamples: 0,
+      dmgShareGapSumNorm: 0,
+      dmgShareSamples: 0,
+    },
   };
 }
 
@@ -302,6 +308,7 @@ function updateHeroCountsAndPerformance(
     // gap 4 이상이면 "큰 차이"로 보고 1로 클램프
     const kdaGapNorm = clamp01(kdaGapAbs / 4);
     acc.perfSamples.kdaGapSumNorm += kdaGapNorm;
+    acc.perfSamples.kdaSamples += 1;
   }
 
   if (avgShareA !== null && avgShareB !== null) {
@@ -309,9 +316,8 @@ function updateHeroCountsAndPerformance(
     // dmg share 0.15(15%p) 이상 차이나면 큰 격차
     const shareGapNorm = clamp01(shareGapAbs / 0.15);
     acc.perfSamples.dmgShareGapSumNorm += shareGapNorm;
+    acc.perfSamples.dmgShareSamples += 1;
   }
-
-  acc.perfSamples.count += 1;
 }
 
 function buildRivalryCard(
@@ -369,7 +375,7 @@ function buildRivalryCard(
   let rawScore = 0.3 * countScore + 0.3 * balance + 0.2 * recency + 0.2 * performanceCloseness;
 
   // 최근 5경기 박빙(2:3 / 3:2) 가산점
-  const closeRecentBonus = recent5.length >= 5 && Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1 ? 0.03 : 0;
+  const closeRecentBonus = isCloseRecentDecisive(recent5Counts) ? 0.03 : 0;
   rawScore = clamp01(rawScore + closeRecentBonus);
 
   const breakdown: RivalryScoreBreakdown = {
@@ -458,8 +464,7 @@ function buildLabels(
   }
 
   // 박빙 흐름 배지(라벨 타입은 그대로 두고 텍스트만 추가)
-  const closeRecent =
-    recent5Counts.winsA + recent5Counts.winsB >= 5 && Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1;
+  const closeRecent = isCloseRecentDecisive(recent5Counts);
   if (matchesCount >= 5 && closeRecent) {
     labels.push({ type: "DESTINED_RIVAL", text: "최근 5경기 박빙" });
   }
@@ -523,24 +528,45 @@ function computeRecency(matchesSorted: ReadonlyArray<H2HMatch>): number {
   if (matchesSorted.length === 0) return 0;
 
   const last = matchesSorted[0];
-  const daysSinceLast = (Date.now() - last.playedAt.getTime()) / (1000 * 60 * 60 * 24);
-  const recentByTime = Math.exp(-daysSinceLast / 60); // 60일 반감 느낌
+  const daysSince = (playedAt: Date) => (Date.now() - playedAt.getTime()) / (1000 * 60 * 60 * 24);
+  const decay = (days: number) => Math.exp(-days / 60); // 60일 반감 느낌
+  const recentByTime = decay(daysSince(last.playedAt));
 
-  // 최근 10경기 내에서 "최근 5경기"를 더 크게 가중
+  // 최근 10경기의 시간 가중 평균(최근 5경기를 더 크게)
   const capped = matchesSorted.slice(0, 10);
-  const maxWeightSum = 5 * 1 + 5 * 0.5; // 7.5
-  const weightSum = capped.reduce((sum, _m, idx) => sum + (idx < 5 ? 1 : 0.5), 0);
-  const recentByVolume = clamp01(weightSum / maxWeightSum);
+  const weighted = capped.reduce(
+    (acc, m, idx) => {
+      const weight = idx < 5 ? 1 : 0.5;
+      const recency = decay(daysSince(m.playedAt));
+      return {
+        weightedRecencySum: acc.weightedRecencySum + recency * weight,
+        weightSum: acc.weightSum + weight,
+      };
+    },
+    { weightedRecencySum: 0, weightSum: 0 },
+  );
+  const recentBySeries = weighted.weightSum > 0 ? weighted.weightedRecencySum / weighted.weightSum : recentByTime;
 
-  return clamp01(0.6 * recentByTime + 0.4 * recentByVolume);
+  return clamp01(0.6 * recentByTime + 0.4 * recentBySeries);
 }
 
 function computePerformanceCloseness(samples: PairAccumulator["perfSamples"]): number {
-  if (samples.count <= 0) return 0.5;
-  const avgKdaGapNorm = samples.kdaGapSumNorm / samples.count;
-  const avgShareGapNorm = samples.dmgShareGapSumNorm / samples.count;
-  const gap = clamp01((avgKdaGapNorm + avgShareGapNorm) / 2);
+  const metricGaps: number[] = [];
+  if (samples.kdaSamples > 0) {
+    metricGaps.push(samples.kdaGapSumNorm / samples.kdaSamples);
+  }
+  if (samples.dmgShareSamples > 0) {
+    metricGaps.push(samples.dmgShareGapSumNorm / samples.dmgShareSamples);
+  }
+  if (metricGaps.length === 0) return 0.5;
+
+  const gap = clamp01(sum(metricGaps) / metricGaps.length);
   return clamp01(1 - gap);
+}
+
+function isCloseRecentDecisive(recent5Counts: { winsA: number; winsB: number; draws: number }): boolean {
+  const decisiveGames = recent5Counts.winsA + recent5Counts.winsB;
+  return decisiveGames === 5 && Math.abs(recent5Counts.winsA - recent5Counts.winsB) === 1;
 }
 
 function topHeroes(map: Map<Hero, number>, topN: number): { hero: Hero; count: number }[] {

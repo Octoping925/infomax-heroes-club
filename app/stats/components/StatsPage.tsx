@@ -11,7 +11,7 @@ import { PersonalStatTab } from "./personal-stat/personal-stat-tab";
 import { PlayerSidebar } from "./PlayerSidebar";
 import { Loading } from "@/components/Loading";
 import { ScrimStatTab } from "./scrim-stat/scrim-stat-tab";
-import { RivalryTab } from "./rivalry-tab";
+import { RivalryTab } from "../rivalry/rivalry-tab";
 import { MapStatTab } from "./map-stat/map-stat-tab";
 import { CounterPickTab } from "./counter-pick-tab";
 import { TeamComposerTab } from "./team-composer/team-composer-tab";
