@@ -1,4 +1,5 @@
 import { DooraySlashCommandRequest, DooraySlashCommandResponse } from "@/domain/dooray/types";
+import { HeroIcyVeinKeyMap, HeroMap } from "@/domain/hots/constants/hero";
 import { NextRequest } from "next/server";
 
 type TierLabel = "S" | "A" | "B" | "C" | "D";
@@ -190,7 +191,7 @@ async function handleTierListRequest(rawMapName: string | null): Promise<Respons
           tiers: parsed.tiers,
           sourceUrl,
         }),
-        responseType: "inChannel",
+        responseType: "ephemeral",
       },
       {
         headers: {
@@ -258,6 +259,8 @@ const ROLE_LABEL_MAP: Record<string, string> = {
   Healer: "힐러",
   Support: "지원가",
 };
+
+const HERO_NAME_KO_BY_ICY_KEY = buildHeroNameMapByIcyKey();
 
 function buildMapLookup(configs: ReadonlyArray<MapConfig>): ReadonlyMap<string, MapConfig> {
   const lookup = new Map<string, MapConfig>();
@@ -389,20 +392,30 @@ function extractRoleName(headerHtml: string): string | null {
 
 function extractHeroes(heroesHtml: string): TierHero[] {
   const heroes: TierHero[] = [];
-  const heroAnchorMatches = heroesHtml.matchAll(/<a\s+[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi);
+  const heroMatches = heroesHtml.matchAll(/<span([^>]*)>\s*<a\s+[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/span>/gi);
 
-  for (const match of heroAnchorMatches) {
-    const href = match[1];
-    const anchorHtml = match[2];
+  for (const match of heroMatches) {
+    const spanAttributes = match[1];
+    const href = match[2];
+    const anchorHtml = match[3];
+    const rankingKey = extractRankingKey(spanAttributes);
     const plainSpanMatches = Array.from(anchorHtml.matchAll(/<span>\s*([^<]+?)\s*<\/span>/gi));
-    const heroName = normalizeText(plainSpanMatches.at(-1)?.[1] ?? "");
+    const heroNameFromHtml = normalizeText(plainSpanMatches.at(-1)?.[1] ?? "");
+
+    const slugMatch = href.match(/\/heroes\/([^/?#]+)-build-guide/i);
+    const heroSlug = slugMatch?.[1] ?? null;
+
+    const heroName = resolveHeroNameKo({
+      rankingKey,
+      heroSlug,
+      fallbackName: heroNameFromHtml,
+    });
 
     if (!heroName) continue;
 
-    const slugMatch = href.match(/\/heroes\/([^/?#]+)-build-guide/i);
     heroes.push({
       name: heroName,
-      heroSlug: slugMatch?.[1] ?? null,
+      heroSlug,
       url: normalizeUrl(href),
       isBanRecommended: /htl_ban_true/.test(anchorHtml),
       trend: /htl_change_up/.test(anchorHtml) ? "UP" : /htl_change_down/.test(anchorHtml) ? "DOWN" : "SAME",
@@ -495,4 +508,63 @@ function normalizeUrl(url: string): string {
   if (url.startsWith("/")) return `https://www.icy-veins.com${url}`;
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   return `https://www.icy-veins.com/${url.replace(/^\/+/, "")}`;
+}
+
+function extractRankingKey(spanAttributes: string): string | null {
+  const rankingIdMatch = spanAttributes.match(/\bid="ranking-([^"]+)"/i);
+  if (!rankingIdMatch) return null;
+  return rankingIdMatch[1].trim();
+}
+
+function resolveHeroNameKo(input: {
+  readonly rankingKey: string | null;
+  readonly heroSlug: string | null;
+  readonly fallbackName: string;
+}): string {
+  const candidates = [input.rankingKey, input.heroSlug];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const normalizedKey = normalizeIcyKey(candidate);
+    if (!normalizedKey) continue;
+
+    const varianVariantName = VARIAN_VARIANT_NAME_MAP[normalizedKey];
+    if (varianVariantName) return varianVariantName;
+
+    const direct = HERO_NAME_KO_BY_ICY_KEY.get(normalizedKey);
+    if (direct) return direct;
+
+    if (normalizedKey.startsWith("varian")) {
+      const varianName = HERO_NAME_KO_BY_ICY_KEY.get("varian");
+      if (varianName) return varianName;
+    }
+  }
+
+  return input.fallbackName;
+}
+
+function normalizeIcyKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replaceAll("'", "")
+    .replaceAll("’", "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+const VARIAN_VARIANT_NAME_MAP: Record<string, string> = {
+  variantaunt: "바리안-도발",
+  variantwin: "바리안-쌍검",
+  variancolossus: "바리안-거강",
+  varianclossus: "바리안-거강",
+};
+
+function buildHeroNameMapByIcyKey(): ReadonlyMap<string, string> {
+  const map = new Map<string, string>();
+
+  for (const [hero, icyKey] of Object.entries(HeroIcyVeinKeyMap)) {
+    const heroNameKo = HeroMap[hero as keyof typeof HeroMap];
+    map.set(normalizeIcyKey(icyKey), heroNameKo);
+  }
+
+  return map;
 }
