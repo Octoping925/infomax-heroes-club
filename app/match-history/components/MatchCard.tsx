@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MatchHighlightItem, MatchHistoryItem } from "@/domain/hots/types/match-contract";
-import { buildYoutubeTimestampUrl } from "@/domain/hots/utils/youtube";
+import { buildYoutubeEmbedUrl, buildYoutubeTimestampUrl } from "@/domain/hots/utils/youtube";
 import dayjs from "dayjs";
 import { GameCard } from "./GameCard";
 import { useMatchResult } from "../hooks/useMatchResult";
@@ -29,6 +29,9 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const [highlightTimeInput, setHighlightTimeInput] = useState<string>("");
   const [highlightNoteInput, setHighlightNoteInput] = useState<string>("");
   const [highlightSaveResult, setHighlightSaveResult] = useState<HighlightSaveResult>({ status: "idle" });
+  const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
+  const [embedStartSeconds, setEmbedStartSeconds] = useState<number>(0);
+  const [embedNonce, setEmbedNonce] = useState<number>(0);
 
   const {
     team1,
@@ -46,6 +49,51 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   useEffect(() => {
     setHighlights(match.highlights);
   }, [match.highlights]);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setIsEmbedOpen(false);
+    }
+  }, [isExpanded]);
+
+  useEffect(() => {
+    setIsEmbedOpen(false);
+    setEmbedStartSeconds(0);
+    setEmbedNonce(0);
+  }, [match.id]);
+
+  const embedUrl = match.youtubeUrl ? buildYoutubeEmbedUrl(match.youtubeUrl, embedStartSeconds) : null;
+
+  const handleToggleEmbed = () => {
+    if (!embedUrl) {
+      return;
+    }
+
+    if (!isExpanded) {
+      onToggle();
+    }
+
+    const shouldOpen = !isEmbedOpen;
+    setIsEmbedOpen(shouldOpen);
+    if (shouldOpen) {
+      setEmbedStartSeconds(0);
+      setEmbedNonce((prev) => prev + 1);
+    }
+  };
+
+  const handlePlayHighlight = (seconds: number) => {
+    if (!embedUrl) {
+      return;
+    }
+
+    if (!isExpanded) {
+      onToggle();
+    }
+
+    setIsEmbedOpen(true);
+    setEmbedStartSeconds(seconds);
+    setEmbedNonce((prev) => prev + 1);
+  };
 
   const handleSubmitHighlight = async () => {
     const parsedSeconds = parseHighlightTimestampInput(highlightTimeInput);
@@ -108,15 +156,14 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           <span className="text-md font-medium text-gray-400">{dayjs(match.playedAt).format("YYYY년 MM월 DD일")}</span>
         </div>
         <div className="flex items-center gap-2">
-          {match.youtubeUrl ? (
-            <a
-              href={match.youtubeUrl}
-              target="_blank"
-              rel="noreferrer"
+          {embedUrl ? (
+            <button
+              type="button"
+              onClick={handleToggleEmbed}
               className="px-3 py-1.5 rounded-lg text-sm font-bold border bg-red-500/15 text-red-200 border-red-400/30 hover:bg-red-500/25 transition-all"
             >
-              풀영상
-            </a>
+              {isEmbedOpen && isExpanded ? "플레이어 닫기" : "풀영상 보기"}
+            </button>
           ) : (
             <span className="px-3 py-1.5 rounded-lg text-xs font-bold border bg-white/5 text-gray-400 border-white/10">
               영상 링크 없음
@@ -221,6 +268,38 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
       {/* Expanded Games */}
       {isExpanded && (
         <div className="bg-black/20 border-t border-white/10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          {isEmbedOpen && embedUrl && (
+            <div className="px-4 pt-4">
+              <div className="rounded-xl border border-red-400/20 bg-black/40 overflow-hidden">
+                <div className="px-3 py-2 flex items-center justify-between border-b border-white/10">
+                  <span className="text-sm font-semibold text-red-100">유튜브 풀영상 플레이어</span>
+                  {match.youtubeUrl && (
+                    <a
+                      href={buildYoutubeTimestampUrl(match.youtubeUrl, embedStartSeconds)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-red-200/80 hover:text-red-100"
+                    >
+                      유튜브에서 열기 ↗
+                    </a>
+                  )}
+                </div>
+                <div className="aspect-video bg-black">
+                  <iframe
+                    key={`${match.id}-${embedStartSeconds}-${embedNonce}`}
+                    src={embedUrl}
+                    title={`${dayjs(match.playedAt).format("YYYY-MM-DD")} 내전 풀영상`}
+                    className="w-full h-full"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="px-4 pt-4">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -272,17 +351,16 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
                     const timestampLabel = formatHighlightTimestamp(highlight.seconds);
                     const caption = highlight.note ? `${timestampLabel} · ${highlight.note}` : timestampLabel;
 
-                    if (match.youtubeUrl) {
+                    if (embedUrl) {
                       return (
-                        <a
+                        <button
+                          type="button"
                           key={highlight.id}
-                          href={buildYoutubeTimestampUrl(match.youtubeUrl, highlight.seconds)}
-                          target="_blank"
-                          rel="noreferrer"
+                          onClick={() => handlePlayHighlight(highlight.seconds)}
                           className="px-2.5 py-1 rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 text-xs font-semibold hover:bg-cyan-500/30"
                         >
                           {caption}
-                        </a>
+                        </button>
                       );
                     }
 

@@ -42,6 +42,19 @@ function extractVideoId(url: URL): string | null {
   return toVideoId(url.searchParams.get("v"));
 }
 
+export function extractYoutubeVideoId(input: string): string | null {
+  try {
+    const url = toUrl(input.trim());
+    const host = normalizeHost(url.hostname);
+    if (!HOSTS.has(host)) {
+      return null;
+    }
+    return extractVideoId(url);
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeYoutubeUrl(input: string): string {
   const trimmed = input.trim();
   if (trimmed.length === 0) {
@@ -86,4 +99,21 @@ export function buildYoutubeTimestampUrl(youtubeUrl: string, seconds: number): s
   } catch {
     return youtubeUrl;
   }
+}
+
+export function buildYoutubeEmbedUrl(youtubeUrl: string, seconds = 0): string | null {
+  const videoId = extractYoutubeVideoId(youtubeUrl);
+  if (!videoId) {
+    return null;
+  }
+
+  const normalizedSeconds = Math.max(0, Math.floor(seconds));
+  const embedUrl = new URL(`https://www.youtube-nocookie.com/embed/${videoId}`);
+  embedUrl.searchParams.set("rel", "0");
+  embedUrl.searchParams.set("modestbranding", "1");
+  embedUrl.searchParams.set("playsinline", "1");
+  if (normalizedSeconds > 0) {
+    embedUrl.searchParams.set("start", String(normalizedSeconds));
+  }
+  return embedUrl.toString();
 }

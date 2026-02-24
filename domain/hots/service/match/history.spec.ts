@@ -39,6 +39,15 @@ describe("getMatchHistory", () => {
         playedAt: new Date("2026-02-10T00:00:00.000Z"),
         type: "LUNCH",
         winnerTeamNumber: 1,
+        youtubeUrl: "https://www.youtube.com/watch?v=abcDEF12345",
+        highlights: [
+          {
+            id: "h1",
+            seconds: 84,
+            note: "한타",
+            createdAt: new Date("2026-02-10T00:10:00.000Z"),
+          },
+        ],
         teams: [
           {
             id: "mt1",
@@ -125,6 +134,15 @@ describe("getMatchHistory", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe("m1");
+    expect(result[0]?.youtubeUrl).toBe("https://www.youtube.com/watch?v=abcDEF12345");
+    expect(result[0]?.highlights).toEqual([
+      {
+        id: "h1",
+        seconds: 84,
+        note: "한타",
+        createdAt: "2026-02-10T00:10:00.000Z",
+      },
+    ]);
     expect(result[0]?.teams[0]?.leader.nickname).toBe("길동");
     expect(result[0]?.games[0]?.teams[0]?.members[0]?.player.nickname).toBe("길동");
     expect(result[0]?.games[0]?.teams[0]?.members[0]?.rank).toBeGreaterThan(0);
