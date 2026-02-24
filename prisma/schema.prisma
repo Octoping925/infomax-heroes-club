@@ -167,14 +167,32 @@ model Match {
   type             MatchType
   playedAt         DateTime // 내전 날짜
   winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부
+  youtubeUrl       String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   // Relations
-  teams MatchTeam[]
-  games Game[]
+  teams       MatchTeam[]
+  games       Game[]
+  highlights  MatchHighlight[]
 
   @@map("matches")
+}
+
+/// 내전 하이라이트 제보 시점
+model MatchHighlight {
+  id        String   @id @default(cuid())
+  matchId   String
+  seconds   Int
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, seconds])
+  @@map("match_highlights")
 }
 
 /// 내전 팀 (초기 편성)

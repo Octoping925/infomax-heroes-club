@@ -1,7 +1,22 @@
-import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
+import { useEffect, useState } from "react";
+import type { MatchHighlightItem, MatchHistoryItem } from "@/domain/hots/types/match-contract";
+import { buildYoutubeTimestampUrl } from "@/domain/hots/utils/youtube";
 import dayjs from "dayjs";
 import { GameCard } from "./GameCard";
 import { useMatchResult } from "../hooks/useMatchResult";
+import { formatHighlightTimestamp, MAX_HIGHLIGHT_SECONDS, parseHighlightTimestampInput } from "../utils/highlight-time";
+
+type HighlightSaveResult =
+  | { readonly status: "idle" }
+  | { readonly status: "saving" }
+  | { readonly status: "success"; readonly message: string }
+  | { readonly status: "error"; readonly message: string };
+
+type CreateHighlightResponse = {
+  readonly success: true;
+  readonly highlight: MatchHighlightItem;
+  readonly youtubeTimestampUrl: string | null;
+};
 
 interface MatchCardProps {
   readonly match: MatchHistoryItem;
@@ -10,6 +25,11 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
+  const [highlights, setHighlights] = useState<ReadonlyArray<MatchHighlightItem>>(match.highlights);
+  const [highlightTimeInput, setHighlightTimeInput] = useState<string>("");
+  const [highlightNoteInput, setHighlightNoteInput] = useState<string>("");
+  const [highlightSaveResult, setHighlightSaveResult] = useState<HighlightSaveResult>({ status: "idle" });
+
   const {
     team1,
     team2,
@@ -22,6 +42,54 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
     isDraw,
     getWinnerLabel,
   } = useMatchResult(match);
+
+  useEffect(() => {
+    setHighlights(match.highlights);
+  }, [match.highlights]);
+
+  const handleSubmitHighlight = async () => {
+    const parsedSeconds = parseHighlightTimestampInput(highlightTimeInput);
+    if (parsedSeconds === null) {
+      setHighlightSaveResult({
+        status: "error",
+        message: `시간 형식이 올바르지 않습니다. 0~${MAX_HIGHLIGHT_SECONDS}초, mm:ss, hh:mm:ss 중 하나로 입력해주세요.`,
+      });
+      return;
+    }
+
+    setHighlightSaveResult({ status: "saving" });
+
+    try {
+      const response = await fetch(`/api/matches/${match.id}/highlights`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          seconds: parsedSeconds,
+          note: highlightNoteInput,
+        }),
+      });
+
+      const data: CreateHighlightResponse | { error: string } = await response.json();
+      if (!response.ok) {
+        const message = "error" in data ? data.error : "하이라이트 저장에 실패했습니다.";
+        throw new Error(message);
+      }
+
+      const typed = data as CreateHighlightResponse;
+      setHighlights((prev) => [...prev, typed.highlight].toSorted((a, b) => a.seconds - b.seconds));
+      setHighlightTimeInput("");
+      setHighlightNoteInput("");
+      setHighlightSaveResult({
+        status: "success",
+        message: "하이라이트가 등록되었습니다.",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "알 수 없는 오류";
+      setHighlightSaveResult({ status: "error", message });
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-white/10 bg-linear-to-b from-white/8 to-white/3 overflow-hidden transition-all hover:border-white/20">
@@ -39,16 +107,33 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
           </span>
           <span className="text-md font-medium text-gray-400">{dayjs(match.playedAt).format("YYYY년 MM월 DD일")}</span>
         </div>
-        <button
-          onClick={onToggle}
-          className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-300 ${
-            isExpanded
-              ? "bg-white/15 text-gray-200 border-white/20"
-              : "bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          {isExpanded ? "접기" : "상세"}
-        </button>
+        <div className="flex items-center gap-2">
+          {match.youtubeUrl ? (
+            <a
+              href={match.youtubeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-lg text-sm font-bold border bg-red-500/15 text-red-200 border-red-400/30 hover:bg-red-500/25 transition-all"
+            >
+              풀영상
+            </a>
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-bold border bg-white/5 text-gray-400 border-white/10">
+              영상 링크 없음
+            </span>
+          )}
+
+          <button
+            onClick={onToggle}
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-300 ${
+              isExpanded
+                ? "bg-white/15 text-gray-200 border-white/20"
+                : "bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            {isExpanded ? "접기" : "상세"}
+          </button>
+        </div>
       </div>
 
       {/* Match Content */}
@@ -136,6 +221,85 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
       {/* Expanded Games */}
       {isExpanded && (
         <div className="bg-black/20 border-t border-white/10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="px-4 pt-4">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <h4 className="text-sm font-bold text-gray-200">하이라이트 제보</h4>
+                <span className="text-xs text-gray-400">총 {highlights.length}개</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_auto] gap-2">
+                <input
+                  value={highlightTimeInput}
+                  onChange={(event) => setHighlightTimeInput(event.target.value)}
+                  placeholder="예: 13:24"
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                />
+                <input
+                  value={highlightNoteInput}
+                  onChange={(event) => setHighlightNoteInput(event.target.value)}
+                  placeholder="장면 설명 (선택)"
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                />
+                <button
+                  type="button"
+                  onClick={handleSubmitHighlight}
+                  disabled={highlightSaveResult.status === "saving"}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${
+                    highlightSaveResult.status === "saving"
+                      ? "bg-gray-600/40 border-gray-500/40 text-gray-300 cursor-not-allowed"
+                      : "bg-cyan-500/20 border-cyan-400/30 text-cyan-100 hover:bg-cyan-500/30"
+                  }`}
+                >
+                  {highlightSaveResult.status === "saving" ? "등록 중..." : "제보"}
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500">초 단위 또는 mm:ss / hh:mm:ss 형식으로 입력할 수 있습니다.</p>
+
+              {highlightSaveResult.status === "error" && (
+                <p className="text-xs text-red-300">❌ {highlightSaveResult.message}</p>
+              )}
+              {highlightSaveResult.status === "success" && (
+                <p className="text-xs text-emerald-300">✅ {highlightSaveResult.message}</p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {highlights.length === 0 ? (
+                  <span className="text-xs text-gray-500">아직 제보된 하이라이트가 없습니다.</span>
+                ) : (
+                  highlights.map((highlight) => {
+                    const timestampLabel = formatHighlightTimestamp(highlight.seconds);
+                    const caption = highlight.note ? `${timestampLabel} · ${highlight.note}` : timestampLabel;
+
+                    if (match.youtubeUrl) {
+                      return (
+                        <a
+                          key={highlight.id}
+                          href={buildYoutubeTimestampUrl(match.youtubeUrl, highlight.seconds)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1 rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 text-xs font-semibold hover:bg-cyan-500/30"
+                        >
+                          {caption}
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <span
+                        key={highlight.id}
+                        className="px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs font-semibold"
+                      >
+                        {caption}
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
           {match.games.map((game) => (
             <GameCard key={game.id} game={game} team1Name={team1Name} team2Name={team2Name} />
           ))}

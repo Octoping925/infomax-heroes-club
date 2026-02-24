@@ -8,7 +8,7 @@ export interface HeroCatalogEntry {
   readonly role: HeroRole;
 }
 
-export const HERO_CATALOG = {
+export const HERO_CATALOG: Record<Hero, HeroCatalogEntry> = {
   Abathur: {
     nameKo: "아바투르",
     image: "/heroes/Abathur.png",
@@ -549,4 +549,4 @@ export const HERO_CATALOG = {
     icyVeinKey: "zuljin",
     role: HeroRoles.MAIN_DEALER,
   },
-} as const satisfies Record<Hero, HeroCatalogEntry>;
+} as const;

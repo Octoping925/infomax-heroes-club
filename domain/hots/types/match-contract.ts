@@ -58,11 +58,20 @@ export type MatchHistoryGame = {
   readonly teams: MatchHistoryGameTeam[];
 };
 
+export type MatchHighlightItem = {
+  readonly id: string;
+  readonly seconds: number;
+  readonly note: string | null;
+  readonly createdAt: string;
+};
+
 export type MatchHistoryItem = {
   readonly id: string;
   readonly playedAt: string;
   readonly type: MatchType;
   readonly winnerTeamNumber: number | null;
+  readonly youtubeUrl: string | null;
+  readonly highlights: ReadonlyArray<MatchHighlightItem>;
   readonly teams: MatchHistoryMatchTeam[];
   readonly games: MatchHistoryGame[];
 };

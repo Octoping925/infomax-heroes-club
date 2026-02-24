@@ -17,6 +17,16 @@ export async function getMatchHistory(take: number): Promise<MatchHistoryItem[]>
       playedAt: true,
       type: true,
       winnerTeamNumber: true,
+      youtubeUrl: true,
+      highlights: {
+        orderBy: [{ seconds: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          seconds: true,
+          note: true,
+          createdAt: true,
+        },
+      },
       teams: {
         orderBy: {
           teamNumber: "asc",
@@ -92,6 +102,13 @@ export async function getMatchHistory(take: number): Promise<MatchHistoryItem[]>
     playedAt: match.playedAt.toISOString(),
     type: match.type,
     winnerTeamNumber: match.winnerTeamNumber,
+    youtubeUrl: match.youtubeUrl ?? null,
+    highlights: (match.highlights ?? []).map((highlight) => ({
+      id: highlight.id,
+      seconds: highlight.seconds,
+      note: highlight.note,
+      createdAt: highlight.createdAt.toISOString(),
+    })),
     teams: match.teams.map((team) => ({
       id: team.id,
       teamNumber: team.teamNumber,

@@ -1,5 +1,6 @@
 import { DooraySlashCommandRequest, DooraySlashCommandResponse } from "@/domain/dooray/types";
 import { HeroIcyVeinKeyMap, HeroMap } from "@/domain/hots/constants/hero";
+import { Hero } from "@/domain/hots/models";
 import { NextRequest } from "next/server";
 
 type TierLabel = "S" | "A" | "B" | "C" | "D";
@@ -555,14 +556,13 @@ const VARIAN_VARIANT_NAME_MAP: Record<string, string> = {
   variantaunt: "바리안-도발",
   variantwin: "바리안-쌍검",
   variancolossus: "바리안-거강",
-  varianclossus: "바리안-거강",
 };
 
 function buildHeroNameMapByIcyKey(): ReadonlyMap<string, string> {
   const map = new Map<string, string>();
 
   for (const [hero, icyKey] of Object.entries(HeroIcyVeinKeyMap)) {
-    const heroNameKo = HeroMap[hero as keyof typeof HeroMap];
+    const heroNameKo = HeroMap[hero as Hero];
     map.set(normalizeIcyKey(icyKey), heroNameKo);
   }
 
