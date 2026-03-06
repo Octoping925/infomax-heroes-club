@@ -8,21 +8,17 @@ import {
   ResultCounts,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
+import { fetchPlayerMap, PlayerMap } from "../utils/player";
 
 /**
  * 맵별 플레이어 승률 조회
  * GET /api/stats/maps
  */
 export async function GET(): Promise<NextResponse<MapPlayerWinRateResponse[]>> {
+  const playerMap = await fetchPlayerMap();
   const gameParticipations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
-      player: {
-        select: {
-          name: true,
-          nickname: true,
-        },
-      },
       gameTeam: {
         select: {
           result: true,
@@ -36,25 +32,23 @@ export async function GET(): Promise<NextResponse<MapPlayerWinRateResponse[]>> {
     },
   });
 
-  const mapStats = aggregateMapPlayerStats(gameParticipations);
+  const mapStats = aggregateMapPlayerStats(gameParticipations, playerMap);
 
   // 맵 이름 순으로 정렬
   return NextResponse.json(
-    Array.from(mapStats.entries())
+    mapStats
+      .entries()
       .map(([map, playerStats]) => ({
         map,
         playerStats: Array.from(playerStats.values()).sort((a, b) => b.totalGames - a.totalGames),
       }))
+      .toArray()
       .sort((a, b) => a.map.localeCompare(b.map)),
   );
 }
 
 type GameParticipation = {
   playerId: string;
-  player: {
-    name: string;
-    nickname: string;
-  };
   gameTeam: {
     result: GameResult;
     game: {
@@ -72,6 +66,7 @@ type PlayerStatsAccumulator = {
 
 function aggregateMapPlayerStats(
   participations: GameParticipation[],
+  playerMap: PlayerMap,
 ): Map<GameMap, Map<string, PlayerWinRateResponse>> {
   const mapStats = new Map<GameMap, Map<string, PlayerStatsAccumulator>>();
 
@@ -83,28 +78,28 @@ function aggregateMapPlayerStats(
       mapStats.set(map, new Map());
     }
 
-    const playerMap = mapStats.get(map)!;
+    const playerStatsMap = mapStats.get(map)!;
 
-    if (!playerMap.has(playerId)) {
-      playerMap.set(playerId, {
+    if (!playerStatsMap.has(playerId)) {
+      playerStatsMap.set(playerId, {
         playerId,
-        playerName: participation.player.name,
-        playerNickname: participation.player.nickname,
+        playerName: playerMap.get(playerId)!.name,
+        playerNickname: playerMap.get(playerId)!.nickname,
         stats: createResultCounts(),
       });
     }
 
-    const playerStats = playerMap.get(playerId)!;
+    const playerStats = playerStatsMap.get(playerId)!;
     updateCountsByResult(playerStats.stats, participation.gameTeam.result);
   }
 
   // 최종 WinRateResponse로 변환
   const result = new Map<GameMap, Map<string, PlayerWinRateResponse>>();
 
-  for (const [map, playerMap] of mapStats.entries()) {
+  for (const [map, playerStatsMap] of mapStats.entries()) {
     const convertedMap = new Map<string, PlayerWinRateResponse>();
 
-    for (const [playerId, stats] of playerMap.entries()) {
+    for (const [playerId, stats] of playerStatsMap.entries()) {
       const winRateStats = buildWinRateStatsFromCounts(stats.stats);
       convertedMap.set(playerId, {
         playerId: stats.playerId,

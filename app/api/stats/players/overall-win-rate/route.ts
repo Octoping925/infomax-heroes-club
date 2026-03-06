@@ -99,13 +99,7 @@ export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWi
       gameStats: buildWinRateStatsFromCounts(entry.gameStats),
     }))
     .filter((entry) => entry.matchStats.totalGames > 0 || entry.gameStats.totalGames > 0)
-    .toArray()
-    .toSorted((a, b) => {
-      if (b.matchStats.winRate !== a.matchStats.winRate) {
-        return b.matchStats.winRate - a.matchStats.winRate;
-      }
-      return b.matchStats.totalGames - a.matchStats.totalGames;
-    });
+    .toArray();
 
   return NextResponse.json(response);
 }

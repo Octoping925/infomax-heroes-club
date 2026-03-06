@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerAverageStatsResponse, calculateAverage } from "@/app/api/stats/types";
+import { fetchPlayerMap } from "../../utils/player";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -21,6 +22,7 @@ type PlayerAccumulator = {
  * GET /api/stats/rankings/avg-stats
  */
 export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>> {
+  const playerMap = await fetchPlayerMap();
   const participations = await prisma.gameTeamMember.findMany({
     select: {
       playerId: true,
@@ -31,12 +33,6 @@ export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>>
       siegeDamage: true,
       healingDone: true,
       damageTaken: true,
-      player: {
-        select: {
-          name: true,
-          nickname: true,
-        },
-      },
     },
   });
 
@@ -44,9 +40,11 @@ export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>>
 
   for (const participation of participations) {
     const playerId = participation.playerId;
-    const current =
-      accumulatorMap.get(playerId) ??
-      createAccumulator(playerId, participation.player.name, participation.player.nickname);
+    const player = playerMap.get(playerId);
+
+    if (!player) continue;
+
+    const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, player.name, player.nickname);
 
     current.totalGames++;
     current.totalKills += participation.kills;
@@ -58,19 +56,17 @@ export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>>
     accumulatorMap.set(playerId, current);
   }
 
-  const response = Array.from(accumulatorMap.values())
-    .filter((it) => it.totalGames > 0)
-    .map((it) => ({
-      playerId: it.playerId,
-      playerName: it.playerName,
-      playerNickname: it.playerNickname,
-      totalGames: it.totalGames,
-      averageKills: calculateAverage(it.totalKills, it.totalGames),
-      averageDeaths: calculateAverage(it.totalDeaths, it.totalGames),
-      averageTakedowns: calculateAverage(it.totalTakedowns, it.totalGames),
-      averageHeroDamage: calculateAverage(it.totalHeroDamage, it.totalGames),
-      averageDamageTaken: calculateAverage(it.totalDamageTaken, it.totalGames),
-    }));
+  const response = Array.from(accumulatorMap.values(), (it) => ({
+    playerId: it.playerId,
+    playerName: it.playerName,
+    playerNickname: it.playerNickname,
+    totalGames: it.totalGames,
+    averageKills: calculateAverage(it.totalKills, it.totalGames),
+    averageDeaths: calculateAverage(it.totalDeaths, it.totalGames),
+    averageTakedowns: calculateAverage(it.totalTakedowns, it.totalGames),
+    averageHeroDamage: calculateAverage(it.totalHeroDamage, it.totalGames),
+    averageDamageTaken: calculateAverage(it.totalDamageTaken, it.totalGames),
+  }));
 
   return NextResponse.json(response);
 }
