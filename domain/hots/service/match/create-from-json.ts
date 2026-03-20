@@ -3,10 +3,10 @@ import { HeroMap } from "@/domain/hots/constants";
 import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
-import { Prisma } from "@/generated/prisma/client";
 import { GameMap, MatchType } from "@/generated/prisma/enums";
 import { calculateGameResult } from "./common";
 import { MatchServiceError } from "./errors";
+import { insertGameTeamMemberTalents } from "./talent-sql";
 
 type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
 
@@ -671,34 +671,6 @@ function readOptionalTalents(value: unknown, label: string): RawPlayerStat["tale
   throw new MatchServiceError(`${label}는 배열 또는 객체여야 합니다.`);
 }
 
-async function insertGameTeamMemberTalents(
-  tx: Pick<typeof prisma, "$executeRaw">,
-  talents: ReadonlyArray<{
-    readonly gameTeamMemberId: string;
-    readonly tier: TalentTier;
-    readonly rawCode: string;
-    readonly talentKey: string | null;
-  }>,
-): Promise<void> {
-  if (talents.length === 0) {
-    return;
-  }
-
-  const rows = talents.map((talent) => ({
-    id: crypto.randomUUID(),
-    ...talent,
-  }));
-
-  await tx.$executeRaw(Prisma.sql`
-    INSERT INTO "game_team_member_talents" ("id", "gameTeamMemberId", "tier", "rawCode", "talentKey")
-    VALUES ${Prisma.join(
-      rows.map(
-        (row) =>
-          Prisma.sql`(${row.id}, ${row.gameTeamMemberId}, ${row.tier}, ${row.rawCode}, ${row.talentKey})`,
-      ),
-    )}
-  `);
-}
 
 function readOptionalString(value: unknown, label: string): string | undefined {
   if (value === undefined || value === null) {

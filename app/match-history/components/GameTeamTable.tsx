@@ -48,7 +48,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
           <thead>
             <tr className="text-sm text-gray-300 tracking-tighter border-b border-white/5">
               <th className="pb-2 text-left font-bold w-8"></th>
-              <th className="pb-2 text-left font-bold w-auto"></th>
+              <th className="pb-2 text-left font-bold w-auto min-w-26"></th>
               <th className="pb-2 text-center font-bold w-22">포지션</th>
               <th className="pb-2 text-center font-bold w-26">OP Score</th>
               <th className="pb-2 text-center font-bold w-38">K/D/T</th>
@@ -151,7 +151,7 @@ function TalentStrip({
   const talentByTier = new Map(talents.map((talent) => [talent.tier, talent] as const));
 
   return (
-    <div className="mt-1.5 flex flex-wrap gap-1">
+    <div className="mt-1.5 flex flex-wrap gap-0.5">
       {HOTS_TALENT_TIERS.map((tier) => {
         const talent = talentByTier.get(tier);
         const label = talent?.talentKey ?? talent?.rawCode ?? `${tier} 특성`;
@@ -163,13 +163,7 @@ function TalentStrip({
             title={`${tier}레벨: ${label}`}
           >
             {talent?.imagePath ? (
-              <Image
-                src={talent.imagePath}
-                alt={label}
-                fill
-                sizes="20px"
-                className="object-cover"
-              />
+              <Image src={talent.imagePath} alt={label} fill sizes="22px" className="object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-gray-500">
                 {tier}
