@@ -114,7 +114,7 @@ export const HERO_CATALOG: Record<Hero, HeroCatalogEntry> = {
   Deckard: {
     nameKo: "데커드",
     image: "/heroes/Deckard.png",
-    icyVeinKey: "deckard",
+    icyVeinKey: "deckard-cain",
     role: HeroRoles.HEALER,
   },
   Dehaka: {
@@ -138,7 +138,7 @@ export const HERO_CATALOG: Record<Hero, HeroCatalogEntry> = {
   ETC: {
     nameKo: "정예 타우렌 족장",
     image: "/heroes/ETC.png",
-    icyVeinKey: "etc",
+    icyVeinKey: "e-t-c",
     role: HeroRoles.TANKER,
   },
   Falstad: {
@@ -240,7 +240,7 @@ export const HERO_CATALOG: Record<Hero, HeroCatalogEntry> = {
   KelThuzad: {
     nameKo: "켈투자드",
     image: "/heroes/KelThuzad.png",
-    icyVeinKey: "kelthuzad",
+    icyVeinKey: "kel-thuzad",
     role: HeroRoles.SUB_DEALER,
   },
   Kerrigan: {
