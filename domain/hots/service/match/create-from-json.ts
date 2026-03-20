@@ -1,14 +1,25 @@
 import { prisma } from "@/config/prisma";
 import { HeroMap } from "@/domain/hots/constants";
+import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
+import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
-import { GameMap, Hero, HeroRole, MatchType } from "@/generated/prisma/enums";
+import { Prisma } from "@/generated/prisma/client";
+import { GameMap, MatchType } from "@/generated/prisma/enums";
 import { calculateGameResult } from "./common";
 import { MatchServiceError } from "./errors";
+
+type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
+
+type RawTalentEntry = {
+  readonly tier: number;
+  readonly code: string | null;
+};
 
 type RawPlayerStat = {
   readonly name: string;
   readonly hero: string;
   readonly position?: string;
+  readonly talents?: ReadonlyArray<string | null | RawTalentEntry> | RawTalentRecord;
   readonly kills: number;
   readonly deaths: number;
   readonly takedowns: number;
@@ -53,6 +64,11 @@ type NormalizedPlayer = {
   readonly nickname: string;
   readonly hero: Hero;
   readonly position: HeroRole;
+  readonly talents: ReadonlyArray<{
+    readonly tier: TalentTier;
+    readonly rawCode: string;
+    readonly talentKey: string | null;
+  }>;
   readonly kills: number;
   readonly deaths: number;
   readonly takedowns: number;
@@ -100,7 +116,7 @@ const koreanToMapMap: ReadonlyMap<string, GameMap> = new Map(
   Object.entries(MAP_CATALOG).map(([mapKey, map]) => [map.nameKo, mapKey as GameMap]),
 );
 
-const ROLE_SET = new Set<string>(Object.values(HeroRole));
+const ROLE_SET = new Set<string>(Object.values(HeroRoles));
 const DATE_PATTERN = /^\d{8}$/;
 
 export async function createMatchesFromJson(input: unknown): Promise<CreateMatchesFromJsonResponse> {
@@ -219,7 +235,7 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
               },
             });
 
-            await tx.gameTeamMember.createMany({
+            const createdMembers = await tx.gameTeamMember.createManyAndReturn({
               data: team.players.map((player) => ({
                 gameTeamId: gameTeam.id,
                 playerId: playerIdByNickname.get(player.nickname)!,
@@ -241,6 +257,22 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
                 regenGlobes: player.regenGlobes,
               })),
             });
+
+            const talentsToCreate = createdMembers.flatMap((member) => {
+              const player = team.players.find((entry) => playerIdByNickname.get(entry.nickname) === member.playerId);
+              if (!player || player.talents.length === 0) {
+                return [];
+              }
+
+              return player.talents.map((talent) => ({
+                gameTeamMemberId: member.id,
+                tier: talent.tier,
+                rawCode: talent.rawCode,
+                talentKey: talent.talentKey,
+              }));
+            });
+
+            await insertGameTeamMemberTalents(tx, talentsToCreate);
 
             if (team.bans.length > 0) {
               await tx.gameTeamBan.createMany({
@@ -346,6 +378,7 @@ function parseRawPlayer(input: unknown, label: string): RawPlayerStat {
     name: readString(player.name, `${label}.name`),
     hero: readString(player.hero, `${label}.hero`),
     position: readOptionalString(player.position, `${label}.position`),
+    talents: readOptionalTalents(player.talents, `${label}.talents`),
     kills: readNumber(player.kills, `${label}.kills`),
     deaths: readNumber(player.deaths, `${label}.deaths`),
     takedowns: readNumber(player.takedowns, `${label}.takedowns`),
@@ -438,6 +471,7 @@ function normalizePlayer(rawPlayer: RawPlayerStat, teamLabel: string): Normalize
     nickname: rawPlayer.name,
     hero,
     position,
+    talents: normalizeTalents(rawPlayer.talents, hero, `${teamLabel}.${rawPlayer.name}.talents`),
     kills: toNonNegativeInt(rawPlayer.kills),
     deaths: toNonNegativeInt(rawPlayer.deaths),
     takedowns: toNonNegativeInt(rawPlayer.takedowns),
@@ -455,9 +489,76 @@ function normalizePlayer(rawPlayer: RawPlayerStat, teamLabel: string): Normalize
   };
 }
 
+function normalizeTalents(
+  input: RawPlayerStat["talents"],
+  hero: Hero,
+  label: string,
+): ReadonlyArray<{
+  readonly tier: TalentTier;
+  readonly rawCode: string;
+  readonly talentKey: string | null;
+}> {
+  if (!input) {
+    return [];
+  }
+
+  const entries: Array<{ tier: TalentTier; code: string }> = Array.isArray(input)
+    ? input.flatMap((value, index) => {
+        if (value === null || value === undefined) {
+          return [];
+        }
+        if (typeof value === "string") {
+          const tier = HOTS_TALENT_TIERS[index];
+          if (!tier) {
+            throw new MatchServiceError(`${label}[${index}]: 지원하지 않는 특성 인덱스입니다.`);
+          }
+          return [{ tier, code: value }];
+        }
+        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+          const tier = readPositiveInt((value as Record<string, unknown>).tier, `${label}[${index}].tier`);
+          const code = readOptionalString((value as Record<string, unknown>).code, `${label}[${index}].code`) ?? null;
+          if (!isTalentTier(tier)) {
+            throw new MatchServiceError(`${label}[${index}].tier: 지원하지 않는 특성 티어입니다.`);
+          }
+          if (!code) {
+            return [];
+          }
+          return [{ tier, code }];
+        }
+        throw new MatchServiceError(`${label}[${index}]: 문자열 또는 { tier, code } 형태여야 합니다.`);
+      })
+    : Object.entries(input as RawTalentRecord).flatMap(([tierKey, code]) => {
+        const tier = Number(tierKey);
+        if (!isTalentTier(tier)) {
+          throw new MatchServiceError(`${label}.${tierKey}: 지원하지 않는 특성 티어입니다.`);
+        }
+        if (!code) {
+          return [];
+        }
+        return [{ tier, code }];
+      });
+
+  const deduped = new Map<TalentTier, { tier: TalentTier; code: string }>();
+  for (const entry of entries) {
+    const rawCode = entry.code.trim();
+    if (!rawCode) {
+      continue;
+    }
+    deduped.set(entry.tier, { tier: entry.tier, code: rawCode });
+  }
+
+  return Array.from(deduped.values())
+    .map((entry) => ({
+      tier: entry.tier,
+      rawCode: entry.code,
+      talentKey: resolveTalentKey(hero, entry.code),
+    }))
+    .toSorted((a, b) => a.tier - b.tier);
+}
+
 function parsePosition(position: string | undefined, label: string): HeroRole {
   if (!position || position.length === 0) {
-    return HeroRole.TANKER;
+    return HeroRoles.TANKER;
   }
   if (!ROLE_SET.has(position)) {
     throw new MatchServiceError(`${label}: 잘못된 포지션(${position})`);
@@ -522,6 +623,81 @@ function readString(value: unknown, label: string): string {
     throw new MatchServiceError(`${label}는 빈 값일 수 없는 문자열이어야 합니다.`);
   }
   return value.trim();
+}
+
+function readOptionalTalents(value: unknown, label: string): RawPlayerStat["talents"] {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry, index) => {
+      if (entry === null) {
+        return null;
+      }
+      if (typeof entry === "string") {
+        return entry;
+      }
+      if (typeof entry === "object" && entry !== null && !Array.isArray(entry)) {
+        const object = entry as Record<string, unknown>;
+        return {
+          tier: readPositiveInt(object.tier, `${label}[${index}].tier`),
+          code: readOptionalString(object.code, `${label}[${index}].code`) ?? null,
+        };
+      }
+      throw new MatchServiceError(`${label}[${index}]는 문자열, null, 또는 객체여야 합니다.`);
+    });
+  }
+
+  if (typeof value === "object" && value !== null) {
+    const object = value as Record<string, unknown>;
+    const result: RawTalentRecord = {};
+
+    for (const [tierKey, rawCode] of Object.entries(object)) {
+      const tier = Number(tierKey);
+      if (!isTalentTier(tier)) {
+        throw new MatchServiceError(`${label}.${tierKey}: 지원하지 않는 특성 티어입니다.`);
+      }
+      if (rawCode === null) {
+        result[tierKey as `${TalentTier}`] = null;
+        continue;
+      }
+      result[tierKey as `${TalentTier}`] = readString(rawCode, `${label}.${tierKey}`);
+    }
+
+    return result;
+  }
+
+  throw new MatchServiceError(`${label}는 배열 또는 객체여야 합니다.`);
+}
+
+async function insertGameTeamMemberTalents(
+  tx: Pick<typeof prisma, "$executeRaw">,
+  talents: ReadonlyArray<{
+    readonly gameTeamMemberId: string;
+    readonly tier: TalentTier;
+    readonly rawCode: string;
+    readonly talentKey: string | null;
+  }>,
+): Promise<void> {
+  if (talents.length === 0) {
+    return;
+  }
+
+  const rows = talents.map((talent) => ({
+    id: crypto.randomUUID(),
+    ...talent,
+  }));
+
+  await tx.$executeRaw(Prisma.sql`
+    INSERT INTO "game_team_member_talents" ("id", "gameTeamMemberId", "tier", "rawCode", "talentKey")
+    VALUES ${Prisma.join(
+      rows.map(
+        (row) =>
+          Prisma.sql`(${row.id}, ${row.gameTeamMemberId}, ${row.tier}, ${row.rawCode}, ${row.talentKey})`,
+      ),
+    )}
+  `);
 }
 
 function readOptionalString(value: unknown, label: string): string | undefined {

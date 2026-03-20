@@ -306,12 +306,29 @@ model GameTeamMember {
 
 
   // Relations
-  gameTeam GameTeam @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
-  player   Player   @relation(fields: [playerId], references: [id])
+  gameTeam GameTeam              @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
+  player   Player                @relation(fields: [playerId], references: [id])
+  talents  GameTeamMemberTalent[]
 
   @@unique([gameTeamId, playerId])
   @@index([playerId]) // 플레이어별 통계 조회 최적화
   @@index([hero]) // 영웅별 통계 조회 최적화
   @@index([playerId, hero]) // 플레이어의 영웅별 통계 조회 최적화
   @@map("game_team_members")
+}
+
+/// 경기 팀 멤버의 특성 선택
+model GameTeamMemberTalent {
+  id               String @id @default(cuid())
+  gameTeamMemberId String
+  tier             Int
+  rawCode          String
+  talentKey        String?
+
+  // Relations
+  gameTeamMember GameTeamMember @relation(fields: [gameTeamMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([gameTeamMemberId, tier])
+  @@index([talentKey])
+  @@map("game_team_member_talents")
 }

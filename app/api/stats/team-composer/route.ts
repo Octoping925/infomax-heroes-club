@@ -2,7 +2,7 @@ import { TeamComposerResponse, TeamingPairStatResponse, TeamingWindowStats } fro
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { prisma } from "@/config/prisma";
 import { HeroRole, HeroRoles } from "@/domain/hots/models";
-import { round } from "es-toolkit";
+import { maxBy, round } from "es-toolkit";
 import { NextResponse } from "next/server";
 import { toResultByWinnerTeamNumber, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { GameResult } from "@/generated/prisma/client";
@@ -114,7 +114,7 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
     .toSorted((a, b) => a.nickname.localeCompare(b.nickname))
     .map((player) => {
       const perRoleCount = roleCountByPlayer.get(player.id) ?? new Map<HeroRole, number>();
-      const totalGames = Array.from(perRoleCount.values()).reduce((sum, count) => sum + count, 0);
+      const totalGames = perRoleCount.values().reduce((sum, count) => sum + count, 0);
 
       const roleStats = ROLE_ORDER.map((role) => {
         const games = perRoleCount.get(role) ?? 0;
@@ -122,7 +122,7 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
         return { role, games, rate };
       });
 
-      const primaryRole = roleStats.toSorted((a, b) => b.games - a.games)[0];
+      const primaryRole = maxBy(roleStats, (it) => it.games)!;
       const flexibility = roleStats.filter((role) => role.games >= 3 || role.rate >= 20).length;
 
       return {
@@ -139,23 +139,21 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
       };
     });
 
-  const pairs = Array.from(pairStats.entries())
-    .map(([key, value]) => {
-      const [playerAId, playerBId] = key.split("|");
-      const allTime = toWindowStats(value.allTime);
-      const recent6 = toWindowStats(value.recent6);
+  const pairs = Array.from(pairStats.entries(), ([key, value]) => {
+    const [playerAId, playerBId] = key.split("|");
+    const allTime = toWindowStats(value.allTime);
+    const recent6 = toWindowStats(value.recent6);
 
-      return {
-        playerAId,
-        playerBId,
-        allTime,
-        recent6,
-      } satisfies TeamingPairStatResponse;
-    })
-    .toSorted((a, b) => {
-      if (a.playerAId !== b.playerAId) return a.playerAId.localeCompare(b.playerAId);
-      return a.playerBId.localeCompare(b.playerBId);
-    });
+    return {
+      playerAId,
+      playerBId,
+      allTime,
+      recent6,
+    } satisfies TeamingPairStatResponse;
+  }).toSorted((a, b) => {
+    if (a.playerAId !== b.playerAId) return a.playerAId.localeCompare(b.playerAId);
+    return a.playerBId.localeCompare(b.playerBId);
+  });
 
   const defaultCandidateIds = matches[0]
     ? Array.from(new Set(matches[0].teams.flatMap((team) => team.members.map((member) => member.playerId))))

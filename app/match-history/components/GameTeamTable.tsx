@@ -1,5 +1,6 @@
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { HeroImage } from "@/domain/hots/constants";
+import { HOTS_TALENT_TIERS } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
 import { round, sumBy } from "es-toolkit";
 import Image from "next/image";
@@ -75,6 +76,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                   <td className="py-2.5 px-2">
                     <div className="font-bold text-gray-200 text-sm whitespace-nowrap">{member.player.nickname}</div>
                     <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
+                    {member.talents.length > 0 && <TalentStrip talents={member.talents} />}
                   </td>
 
                   <td className="py-2.5 text-center">
@@ -139,4 +141,43 @@ function getTeamBackgroundClass(result: string | null) {
   if (result === "WIN") return "bg-blue-500/10";
   if (result === "LOSE") return "bg-red-500/10";
   return "bg-white/0";
+}
+
+function TalentStrip({
+  talents,
+}: {
+  readonly talents: MatchHistoryItem["games"][number]["teams"][number]["members"][number]["talents"];
+}) {
+  const talentByTier = new Map(talents.map((talent) => [talent.tier, talent] as const));
+
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1">
+      {HOTS_TALENT_TIERS.map((tier) => {
+        const talent = talentByTier.get(tier);
+        const label = talent?.talentKey ?? talent?.rawCode ?? `${tier} 특성`;
+
+        return (
+          <div
+            key={tier}
+            className="relative h-5 w-5 overflow-hidden rounded border border-white/10 bg-white/5"
+            title={`${tier}레벨: ${label}`}
+          >
+            {talent?.imagePath ? (
+              <Image
+                src={talent.imagePath}
+                alt={label}
+                fill
+                sizes="20px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-gray-500">
+                {tier}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }

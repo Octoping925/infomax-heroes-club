@@ -1,4 +1,4 @@
-import type { GameMap, Hero, HeroRole } from "@/domain/hots/models";
+import type { GameMap, Hero, HeroRole, TalentTier } from "@/domain/hots/models";
 import type { GameResult, MatchType } from "@/generated/prisma/client";
 
 export type MatchHistoryPlayer = {
@@ -19,6 +19,7 @@ export type MatchHistoryGameTeamMember = {
   player: MatchHistoryPlayer;
   position: HeroRole;
   hero: Hero;
+  talents: ReadonlyArray<MatchHistoryTalentPick>;
   kills: number;
   deaths: number;
   takedowns: number;
@@ -33,6 +34,13 @@ export type MatchHistoryGameTeamMember = {
   watchTowerCaptures: number;
   rank: number;
   rankScore: number;
+};
+
+export type MatchHistoryTalentPick = {
+  readonly tier: TalentTier;
+  readonly rawCode: string;
+  readonly talentKey: string | null;
+  readonly imagePath: string | null;
 };
 
 export type MatchHistoryGameTeamBan = {
