@@ -94,9 +94,9 @@ export default function MatchStatsPage() {
   const [isLoadingPlayers, setIsLoadingPlayers] = useState<boolean>(false);
   const [matchSearchText, setMatchSearchText] = useState<string>("");
 
-  const heroOptions = Object.values(HERO_CATALOG)
-    .map((entry) => entry.nameKo)
-    .toSorted((a, b) => a.localeCompare(b, "ko"));
+  const heroOptions = Object.keys(HERO_CATALOG).toSorted((a, b) =>
+    HERO_CATALOG[a as Hero].nameKo.localeCompare(HERO_CATALOG[b as Hero].nameKo, "ko"),
+  );
 
   const positionOptions: HeroRole[] = Object.values(HeroRoles);
   const positionLabelMap: Record<HeroRole, string> = {
@@ -393,7 +393,7 @@ export default function MatchStatsPage() {
                                   >
                                     {heroOptions.map((hero) => (
                                       <option key={hero} value={hero} className="bg-[#1a1a2e]">
-                                        {hero}
+                                        {HERO_CATALOG[hero as Hero]!.nameKo}
                                       </option>
                                     ))}
                                   </select>
