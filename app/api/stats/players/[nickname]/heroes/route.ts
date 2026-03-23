@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { GameResult } from "@/generated/prisma/client";
-import { PlayerHeroWinRateResponse, HeroWinRateResponse } from "@/app/api/stats/types";
+import { PlayerHeroMapWinRateResponse, PlayerHeroWinRateResponse, HeroWinRateResponse } from "@/app/api/stats/types";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
-import { Hero } from "@/domain/hots/models";
+import { GameMap, Hero } from "@/domain/hots/models";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -44,18 +44,25 @@ export async function GET(
       gameTeam: {
         select: {
           result: true,
+          game: {
+            select: {
+              map: true,
+            },
+          },
         },
       },
     },
   });
 
   const heroStats = aggregateHeroStats(gameResults);
+  const heroStatsByMap = aggregateHeroStatsByMap(gameResults);
 
   const response: PlayerHeroWinRateResponse = {
     playerId: player.id,
     playerName: player.name,
     playerNickname: player.nickname,
     heroStats,
+    heroStatsByMap,
   };
 
   return NextResponse.json(response);
@@ -63,7 +70,12 @@ export async function GET(
 
 type GameResultWithHero = {
   hero: Hero;
-  gameTeam: { result: GameResult };
+  gameTeam: {
+    result: GameResult;
+    game: {
+      map: GameMap;
+    };
+  };
 };
 
 function aggregateHeroStats(results: GameResultWithHero[]): HeroWinRateResponse[] {
@@ -79,4 +91,26 @@ function aggregateHeroStats(results: GameResultWithHero[]): HeroWinRateResponse[
     hero,
     ...buildWinRateStatsFromCounts(stats),
   })).toSorted((a, b) => b.totalGames - a.totalGames);
+}
+
+function aggregateHeroStatsByMap(results: GameResultWithHero[]): PlayerHeroMapWinRateResponse[] {
+  const mapHeroStats = new Map<GameMap, Map<Hero, ResultCounts>>();
+
+  for (const result of results) {
+    const map = result.gameTeam.game.map;
+    const currentMapStats = mapHeroStats.get(map) ?? new Map<Hero, ResultCounts>();
+    const currentHeroStats = currentMapStats.get(result.hero) ?? createResultCounts();
+
+    updateCountsByResult(currentHeroStats, result.gameTeam.result);
+    currentMapStats.set(result.hero, currentHeroStats);
+    mapHeroStats.set(map, currentMapStats);
+  }
+
+  return Array.from(mapHeroStats.entries(), ([map, heroStats]) => ({
+    map,
+    heroStats: Array.from(heroStats.entries(), ([hero, stats]) => ({
+      hero,
+      ...buildWinRateStatsFromCounts(stats),
+    })).toSorted((a, b) => b.totalGames - a.totalGames),
+  })).toSorted((a, b) => a.map.localeCompare(b.map));
 }

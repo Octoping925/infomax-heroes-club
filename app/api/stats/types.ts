@@ -52,12 +52,19 @@ export interface HeroDuoWinRateResponse extends WinRateStats {
   readonly heroB: Hero;
 }
 
+/** 플레이어의 맵별 영웅 승률 응답 */
+export interface PlayerHeroMapWinRateResponse {
+  readonly map: GameMap;
+  readonly heroStats: ReadonlyArray<HeroWinRateResponse>;
+}
+
 /** 플레이어의 영웅별 승률 응답 */
 export interface PlayerHeroWinRateResponse {
   readonly playerId: string;
   readonly playerName: string;
   readonly playerNickname: string;
   readonly heroStats: ReadonlyArray<HeroWinRateResponse>;
+  readonly heroStatsByMap: ReadonlyArray<PlayerHeroMapWinRateResponse>;
 }
 
 export type PlayerFormResult = "WIN" | "LOSE" | "DRAW";
