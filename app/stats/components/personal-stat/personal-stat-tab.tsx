@@ -73,7 +73,7 @@ export function PersonalStatTab() {
           <PlayerFormTrendChart nickname={selectedPlayer.nickname} />
         </Suspense>
         <Suspense fallback={<Loading />}>
-          <HeroStats nickname={selectedPlayer.nickname} />
+          <HeroStats key={selectedPlayer.id} nickname={selectedPlayer.nickname} />
         </Suspense>
         <Suspense fallback={<Loading />}>
           <PersonalMapWinRateChart nickname={selectedPlayer.nickname} />
