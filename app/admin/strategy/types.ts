@@ -55,7 +55,6 @@ export interface StrategyPlayerReport {
   readonly strongMaps: ReadonlyArray<StrategyMapSummary>;
   readonly weakMaps: ReadonlyArray<StrategyMapSummary>;
   readonly recentGames: ReadonlyArray<StrategyRecentGameSummary>;
-  readonly headline: string;
 }
 
 export interface StrategyTeamRoleCoverage {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import type { PlayerListItem } from "@/app/api/players/route";
 import type {
   StrategyHeroRecommendation,
@@ -18,8 +18,9 @@ import type {
   StrategyTeamRoleCoverage,
   StrategyTeamSynergyPair,
 } from "./types";
-import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
+import { HERO_CATALOG, HeroImage, MAP_CATALOG } from "@/domain/hots/constants";
 import type { HeroRole, GameMap, Hero } from "@/domain/hots/models";
+import Image from "next/image";
 
 const MAX_TEAM_SIZE = 5;
 const MAX_SELECTED_MAPS = 5;
@@ -41,44 +42,45 @@ export default function StrategyAnalyzer({ players }: Props) {
   const [allyNicknames, setAllyNicknames] = useState<string[]>([]);
   const [enemyNicknames, setEnemyNicknames] = useState<string[]>([]);
   const [selectedMaps, setSelectedMaps] = useState<GameMap[]>([]);
-  const [allySelection, setAllySelection] = useState<string>("");
-  const [enemySelection, setEnemySelection] = useState<string>("");
-  const [mapSelection, setMapSelection] = useState<string>("");
+  const [allyQuery, setAllyQuery] = useState("");
+  const [enemyQuery, setEnemyQuery] = useState("");
+  const [mapQuery, setMapQuery] = useState("");
   const [report, setReport] = useState<StrategyReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const deferredAllyQuery = useDeferredValue(allyQuery);
+  const deferredEnemyQuery = useDeferredValue(enemyQuery);
+  const deferredMapQuery = useDeferredValue(mapQuery);
   const assignedNicknames = new Set([...allyNicknames, ...enemyNicknames]);
   const selectablePlayers = players.filter((player) => !assignedNicknames.has(player.nickname));
+  const allyCandidatePlayers = selectablePlayers.filter((player) => matchesPlayerQuery(player, deferredAllyQuery));
+  const enemyCandidatePlayers = selectablePlayers.filter((player) => matchesPlayerQuery(player, deferredEnemyQuery));
   const mapOptions = Object.entries(MAP_CATALOG)
     .map(([map, info]) => ({
       value: map as GameMap,
       label: info.nameKo,
     }))
     .filter((item) => !selectedMaps.includes(item.value))
+    .filter((item) => matchesMapQuery(item.label, item.value, deferredMapQuery))
     .toSorted((left, right) => left.label.localeCompare(right.label, "ko"));
 
-  const handleAddPlayer = (side: StrategySide) => {
-    const selection = side === "ALLY" ? allySelection : enemySelection;
-    if (!selection) {
-      return;
-    }
-
+  const handleAddPlayer = (side: StrategySide, nickname: string) => {
     if (side === "ALLY") {
       if (allyNicknames.length >= MAX_TEAM_SIZE) {
         setError(`우리 팀은 최대 ${MAX_TEAM_SIZE}명까지 선택할 수 있습니다.`);
         return;
       }
-      setAllyNicknames((prev) => [...prev, selection]);
-      setAllySelection("");
+      setAllyNicknames((prev) => [...prev, nickname]);
+      setAllyQuery("");
     } else {
       if (enemyNicknames.length >= MAX_TEAM_SIZE) {
         setError(`상대 팀은 최대 ${MAX_TEAM_SIZE}명까지 선택할 수 있습니다.`);
         return;
       }
-      setEnemyNicknames((prev) => [...prev, selection]);
-      setEnemySelection("");
+      setEnemyNicknames((prev) => [...prev, nickname]);
+      setEnemyQuery("");
     }
 
     setError(null);
@@ -99,9 +101,9 @@ export default function StrategyAnalyzer({ players }: Props) {
     setAllyNicknames([]);
     setEnemyNicknames([]);
     setSelectedMaps([]);
-    setAllySelection("");
-    setEnemySelection("");
-    setMapSelection("");
+    setAllyQuery("");
+    setEnemyQuery("");
+    setMapQuery("");
     setError(null);
     setReport(null);
   };
@@ -113,18 +115,14 @@ export default function StrategyAnalyzer({ players }: Props) {
     setReport(null);
   };
 
-  const handleAddMap = () => {
-    if (!mapSelection) {
-      return;
-    }
-
+  const handleAddMap = (map: GameMap) => {
     if (selectedMaps.length >= MAX_SELECTED_MAPS) {
       setError(`맵은 최대 ${MAX_SELECTED_MAPS}개까지 선택할 수 있습니다.`);
       return;
     }
 
-    setSelectedMaps((prev) => [...prev, mapSelection as GameMap]);
-    setMapSelection("");
+    setSelectedMaps((prev) => [...prev, map]);
+    setMapQuery("");
     setError(null);
     setReport(null);
   };
@@ -239,7 +237,7 @@ export default function StrategyAnalyzer({ players }: Props) {
           </div>
         </header>
 
-        <section className="mb-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="mb-8 grid gap-6">
           <div className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -270,10 +268,10 @@ export default function StrategyAnalyzer({ players }: Props) {
                 title="우리 팀"
                 subtitle="권장 5인"
                 nicknames={allyNicknames}
-                selection={allySelection}
-                selectablePlayers={selectablePlayers}
-                onSelectionChange={setAllySelection}
-                onAdd={() => handleAddPlayer("ALLY")}
+                query={allyQuery}
+                candidates={allyCandidatePlayers}
+                onQueryChange={setAllyQuery}
+                onPick={(nickname) => handleAddPlayer("ALLY", nickname)}
                 onRemove={(nickname) => handleRemovePlayer("ALLY", nickname)}
               />
               <RosterPanel
@@ -281,20 +279,20 @@ export default function StrategyAnalyzer({ players }: Props) {
                 title="상대 팀"
                 subtitle="권장 5인"
                 nicknames={enemyNicknames}
-                selection={enemySelection}
-                selectablePlayers={selectablePlayers}
-                onSelectionChange={setEnemySelection}
-                onAdd={() => handleAddPlayer("ENEMY")}
+                query={enemyQuery}
+                candidates={enemyCandidatePlayers}
+                onQueryChange={setEnemyQuery}
+                onPick={(nickname) => handleAddPlayer("ENEMY", nickname)}
                 onRemove={(nickname) => handleRemovePlayer("ENEMY", nickname)}
               />
             </div>
 
             <MapSelectionPanel
               selectedMaps={selectedMaps}
-              selection={mapSelection}
+              query={mapQuery}
               options={mapOptions}
-              onSelectionChange={setMapSelection}
-              onAdd={handleAddMap}
+              onQueryChange={setMapQuery}
+              onPick={handleAddMap}
               onRemove={handleRemoveMap}
             />
 
@@ -319,29 +317,6 @@ export default function StrategyAnalyzer({ players }: Props) {
               </div>
             )}
           </div>
-
-          <div className="rounded-[32px] border border-white/10 bg-[#0d1827]/80 p-6 backdrop-blur-xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-200/80">How It Reads</p>
-            <h2 className="mt-2 text-2xl font-bold">리포트 해석 포인트</h2>
-            <div className="mt-6 space-y-4">
-              <HintCard
-                title="선택 맵별 드래프트"
-                description="선택한 최대 5개 맵 각각에 대해 맵 숙련도, 우선 밴, 추천 픽을 따로 정리합니다."
-              />
-              <HintCard
-                title="맵 기반 밴 후보"
-                description="상대 팀이 해당 맵에서 자주 이겼거나, 맵 표본이 없으면 통산 주력 영웅을 기준으로 밴 우선순위를 뽑습니다."
-              />
-              <HintCard
-                title="맵 기반 픽 후보"
-                description="우리 팀 쪽은 해당 맵에서 실제 승률이 좋았던 영웅을 우선 추천하고, 표본이 적으면 시그니처 영웅으로 보완합니다."
-              />
-              <HintCard
-                title="시너지 / 맞상대"
-                description="같은 팀으로 자주 이기던 듀오와, 서로 많이 붙었던 상대 조합을 한 번에 확인할 수 있습니다."
-              />
-            </div>
-          </div>
         </section>
 
         {report ? (
@@ -350,7 +325,7 @@ export default function StrategyAnalyzer({ players }: Props) {
               <MatchupHeadline report={report.matchup} generatedAt={report.generatedAt} />
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <section className="grid gap-6 xl:grid-cols-[1.5fr_0.5fr]">
               <SelectedMapPlanBoard plans={report.matchup.selectedMapPlans} />
               <PlayerMatchupCard rows={report.matchup.playerMatchups} />
             </section>
@@ -401,33 +376,39 @@ function RosterPanel({
   title,
   subtitle,
   nicknames,
-  selection,
-  selectablePlayers,
-  onSelectionChange,
-  onAdd,
+  query,
+  candidates,
+  onQueryChange,
+  onPick,
   onRemove,
 }: {
   readonly side: StrategySide;
   readonly title: string;
   readonly subtitle: string;
   readonly nicknames: ReadonlyArray<string>;
-  readonly selection: string;
-  readonly selectablePlayers: ReadonlyArray<PlayerListItem>;
-  readonly onSelectionChange: (value: string) => void;
-  readonly onAdd: () => void;
+  readonly query: string;
+  readonly candidates: ReadonlyArray<PlayerListItem>;
+  readonly onQueryChange: (value: string) => void;
+  readonly onPick: (nickname: string) => void;
   readonly onRemove: (nickname: string) => void;
 }) {
+  const isFull = nicknames.length >= MAX_TEAM_SIZE;
   const tone =
     side === "ALLY"
       ? {
           panel: "from-cyan-400/12 to-sky-500/8 border-cyan-300/20",
           chip: "border-cyan-300/20 bg-cyan-400/10 text-cyan-50",
-          button: "from-cyan-300 via-sky-400 to-blue-600 text-slate-950",
+          input: "border-cyan-300/20 bg-cyan-400/6 text-cyan-50 placeholder:text-cyan-100/45 focus:border-cyan-200/40",
+          candidate: "border-cyan-300/16 bg-cyan-400/8 hover:border-cyan-200/35 hover:bg-cyan-400/14",
+          meta: "text-cyan-100/60",
         }
       : {
           panel: "from-rose-400/10 to-orange-400/10 border-orange-200/20",
           chip: "border-orange-300/20 bg-orange-400/10 text-orange-50",
-          button: "from-orange-300 via-amber-400 to-rose-500 text-slate-950",
+          input:
+            "border-orange-300/20 bg-orange-400/6 text-orange-50 placeholder:text-orange-100/45 focus:border-orange-200/40",
+          candidate: "border-orange-300/16 bg-orange-400/8 hover:border-orange-200/35 hover:bg-orange-400/14",
+          meta: "text-orange-100/60",
         };
 
   return (
@@ -450,38 +431,51 @@ function RosterPanel({
                 key={nickname}
                 type="button"
                 onClick={() => onRemove(nickname)}
-                className={`rounded-full border px-3 py-2 text-sm font-medium transition hover:brightness-110 ${tone.chip}`}
+                className={`rounded-full border px-3 py-2 text-sm font-medium transition hover:brightness-110 cursor-pointer ${tone.chip}`}
               >
                 {nickname}
               </button>
             ))}
           </div>
         ) : (
-          <p className="text-sm leading-6 text-slate-400">아직 선택된 멤버가 없습니다. 아래 드롭다운에서 추가하세요.</p>
+          <p className="text-sm leading-6 text-slate-400">
+            아직 선택된 멤버가 없습니다. 아래 검색창에서 바로 골라 추가하세요.
+          </p>
         )}
       </div>
 
-      <div className="flex gap-2">
-        <select
-          value={selection}
-          onChange={(event) => onSelectionChange(event.target.value)}
-          className="flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none"
-        >
-          <option value="">플레이어 선택</option>
-          {selectablePlayers.map((player) => (
-            <option key={player.id} value={player.nickname}>
-              {player.nickname} ({player.name})
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={!selection || nicknames.length >= MAX_TEAM_SIZE}
-          className={`rounded-2xl bg-linear-to-r px-4 py-3 text-sm font-bold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${tone.button}`}
-        >
-          추가
-        </button>
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="닉네임 또는 이름 검색"
+          className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition ${tone.input}`}
+        />
+
+        {isFull ? (
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">
+            팀 정원이 찼습니다. 칩을 눌러 기존 멤버를 제거하면 다시 선택할 수 있습니다.
+          </div>
+        ) : candidates.length > 0 ? (
+          <div className="grid max-h-64 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            {candidates.map((player) => (
+              <button
+                key={player.id}
+                type="button"
+                onClick={() => onPick(player.nickname)}
+                className={`rounded-2xl border px-4 py-3 text-left transition ${tone.candidate}`}
+              >
+                <p className="text-sm font-semibold text-white">{player.nickname}</p>
+                <p className={`mt-1 text-xs ${tone.meta}`}>{player.name}</p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 px-4 py-4 text-sm text-slate-400">
+            {query.trim().length > 0 ? "검색 결과가 없습니다." : "선택 가능한 플레이어가 없습니다."}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -489,19 +483,21 @@ function RosterPanel({
 
 function MapSelectionPanel({
   selectedMaps,
-  selection,
+  query,
   options,
-  onSelectionChange,
-  onAdd,
+  onQueryChange,
+  onPick,
   onRemove,
 }: {
   readonly selectedMaps: ReadonlyArray<GameMap>;
-  readonly selection: string;
+  readonly query: string;
   readonly options: ReadonlyArray<{ value: GameMap; label: string }>;
-  readonly onSelectionChange: (value: string) => void;
-  readonly onAdd: () => void;
+  readonly onQueryChange: (value: string) => void;
+  readonly onPick: (map: GameMap) => void;
   readonly onRemove: (map: GameMap) => void;
 }) {
+  const isFull = selectedMaps.length >= MAX_SELECTED_MAPS;
+
   return (
     <div className="rounded-[28px] border border-white/10 bg-linear-to-br from-violet-400/10 to-fuchsia-500/8 p-5">
       <div className="mb-4 flex items-end justify-between gap-3">
@@ -529,41 +525,44 @@ function MapSelectionPanel({
             ))}
           </div>
         ) : (
-          <p className="text-sm leading-6 text-slate-400">아직 선택된 맵이 없습니다. 드롭다운에서 추가하세요.</p>
+          <p className="text-sm leading-6 text-slate-400">
+            아직 선택된 맵이 없습니다. 아래에서 원하는 맵을 바로 눌러 추가하세요.
+          </p>
         )}
       </div>
 
-      <div className="flex gap-2">
-        <select
-          value={selection}
-          onChange={(event) => onSelectionChange(event.target.value)}
-          className="flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none"
-        >
-          <option value="">맵 선택</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={!selection || selectedMaps.length >= MAX_SELECTED_MAPS}
-          className="rounded-2xl bg-linear-to-r from-violet-300 via-fuchsia-400 to-pink-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          추가
-        </button>
-      </div>
-    </div>
-  );
-}
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="맵 이름 검색"
+          className="w-full rounded-2xl border border-violet-300/20 bg-violet-400/6 px-4 py-3 text-sm text-violet-50 outline-none transition placeholder:text-violet-100/45 focus:border-violet-200/40"
+        />
 
-function HintCard({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="rounded-[24px] border border-white/10 bg-black/15 p-4">
-      <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
+        {isFull ? (
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">
+            맵 선택이 가득 찼습니다. 선택된 맵 칩을 눌러 제거하면 다시 고를 수 있습니다.
+          </div>
+        ) : options.length > 0 ? (
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onPick(option.value)}
+                className="rounded-2xl border border-violet-300/16 bg-violet-400/8 px-4 py-3 text-left text-sm font-semibold text-white transition hover:border-violet-200/35 hover:bg-violet-400/14"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 px-4 py-4 text-sm text-slate-400">
+            {query.trim().length > 0 ? "검색 결과가 없습니다." : "선택 가능한 맵이 없습니다."}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -579,18 +578,13 @@ function MatchupHeadline({ report, generatedAt }: { report: StrategyMatchupRepor
         <p className="text-xs text-slate-400">{formatDateTime(generatedAt)} 생성</p>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4">
         <MetricBox
           label="로스터 맞대결"
           value={`${report.enteredRosterStats.wins}-${report.enteredRosterStats.losses}-${report.enteredRosterStats.draws}`}
           sub={`${report.enteredRosterMatchCount}매치`}
         />
         <MetricBox label="승률" value={`${report.enteredRosterStats.winRate}%`} sub="우리 팀 기준" />
-        <MetricBox
-          label="선택 맵"
-          value={`${report.selectedMaps.length}개`}
-          sub={report.selectedMaps.map((map) => getMapName(map)).join(", ")}
-        />
       </div>
 
       <ul className="mt-6 list-disc list-inside space-y-3">
@@ -702,15 +696,12 @@ function RecommendationList({
           {items.map((item) => (
             <div key={`${title}-${item.hero}`} className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-white">{getHeroName(item.hero)}</p>
+                <HeroIcon hero={item.hero} />
                 <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${palette}`}>
                   {item.source === "MAP" ? "맵 표본" : "통산 보정"}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-300">
-                {item.playerNicknames.join(", ")} · {item.averageWinRate}% · {item.totalGames}경기
-              </p>
-              <p className="mt-2 text-xs leading-5 text-slate-400">{item.reason}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">{item.reason}</p>
             </div>
           ))}
         </div>
@@ -725,7 +716,7 @@ function MiniInfo({ title, description }: { title: string; description: string }
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
       <p className="text-sm font-medium text-white">{title}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-400">{description}</p>
+      <p className="mt-1 text-sm leading-5 text-slate-400">{description}</p>
     </div>
   );
 }
@@ -746,12 +737,9 @@ function PlayerMatchupCard({ rows }: { rows: ReadonlyArray<StrategyPlayerMatchup
                 <p className="text-base font-semibold text-white">
                   {row.allyNickname} vs {row.enemyNickname}
                 </p>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-100">
-                  {row.matches}매치
-                </span>
               </div>
               <p className="mt-2 text-sm text-slate-300">
-                우리 팀 기준 {row.allyWins}승 {row.enemyWins}패 {row.draws}무 · 승률 {row.allyWinRate}%
+                {row.allyWins}승 {row.enemyWins}패 {row.draws}무 · 승률 {row.allyWinRate}%
               </p>
             </div>
           ))
@@ -800,7 +788,7 @@ function TeamReportColumn({
         <InsightPanel title="선호 맵">
           <MapFocusList rows={team.preferredMaps} />
         </InsightPanel>
-        <InsightPanel title="주의 맵">
+        <InsightPanel title="비선호 맵">
           <MapFocusList rows={team.weakMaps} />
         </InsightPanel>
         <InsightPanel title="팀 시그니처 영웅">
@@ -831,13 +819,13 @@ function InsightPanel({ title, children }: { title: string; children: React.Reac
 
 function SimpleTextList({ lines }: { lines: ReadonlyArray<string> }) {
   return lines.length > 0 ? (
-    <div className="space-y-2">
+    <ul className="list-disc list-inside space-y-2">
       {lines.map((line) => (
-        <p key={line} className="text-sm leading-6 text-slate-300">
+        <li key={line} className="text-sm leading-6 text-slate-300">
           {line}
-        </p>
+        </li>
       ))}
-    </div>
+    </ul>
   ) : (
     <EmptyList text="요약할 데이터가 없습니다." />
   );
@@ -845,18 +833,16 @@ function SimpleTextList({ lines }: { lines: ReadonlyArray<string> }) {
 
 function RoleCoverageList({ rows }: { rows: ReadonlyArray<StrategyTeamRoleCoverage> }) {
   return rows.length > 0 ? (
-    <div className="space-y-2">
+    <ul className="space-y-2">
       {rows.map((row) => (
-        <div key={row.role} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-          <p className="text-sm font-medium text-white">
-            {getRoleLabel(row.role)} · {row.playerCount}명
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {row.specialists.length > 0 ? row.specialists.join(", ") : "전담 멤버 없음"}
-          </p>
-        </div>
+        <li key={row.role} className="flex items-center leading-6 text-slate-300">
+          {getRoleLabel(row.role)} ·
+          <span className="ml-2 text-slate-400">
+            {row.specialists.length > 0 ? row.specialists.join(", ") : "없음"}
+          </span>
+        </li>
       ))}
-    </div>
+    </ul>
   ) : (
     <EmptyList text="포지션 데이터가 없습니다." />
   );
@@ -864,19 +850,16 @@ function RoleCoverageList({ rows }: { rows: ReadonlyArray<StrategyTeamRoleCovera
 
 function MapFocusList({ rows }: { rows: ReadonlyArray<StrategyTeamMapFocus> }) {
   return rows.length > 0 ? (
-    <div className="space-y-2">
+    <ul className="space-y-2">
       {rows.map((row) => (
-        <div key={row.map} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+        <li key={row.map} className="text-sm leading-6 text-slate-300">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-white">{getMapName(row.map)}</p>
-            <span className="text-xs text-slate-300">{row.averageWinRate}%</span>
+            <span className="text-sm text-slate-300">{row.averageWinRate}%</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            {row.qualifiedPlayerCount}명 표본 · {row.standoutPlayers.join(", ") || "표본 부족"}
-          </p>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   ) : (
     <EmptyList text="맵 표본이 충분하지 않습니다." />
   );
@@ -884,19 +867,19 @@ function MapFocusList({ rows }: { rows: ReadonlyArray<StrategyTeamMapFocus> }) {
 
 function HeroFocusList({ rows }: { rows: ReadonlyArray<StrategyTeamHeroFocus> }) {
   return rows.length > 0 ? (
-    <div className="space-y-2">
+    <ul className="space-y-2">
       {rows.map((row) => (
-        <div key={row.hero} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+        <li key={row.hero} className="text-sm leading-6 text-slate-300">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-white">{getHeroName(row.hero)}</p>
-            <span className="text-xs text-slate-300">{row.averageWinRate}%</span>
+            <HeroIcon hero={row.hero} />
+            <span className="text-sm text-slate-300">{row.averageWinRate}%</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
             {row.playerNicknames.join(", ")} · 총 {row.totalGames}경기
           </p>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   ) : (
     <EmptyList text="팀 시그니처 영웅 데이터가 없습니다." />
   );
@@ -904,21 +887,21 @@ function HeroFocusList({ rows }: { rows: ReadonlyArray<StrategyTeamHeroFocus> })
 
 function SynergyList({ rows }: { rows: ReadonlyArray<StrategyTeamSynergyPair> }) {
   return rows.length > 0 ? (
-    <div className="space-y-2">
+    <ul className="space-y-2">
       {rows.map((row) => (
-        <div key={`${row.playerA}-${row.playerB}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+        <li key={`${row.playerA}-${row.playerB}`} className="text-sm leading-6 text-slate-300">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-white">
               {row.playerA} - {row.playerB}
             </p>
-            <span className="text-xs text-slate-300">{row.sameTeamWinRate}%</span>
+            <span className="text-sm text-slate-300">{row.sameTeamWinRate}%</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
             같은 팀 {row.sameTeamMatches}회 / 함께 나온 매치 {row.encounterMatches}회
           </p>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   ) : (
     <EmptyList text="시너지 표본이 없습니다." />
   );
@@ -932,11 +915,8 @@ function PlayerCard({ player, tone }: { player: StrategyPlayerReport; tone: "all
 
   return (
     <article className={`rounded-[28px] border p-5 ${palette}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-2xl font-bold text-white">{player.playerNickname}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{player.headline}</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="text-2xl font-bold text-white">{player.playerNickname}</div>
         <div className="flex flex-wrap gap-2">
           <StatBadge label="통산" value={`${player.overallStats.winRate}%`} />
           <StatBadge label="최근" value={`${player.recentStats.winRate}%`} />
@@ -948,11 +928,13 @@ function PlayerCard({ player, tone }: { player: StrategyPlayerReport; tone: "all
         <PlayerListBlock title="시그니처 영웅">
           {player.signatureHeroes.length > 0 ? (
             player.signatureHeroes.map((hero) => (
-              <PlayerLine
+              <div
                 key={`${player.playerId}-${hero.hero}`}
-                title={getHeroName(hero.hero)}
-                meta={`${hero.totalGames}경기 · ${hero.winRate}% · 평균 DPM ${hero.averageDpm}`}
-              />
+                className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+              >
+                <HeroIcon hero={hero.hero} />
+                <p className="mt-1 text-xs text-slate-400">{`${hero.totalGames}경기 · ${hero.winRate}% · 평균 DPM ${hero.averageDpm}`}</p>
+              </div>
             ))
           ) : (
             <EmptyList text="영웅 표본이 없습니다." />
@@ -987,8 +969,8 @@ function PlayerCard({ player, tone }: { player: StrategyPlayerReport; tone: "all
             player.recentGames.map((game) => (
               <PlayerLine
                 key={`${player.playerId}-${game.gameId}`}
-                title={`${formatDate(game.playedAt)} · ${getMapName(game.map)}`}
-                meta={`${getHeroName(game.hero)} · ${getResultLabel(game.result)} · DPM ${game.dpm}`}
+                title={`${getMapName(game.map)}`}
+                meta={`${getHeroName(game.hero)} · ${getResultLabel(game.result)}`}
               />
             ))
           ) : (
@@ -1021,7 +1003,7 @@ function PlayerLine({ title, meta }: { title: string; meta: string }) {
 function StatBadge({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-right">
-      <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">{label}</p>
+      <p className="text-sm uppercase tracking-[0.24em] text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-semibold text-white">{value}</p>
     </div>
   );
@@ -1029,6 +1011,27 @@ function StatBadge({ label, value }: { label: string; value: string }) {
 
 function EmptyList({ text }: { text: string }) {
   return <p className="text-sm leading-6 text-slate-400">{text}</p>;
+}
+
+function matchesPlayerQuery(player: PlayerListItem, query: string): boolean {
+  return matchesQuery([player.nickname, player.name], query);
+}
+
+function matchesMapQuery(label: string, value: GameMap, query: string): boolean {
+  return matchesQuery([label, value], query);
+}
+
+function matchesQuery(targets: ReadonlyArray<string>, query: string): boolean {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return targets.some((target) => normalizeSearchText(target).includes(normalizedQuery));
+}
+
+function normalizeSearchText(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, "").trim();
 }
 
 function getRoleLabel(role: HeroRole): string {
@@ -1049,13 +1052,6 @@ function getResultLabel(result: string): string {
   return "무";
 }
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(iso));
-}
-
 function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat("ko-KR", {
     month: "numeric",
@@ -1063,4 +1059,13 @@ function formatDateTime(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+function HeroIcon({ hero }: { hero: Hero }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Image src={HeroImage[hero]} alt={hero} width={24} height={24} />
+      <p className="text-sm font-medium text-white">{getHeroName(hero)}</p>
+    </div>
+  );
 }

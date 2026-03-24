@@ -33,6 +33,7 @@ const MAX_SELECTED_MAPS = 5;
 const RECENT_FORM_GAMES = 8;
 const RECENT_ACTIVITY_GAMES = 5;
 const TEAM_LIST_LIMIT = 4;
+const MIN_STRATEGY_HERO_GAMES = 3;
 const ROLE_ORDER: readonly HeroRole[] = Object.values(HeroRoles);
 
 const ROLE_LABELS: Record<HeroRole, string> = {
@@ -401,7 +402,7 @@ function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerG
 
   const overallStats = buildWinRateStatsFromCounts(overallCounts);
   const recentStats = buildWinRateStatsFromCounts(recentCounts);
-  const totalRoleGames = Array.from(roleCounts.values()).reduce((sum, count) => sum + count, 0);
+  const totalRoleGames = roleCounts.values().reduce((sum, count) => sum + count, 0);
 
   const roleStats = ROLE_ORDER.map((role) => {
     const games = roleCounts.get(role) ?? 0;
@@ -445,18 +446,15 @@ function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerG
   const qualifiedMapStats = allMapStats.filter((item) => item.totalGames >= 2);
 
   const signatureHeroes = (qualifiedHeroStats.length > 0 ? qualifiedHeroStats : allHeroStats)
-    .slice()
-    .sort(compareWinRateWithSample)
+    .toSorted(compareWinRateWithSample)
     .slice(0, 3);
 
   const strongMaps = (qualifiedMapStats.length > 0 ? qualifiedMapStats : allMapStats)
-    .slice()
-    .sort(compareWinRateWithSample)
+    .toSorted(compareWinRateWithSample)
     .slice(0, 3);
 
   const weakMaps = (qualifiedMapStats.length > 0 ? qualifiedMapStats : allMapStats)
-    .slice()
-    .sort((left, right) => compareWinRateWithSample(right, left))
+    .toSorted((left, right) => compareWinRateWithSample(right, left))
     .slice(0, 3);
 
   const recentGames = rows.slice(0, RECENT_ACTIVITY_GAMES).map((row) => ({
@@ -468,7 +466,6 @@ function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerG
     dpm: row.dpm,
   })) satisfies ReadonlyArray<StrategyRecentGameSummary>;
 
-  const headline = buildPlayerHeadline(player.nickname, primaryRole, signatureHeroes[0], strongMaps[0], recentStats);
   const mapHeroStatsByMap = new Map(
     Array.from(mapHeroMap.entries(), ([map, heroStats]) => [
       map,
@@ -490,7 +487,6 @@ function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerG
       strongMaps,
       weakMaps,
       recentGames,
-      headline,
     },
     allHeroStats,
     allMapStats,
@@ -534,12 +530,10 @@ function buildTeamAnalysis(
 
   const mapMetrics = buildTeamMapMetrics(playerAnalyses);
   const preferredMaps = Array.from(mapMetrics.values())
-    .slice()
-    .sort((left, right) => right.averageWinRate - left.averageWinRate)
+    .toSorted((left, right) => right.averageWinRate - left.averageWinRate)
     .slice(0, 3);
   const weakMaps = Array.from(mapMetrics.values())
-    .slice()
-    .sort((left, right) => left.averageWinRate - right.averageWinRate)
+    .toSorted((left, right) => left.averageWinRate - right.averageWinRate)
     .slice(0, 3);
   const signatureHeroes = buildTeamHeroFocuses(playerAnalyses);
   const synergyPairs = buildSynergyPairs(
@@ -910,11 +904,13 @@ function buildHeroRecommendationsForMap(
   >();
 
   for (const analysis of playerAnalyses) {
-    const mapCandidates = (analysis.mapHeroStatsByMap.get(map) ?? []).filter((item) => item.totalGames > 0).slice(0, 2);
-    const candidates = (mapCandidates.length > 0 ? mapCandidates : analysis.report.signatureHeroes.slice(0, 2)).slice(
-      0,
-      2,
-    );
+    const mapCandidates = (analysis.mapHeroStatsByMap.get(map) ?? [])
+      .filter((item) => item.totalGames >= MIN_STRATEGY_HERO_GAMES)
+      .slice(0, 2);
+    const overallCandidates = analysis.report.signatureHeroes
+      .filter((item) => item.totalGames >= MIN_STRATEGY_HERO_GAMES)
+      .slice(0, 2);
+    const candidates = (mapCandidates.length > 0 ? mapCandidates : overallCandidates).slice(0, 2);
     const source: "MAP" | "OVERALL" = mapCandidates.length > 0 ? "MAP" : "OVERALL";
 
     for (const candidate of candidates) {
@@ -951,8 +947,8 @@ function buildHeroRecommendationsForMap(
       source,
       reason:
         source === "MAP"
-          ? `${playerNicknames.join(", ")}이(가) ${getMapName(map)}에서 ${getHeroName(hero)}로 총 ${value.totalGames}경기, 평균 승률 ${averageWinRate}%입니다.`
-          : `${playerNicknames.join(", ")}이(가) ${getHeroName(hero)}를 주력으로 쓰며 통산 ${value.totalGames}경기, 평균 승률 ${averageWinRate}%를 기록했습니다.`,
+          ? `${playerNicknames.join(", ")}이(가) 이 맵에서 ${averageWinRate}% 승률(${value.totalGames}경기)입니다.`
+          : `${playerNicknames.join(", ")}이(가) 주력으로 쓰며 ${averageWinRate}% 승률(${value.totalGames}경기)입니다.`,
     } satisfies StrategyHeroRecommendation;
   })
     .toSorted((left, right) => compareHeroRecommendation(left, right))
@@ -972,13 +968,13 @@ function buildTeamSummaryLines(input: {
 
   if (input.preferredMaps[0]) {
     lines.push(
-      `${teamLabel} 최고 선호 맵은 ${getMapName(input.preferredMaps[0].map)}입니다. 평균 승률 ${input.preferredMaps[0].averageWinRate}%입니다.`,
+      `최고 선호 맵은 ${getMapName(input.preferredMaps[0].map)}입니다. (평균 승률 ${input.preferredMaps[0].averageWinRate}%)`,
     );
   }
 
   if (input.signatureHeroes[0]) {
     lines.push(
-      `${teamLabel} 핵심 시그니처는 ${getHeroName(input.signatureHeroes[0].hero)}이며 ${input.signatureHeroes[0].playerNicknames.join(", ")} 중심으로 나옵니다.`,
+      `핵심 시그니처는 ${getHeroName(input.signatureHeroes[0].hero)}입니다. (${input.signatureHeroes[0].playerNicknames.join(", ")})`,
     );
   }
 
@@ -1089,34 +1085,6 @@ function compareHeroRecommendation(left: StrategyHeroRecommendation, right: Stra
 function scoreHeroRecommendation(item: StrategyHeroRecommendation): number {
   const sourceBonus = item.source === "MAP" ? 12 : 0;
   return item.samplePlayers * 20 + item.averageWinRate + Math.min(item.totalGames, 10) * 2 + sourceBonus;
-}
-
-function buildPlayerHeadline(
-  nickname: string,
-  primaryRole: HeroRole | null,
-  signatureHero: StrategyHeroSummary | undefined,
-  strongMap: StrategyMapSummary | undefined,
-  recentStats: StrategyPlayerReport["recentStats"],
-): string {
-  const parts = [`${nickname}`];
-
-  if (primaryRole) {
-    parts.push(`주 역할 ${ROLE_LABELS[primaryRole]}`);
-  }
-
-  if (signatureHero) {
-    parts.push(`${getHeroName(signatureHero.hero)} ${signatureHero.totalGames}경기 ${signatureHero.winRate}%`);
-  }
-
-  if (strongMap) {
-    parts.push(`${getMapName(strongMap.map)} ${strongMap.winRate}%`);
-  }
-
-  if (recentStats.totalGames > 0) {
-    parts.push(`최근 ${recentStats.totalGames}경기 ${recentStats.winRate}%`);
-  }
-
-  return parts.join(" · ");
 }
 
 function compareWinRateWithSample(
