@@ -26,7 +26,7 @@ import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import { GameMap, Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { GameResult } from "@/generated/prisma/client";
-import { round } from "es-toolkit";
+import { groupBy, round, uniq } from "es-toolkit";
 
 const MAX_TEAM_SIZE = 5;
 const MAX_SELECTED_MAPS = 5;
@@ -255,14 +255,10 @@ export async function buildStrategyReport(
     }),
   ]);
 
-  const rowsByPlayer = groupRowsByPlayer(playerGameRows);
+  const rowsByPlayer = groupBy(playerGameRows, (row) => row.playerId);
 
-  const allyPlayerAnalyses = allyPlayers.map((player) =>
-    buildPlayerAnalysis(player, rowsByPlayer.get(player.id) ?? []),
-  );
-  const enemyPlayerAnalyses = enemyPlayers.map((player) =>
-    buildPlayerAnalysis(player, rowsByPlayer.get(player.id) ?? []),
-  );
+  const allyPlayerAnalyses = allyPlayers.map((player) => buildPlayerAnalysis(player, rowsByPlayer[player.id] ?? []));
+  const enemyPlayerAnalyses = enemyPlayers.map((player) => buildPlayerAnalysis(player, rowsByPlayer[player.id] ?? []));
 
   const allyTeam = buildTeamAnalysis("ALLY", allyPlayerAnalyses, relatedMatches);
   const enemyTeam = buildTeamAnalysis("ENEMY", enemyPlayerAnalyses, relatedMatches);
@@ -287,7 +283,8 @@ export async function buildStrategyReport(
 }
 
 function normalizeTeamNicknames(values: ReadonlyArray<string>, label: string): string[] {
-  const nicknames = values.map((value) => value.trim()).filter(Boolean);
+  const trimmedNicknames = values.map((value) => value.trim()).filter(Boolean);
+  const nicknames = uniq(values.map((value) => value.trim()).filter(Boolean));
 
   if (nicknames.length === 0) {
     throw new StrategyReportError(`${label} 멤버를 1명 이상 선택해주세요.`);
@@ -297,7 +294,7 @@ function normalizeTeamNicknames(values: ReadonlyArray<string>, label: string): s
     throw new StrategyReportError(`${label}은 최대 ${MAX_TEAM_SIZE}명까지 선택할 수 있습니다.`);
   }
 
-  if (new Set(nicknames).size !== nicknames.length) {
+  if (nicknames.length !== trimmedNicknames.length) {
     throw new StrategyReportError(`${label}에 중복된 닉네임이 있습니다.`);
   }
 
@@ -320,18 +317,6 @@ function normalizeSelectedMaps(values: ReadonlyArray<GameMap>): GameMap[] {
   }
 
   return maps;
-}
-
-function groupRowsByPlayer(rows: ReadonlyArray<PlayerGameRow>): Map<string, PlayerGameRow[]> {
-  const result = new Map<string, PlayerGameRow[]>();
-
-  for (const row of rows) {
-    const current = result.get(row.playerId) ?? [];
-    current.push(row);
-    result.set(row.playerId, current);
-  }
-
-  return result;
 }
 
 function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerGameRow>): PlayerAnalysis {
@@ -446,7 +431,7 @@ function buildPlayerAnalysis(player: SelectedPlayer, rows: ReadonlyArray<PlayerG
   const qualifiedMapStats = allMapStats.filter((item) => item.totalGames >= 2);
 
   const signatureHeroes = (qualifiedHeroStats.length > 0 ? qualifiedHeroStats : allHeroStats)
-    .toSorted(compareWinRateWithSample)
+    .toSorted(compareSignatureHeroSummary)
     .slice(0, 3);
 
   const strongMaps = (qualifiedMapStats.length > 0 ? qualifiedMapStats : allMapStats)
@@ -658,12 +643,7 @@ function buildTeamHeroFocuses(playerAnalyses: ReadonlyArray<PlayerAnalysis>): St
     totalGames: value.totalGames,
     averageWinRate: value.totalGames > 0 ? round(value.weightedWinRate / value.totalGames, 1) : 0,
   }))
-    .toSorted(
-      (left, right) =>
-        right.playerNicknames.length - left.playerNicknames.length ||
-        right.averageWinRate - left.averageWinRate ||
-        right.totalGames - left.totalGames,
-    )
+    .toSorted(compareTeamHeroFocus)
     .slice(0, TEAM_LIST_LIMIT);
 }
 
@@ -1096,8 +1076,41 @@ function compareWinRateWithSample(
   return rightScore - leftScore || right.totalGames - left.totalGames || right.winRate - left.winRate;
 }
 
+function compareSignatureHeroSummary(left: StrategyHeroSummary, right: StrategyHeroSummary): number {
+  return (
+    right.totalGames - left.totalGames ||
+    right.winRate - left.winRate ||
+    right.averageDpm - left.averageDpm ||
+    compareRecentActivity(right.lastPlayedAt, left.lastPlayedAt)
+  );
+}
+
+function compareTeamHeroFocus(left: StrategyTeamHeroFocus, right: StrategyTeamHeroFocus): number {
+  return (
+    right.totalGames - left.totalGames ||
+    right.averageWinRate - left.averageWinRate ||
+    right.playerNicknames.length - left.playerNicknames.length
+  );
+}
+
 function scoreWithSample(winRate: number, totalGames: number): number {
   return winRate + Math.min(totalGames, 10) * 3;
+}
+
+function compareRecentActivity(left: string | null, right: string | null): number {
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return -1;
+  }
+
+  if (!right) {
+    return 1;
+  }
+
+  return new Date(left).getTime() - new Date(right).getTime();
 }
 
 function getMapName(map: GameMap): string {
