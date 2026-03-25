@@ -1,9 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import type { TalentTier } from "@/domain/hots/models";
-import { prisma } from "@/config/prisma";
-
-type SqlExecutor = Pick<typeof prisma, "$executeRaw">;
 
 type GameTeamMemberTalentInsert = {
   readonly gameTeamMemberId: string;
@@ -13,32 +10,30 @@ type GameTeamMemberTalentInsert = {
 };
 
 export async function insertGameTeamMemberTalents(
-  db: SqlExecutor,
+  tx: Prisma.TransactionClient,
   talents: ReadonlyArray<GameTeamMemberTalentInsert>,
 ): Promise<void> {
   if (talents.length === 0) {
     return;
   }
 
-  const rows = talents.map((talent) => ({
-    id: randomUUID(),
-    ...talent,
-  }));
-
-  await prisma.gameTeamMemberTalent.createMany({
-    data: rows,
+  await tx.gameTeamMemberTalent.createMany({
+    data: talents.map((talent) => ({
+      id: randomUUID(),
+      ...talent,
+    })),
   });
 }
 
 export async function deleteGameTeamMemberTalents(
-  db: SqlExecutor,
+  db: Prisma.TransactionClient,
   gameTeamMemberIds: ReadonlyArray<string>,
 ): Promise<void> {
   if (gameTeamMemberIds.length === 0) {
     return;
   }
 
-  await prisma.gameTeamMemberTalent.deleteMany({
+  await db.gameTeamMemberTalent.deleteMany({
     where: {
       gameTeamMemberId: {
         in: gameTeamMemberIds as string[],
