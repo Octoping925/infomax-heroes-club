@@ -5,6 +5,7 @@ import { Hero } from "@/domain/hots/models";
 import { HeroCounterPickResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 type ResultCounts = {
   total: number;
@@ -20,8 +21,17 @@ const MAX_COUNTERS_PER_HERO = 5;
  * 카운터픽 통계 조회
  * GET /api/stats/heroes/counter-picks
  */
-export async function GET(): Promise<NextResponse<HeroCounterPickResponse[]>> {
+export async function GET(request: Request): Promise<NextResponse<HeroCounterPickResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const games = await prisma.game.findMany({
+    where: playedAt
+      ? {
+          match: {
+            playedAt,
+          },
+        }
+      : undefined,
     select: {
       teams: {
         select: {

@@ -9,13 +9,27 @@ import {
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { GameMap, Hero } from "@/domain/hots/models";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 /**
  * 맵별 영웅 승률 조회
  * GET /api/stats/maps/hero
  */
-export async function GET(): Promise<NextResponse<MapHeroWinRateResponse[]>> {
+export async function GET(request: Request): Promise<NextResponse<MapHeroWinRateResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const gameParticipations = await prisma.gameTeamMember.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       hero: true,
       gameTeam: {

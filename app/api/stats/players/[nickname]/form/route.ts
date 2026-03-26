@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerFormPointResponse, PlayerFormTrendResponse } from "@/app/api/stats/types";
-import { parseClampedInteger } from "@/app/api/stats/utils/query";
+import { buildPlayedAtYearFilter, parseClampedInteger, parseYearParam } from "@/app/api/stats/utils/query";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -22,6 +22,8 @@ export async function GET(
     fallback: 20,
     round: "trunc",
   });
+  const year = parseYearParam(request.nextUrl.searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
 
   const player = await prisma.player.findUnique({
     where: { nickname },
@@ -37,7 +39,20 @@ export async function GET(
   }
 
   const rows = await prisma.gameTeamMember.findMany({
-    where: { playerId: player.id },
+    where: {
+      playerId: player.id,
+      ...(playedAt
+        ? {
+            gameTeam: {
+              game: {
+                match: {
+                  playedAt,
+                },
+              },
+            },
+          }
+        : {}),
+    },
     select: {
       kills: true,
       deaths: true,

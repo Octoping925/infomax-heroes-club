@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { type LunchDinnerUnit, statsQueryKeys } from "@/config/query-keys";
-import { SITE_URL } from "@/config/url";
+import { buildStatsUrl } from "../utils/build-stats-url";
+import { useStatsYear } from "../hooks/useStatsYearFilter";
 
 type DuoRow = {
   readonly duoName: string;
@@ -23,6 +24,8 @@ const DEFAULT_LIMIT = 50;
  * '환상의 듀오' 랭킹 (내전 단위)
  */
 export function FantasyDuoRankingChart() {
+  const { selectedYear } = useStatsYear();
+  const year = selectedYear ?? undefined;
   const [unit, setUnit] = useState<LunchDinnerUnit>("game");
   const [minCountByUnit, setMinCountByUnit] = useState<Record<LunchDinnerUnit, number>>({
     match: DEFAULT_MIN_MATCHES,
@@ -43,13 +46,17 @@ export function FantasyDuoRankingChart() {
       unit,
       minCount,
       limit,
+      year,
     }),
     queryFn: async () => {
-      const url = new URL(`${SITE_URL}/api/stats/players/fantasy-duo`);
-      url.searchParams.set("unit", unit);
-      url.searchParams.set("minCount", String(minCount));
-      url.searchParams.set("limit", String(limit));
-      const response = await fetch(url);
+      const response = await fetch(
+        buildStatsUrl("/api/stats/players/fantasy-duo", {
+          unit,
+          minCount,
+          limit,
+          year,
+        }),
+      );
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }

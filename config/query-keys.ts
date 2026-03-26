@@ -1,17 +1,21 @@
 export type LunchDinnerUnit = "game" | "match";
 
-export interface FantasyDuoParams {
+export interface StatsYearParams {
+  readonly year?: number;
+}
+
+export interface FantasyDuoParams extends StatsYearParams {
   readonly unit: LunchDinnerUnit;
   readonly minCount: number;
   readonly limit: number;
 }
 
-export interface HeroDuoParams {
+export interface HeroDuoParams extends StatsYearParams {
   readonly minCount: number;
   readonly limit: number;
 }
 
-export interface RivalryParams {
+export interface RivalryParams extends StatsYearParams {
   readonly minMatches: number;
   readonly limit: number;
   readonly takeMatches: number;
@@ -25,26 +29,27 @@ export const statsQueryKeys = {
   },
   stats: {
     heroes: {
-      tier: () => ["stats", "heroes", "tier"],
-      counterPicks: () => ["stats", "heroes", "counter-picks"],
+      tier: (year?: number) => ["stats", "heroes", "tier", year],
+      counterPicks: (year?: number) => ["stats", "heroes", "counter-picks", year],
       fantasyDuo: (params: HeroDuoParams) => ["stats", "heroes", "fantasy-duo", params],
     },
     players: {
       winRate: (nickname: string) => ["stats", "players", "win-rate", nickname],
-      heroStats: (nickname: string) => ["stats", "players", "hero-stats", nickname],
-      formTrend: (nickname: string, take: number) => ["stats", "players", "form-trend", nickname, take],
-      lunchDinner: (unit: LunchDinnerUnit) => ["stats", "players", "lunch-dinner", unit],
+      heroStats: (nickname: string, year?: number) => ["stats", "players", "hero-stats", nickname, year],
+      formTrend: (nickname: string, take: number, year?: number) =>
+        ["stats", "players", "form-trend", nickname, take, year],
+      lunchDinner: (unit: LunchDinnerUnit, year?: number) => ["stats", "players", "lunch-dinner", unit, year],
       fantasyDuo: (params: FantasyDuoParams) => ["stats", "players", "fantasy-duo", params],
       matchWinRate: () => ["stats", "players", "match-win-rate"],
-      overallWinRate: () => ["stats", "players", "overall-win-rate"],
+      overallWinRate: (year?: number) => ["stats", "players", "overall-win-rate", year],
     },
-    maps: () => ["stats", "maps"],
-    mapsHero: () => ["stats", "maps", "hero"],
-    teamSwitch: () => ["stats", "team-switch"],
-    teamComposer: () => ["stats", "team-composer"],
+    maps: (year?: number) => ["stats", "maps", year],
+    mapsHero: (year?: number) => ["stats", "maps", "hero", year],
+    teamSwitch: (year?: number) => ["stats", "team-switch", year],
+    teamComposer: (year?: number) => ["stats", "team-composer", year],
     rankings: {
       lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],
-      avgStats: () => ["stats", "rankings", "avg-stats"],
+      avgStats: (year?: number) => ["stats", "rankings", "avg-stats", year],
     },
     rivalries: (params: RivalryParams) => ["stats", "rivalries", params],
   },

@@ -9,6 +9,7 @@ import {
 } from "@/app/api/stats/utils/stats";
 import { GameResult } from "@/generated/prisma/enums";
 import { fetchPlayerMap } from "../utils/player";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 /**
  * 매치팀과 다른 게임팀에서 승률이 좋은 사람 조회
@@ -16,10 +17,23 @@ import { fetchPlayerMap } from "../utils/player";
  *
  * 초기 편성(MatchTeam)과 다른 팀(GameTeam)에서 뛴 경기의 승률을 비교합니다.
  */
-export async function GET(): Promise<NextResponse<TeamSwitchWinRateResponse[]>> {
+export async function GET(request: Request): Promise<NextResponse<TeamSwitchWinRateResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const [players, participations, matchTeamMemberships] = await Promise.all([
     fetchPlayerMap(),
     prisma.gameTeamMember.findMany({
+      where: playedAt
+        ? {
+            gameTeam: {
+              game: {
+                match: {
+                  playedAt,
+                },
+              },
+            },
+          }
+        : undefined,
       select: {
         playerId: true,
         gameTeam: {
@@ -36,6 +50,15 @@ export async function GET(): Promise<NextResponse<TeamSwitchWinRateResponse[]>> 
       },
     }),
     prisma.matchTeamMember.findMany({
+      where: playedAt
+        ? {
+            matchTeam: {
+              match: {
+                playedAt,
+              },
+            },
+          }
+        : undefined,
       select: {
         playerId: true,
         matchTeam: {

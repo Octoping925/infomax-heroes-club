@@ -10,6 +10,7 @@ import {
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { round } from "es-toolkit";
+import { buildPlayedAtYearFilter } from "./query";
 
 export type LunchDinnerUnit = "game" | "match";
 
@@ -37,11 +38,12 @@ export function parseLunchDinnerUnit(input: string | null): LunchDinnerUnit {
  */
 export async function fetchPlayerLunchDinnerWinRate(
   unit: LunchDinnerUnit,
+  year?: number,
 ): Promise<PlayerLunchDinnerWinRateResponse[]> {
   const playerMap = await fetchPlayerMap();
 
   const accumulatorMap =
-    unit === "match" ? await buildAccumulatorByMatch(playerMap) : await buildAccumulatorByGame(playerMap);
+    unit === "match" ? await buildAccumulatorByMatch(playerMap, year) : await buildAccumulatorByGame(playerMap, year);
 
   return Array.from(accumulatorMap.values(), (acc) => {
     const lunchStats = buildWinRateStatsFromCounts(acc.lunch);
@@ -60,8 +62,20 @@ export async function fetchPlayerLunchDinnerWinRate(
   });
 }
 
-async function buildAccumulatorByGame(playerMap: PlayerMap): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByGame(playerMap: PlayerMap, year?: number): Promise<Map<string, PlayerAccumulator>> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const participations = await prisma.gameTeamMember.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       playerId: true,
       gameTeam: {
@@ -105,8 +119,18 @@ async function buildAccumulatorByGame(playerMap: PlayerMap): Promise<Map<string,
   return accumulatorMap;
 }
 
-async function buildAccumulatorByMatch(playerMap: PlayerMap): Promise<Map<string, PlayerAccumulator>> {
+async function buildAccumulatorByMatch(playerMap: PlayerMap, year?: number): Promise<Map<string, PlayerAccumulator>> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const memberships = await prisma.matchTeamMember.findMany({
+    where: playedAt
+      ? {
+          matchTeam: {
+            match: {
+              playedAt,
+            },
+          },
+        }
+      : undefined,
     select: {
       playerId: true,
       matchTeam: {

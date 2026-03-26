@@ -5,6 +5,34 @@ export function parseNumber(input: string | null): number | undefined {
   return parsed;
 }
 
+const STATS_YEAR_PATTERN = /^\d{4}$/;
+const KOREA_UTC_OFFSET_HOURS = 9;
+const HOUR_IN_MS = 60 * 60 * 1000;
+
+export function parseYearParam(input: string | null | undefined): number | undefined {
+  if (input === null || input === undefined) return undefined;
+  if (!STATS_YEAR_PATTERN.test(input)) return undefined;
+
+  const parsed = Number(input);
+  if (!Number.isInteger(parsed)) return undefined;
+  return parsed;
+}
+
+export function buildPlayedAtYearFilter(year: number | undefined): { readonly gte: Date; readonly lt: Date } | undefined {
+  if (year === undefined) {
+    return undefined;
+  }
+
+  return {
+    gte: new Date(Date.UTC(year, 0, 1, -KOREA_UTC_OFFSET_HOURS)),
+    lt: new Date(Date.UTC(year + 1, 0, 1, -KOREA_UTC_OFFSET_HOURS)),
+  };
+}
+
+export function getKoreanYear(date: Date): number {
+  return new Date(date.getTime() + KOREA_UTC_OFFSET_HOURS * HOUR_IN_MS).getUTCFullYear();
+}
+
 type ParseClampedIntegerOptions = {
   readonly min: number;
   readonly max: number;

@@ -2,18 +2,19 @@ import { PlayerCombinedWinRateResponse, PlayerLunchDinnerWinRateResponse } from 
 import { LunchDinnerUnit } from "@/app/api/stats/utils/lunch-dinner";
 import { statsQueryKeys } from "@/config/query-keys";
 import { useSuspenseQueries } from "@tanstack/react-query";
-import { SITE_URL } from "@/config/url";
+import { buildStatsUrl } from "../utils/build-stats-url";
+import { useStatsYear } from "./useStatsYearFilter";
 
-async function fetchOverallWinRate() {
-  const response = await fetch(`${SITE_URL}/api/stats/players/overall-win-rate`);
+async function fetchOverallWinRate(year: number | undefined) {
+  const response = await fetch(buildStatsUrl("/api/stats/players/overall-win-rate", { year }));
   if (!response.ok) {
     throw new Error("승률 데이터를 불러오는데 실패했습니다.");
   }
   return (await response.json()) as PlayerCombinedWinRateResponse[];
 }
 
-async function fetchLunchDinnerWinRate(unit: LunchDinnerUnit) {
-  const response = await fetch(`${SITE_URL}/api/stats/players/lunch-dinner?unit=${unit}`);
+async function fetchLunchDinnerWinRate(unit: LunchDinnerUnit, year: number | undefined) {
+  const response = await fetch(buildStatsUrl("/api/stats/players/lunch-dinner", { unit, year }));
   if (!response.ok) {
     throw new Error("데이터를 불러오는데 실패했습니다.");
   }
@@ -21,19 +22,21 @@ async function fetchLunchDinnerWinRate(unit: LunchDinnerUnit) {
 }
 
 export function usePlayerCombinedWinRate() {
+  const { selectedYear } = useStatsYear();
+  const year = selectedYear ?? undefined;
   const [{ data: overallData }, { data: matchData }, { data: gameData }] = useSuspenseQueries({
     queries: [
       {
-        queryKey: statsQueryKeys.stats.players.overallWinRate(),
-        queryFn: fetchOverallWinRate,
+        queryKey: statsQueryKeys.stats.players.overallWinRate(year),
+        queryFn: () => fetchOverallWinRate(year),
       },
       {
-        queryKey: statsQueryKeys.stats.players.lunchDinner("match"),
-        queryFn: () => fetchLunchDinnerWinRate("match"),
+        queryKey: statsQueryKeys.stats.players.lunchDinner("match", year),
+        queryFn: () => fetchLunchDinnerWinRate("match", year),
       },
       {
-        queryKey: statsQueryKeys.stats.players.lunchDinner("game"),
-        queryFn: () => fetchLunchDinnerWinRate("game"),
+        queryKey: statsQueryKeys.stats.players.lunchDinner("game", year),
+        queryFn: () => fetchLunchDinnerWinRate("game", year),
       },
     ],
   });

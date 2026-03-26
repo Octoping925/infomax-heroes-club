@@ -9,14 +9,28 @@ import {
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { fetchPlayerMap, PlayerMap } from "../utils/player";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 /**
  * 맵별 플레이어 승률 조회
  * GET /api/stats/maps
  */
-export async function GET(): Promise<NextResponse<MapPlayerWinRateResponse[]>> {
+export async function GET(request: Request): Promise<NextResponse<MapPlayerWinRateResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const playerMap = await fetchPlayerMap();
   const gameParticipations = await prisma.gameTeamMember.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       playerId: true,
       gameTeam: {

@@ -8,13 +8,15 @@ import { groupBy } from "@/utils/groupBy";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 /**
  * 영웅 티어리스트 통계 조회
  * GET /api/stats/heroes/popular
  */
-export async function GET(): Promise<NextResponse<HeroTierResponse[]>> {
-  const [pickStats, banStats] = await Promise.all([fetchPickStats(), fetchBanStats()]);
+export async function GET(request: Request): Promise<NextResponse<HeroTierResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const [pickStats, banStats] = await Promise.all([fetchPickStats(year), fetchBanStats(year)]);
   const heroTiers = buildHeroTiers(pickStats, banStats);
   return NextResponse.json(heroTiers);
 }
@@ -25,8 +27,20 @@ type PickStat = {
   gameId: string;
 };
 
-async function fetchPickStats(): Promise<PickStat[]> {
+async function fetchPickStats(year?: number): Promise<PickStat[]> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const picks = await prisma.gameTeamMember.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       hero: true,
       gameTeam: {
@@ -50,8 +64,20 @@ type BanStats = {
   gamesWithBanCount: number;
 };
 
-async function fetchBanStats(): Promise<BanStats> {
+async function fetchBanStats(year?: number): Promise<BanStats> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const bans = await prisma.gameTeamBan.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       hero: true,
       gameTeam: {

@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { round } from "es-toolkit";
+import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 interface Props {
   readonly nickname: string;
@@ -45,6 +46,8 @@ const SCORE_WEIGHT = {
 
 export function PlayerFormTrendChart({ nickname }: Props) {
   const { data, error } = usePlayerFormTrend(nickname, TAKE_GAMES);
+  const { selectedYear } = useStatsYear();
+  const yearLabel = formatStatsYear(selectedYear);
 
   const chartData = useMemo<ChartPoint[]>(() => {
     const sortedPoints = data.points.toSorted(
@@ -119,7 +122,7 @@ export function PlayerFormTrendChart({ nickname }: Props) {
     return (
       <div className="rounded-xl border border-white/10 bg-black/20 p-6">
         <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">폼 점수</h3>
-        <p className="mt-3 text-gray-400">표시할 경기 데이터가 없습니다.</p>
+        <p className="mt-3 text-gray-400">{yearLabel} 기준 표시할 경기 데이터가 없습니다.</p>
       </div>
     );
   }
@@ -128,7 +131,9 @@ export function PlayerFormTrendChart({ nickname }: Props) {
     <section className="rounded-xl border border-white/10 bg-black/20 px-4 py-2 space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="text-md font-bold uppercase tracking-wider">폼 점수 (최근 20경기)</h3>
+          <h3 className="text-md font-bold uppercase tracking-wider">
+            폼 점수 ({yearLabel} 최근 {TAKE_GAMES}경기)
+          </h3>
           <p className="text-sm text-gray-400 mt-1">승률 50% + KDA 30% + DPM 20%</p>
         </div>
         <div className="rounded-md border border-white/15 bg-white/5 px-3 py-2">

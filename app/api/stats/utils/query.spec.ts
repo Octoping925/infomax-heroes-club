@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPlayedAtYearFilter,
+  getKoreanYear,
   parseBoolean,
   parseClampedInteger,
   parseClampedIntegerParam,
   parseEnumParam,
   parseNumber,
+  parseYearParam,
 } from "./query";
 
 describe("stats query 유틸", () => {
@@ -41,5 +44,24 @@ describe("stats query 유틸", () => {
     expect(parseBoolean("false")).toBe(false);
     expect(parseBoolean("yes")).toBeUndefined();
     expect(parseBoolean(null)).toBeUndefined();
+  });
+
+  it("parseYearParam은 유효한 4자리 연도만 통과시킨다", () => {
+    expect(parseYearParam("2026")).toBe(2026);
+    expect(parseYearParam("26")).toBeUndefined();
+    expect(parseYearParam("202A")).toBeUndefined();
+    expect(parseYearParam(undefined)).toBeUndefined();
+  });
+
+  it("buildPlayedAtYearFilter는 KST 기준 연도 범위를 만든다", () => {
+    expect(buildPlayedAtYearFilter(2026)).toEqual({
+      gte: new Date("2025-12-31T15:00:00.000Z"),
+      lt: new Date("2026-12-31T15:00:00.000Z"),
+    });
+  });
+
+  it("getKoreanYear는 UTC 경계에서도 KST 연도를 계산한다", () => {
+    expect(getKoreanYear(new Date("2025-12-31T14:59:59.999Z"))).toBe(2025);
+    expect(getKoreanYear(new Date("2025-12-31T15:00:00.000Z"))).toBe(2026);
   });
 });

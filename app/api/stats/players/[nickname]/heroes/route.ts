@@ -9,6 +9,7 @@ import {
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { GameMap, Hero } from "@/domain/hots/models";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 type RouteParams = {
   params: Promise<{ nickname: string }>;
@@ -19,10 +20,12 @@ type RouteParams = {
  * GET /api/stats/players/[nickname]/heroes
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteParams,
 ): Promise<NextResponse<PlayerHeroWinRateResponse | { error: string }>> {
   const { nickname } = await params;
+  const year = parseYearParam(request.nextUrl.searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
 
   const player = await prisma.player.findUnique({
     where: { nickname: nickname },
@@ -38,7 +41,20 @@ export async function GET(
   }
 
   const gameResults = await prisma.gameTeamMember.findMany({
-    where: { playerId: player.id },
+    where: {
+      playerId: player.id,
+      ...(playedAt
+        ? {
+            gameTeam: {
+              game: {
+                match: {
+                  playedAt,
+                },
+              },
+            },
+          }
+        : {}),
+    },
     select: {
       hero: true,
       gameTeam: {

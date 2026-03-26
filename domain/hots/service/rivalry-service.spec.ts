@@ -258,6 +258,94 @@ describe("fetchRivalries", () => {
     expect(result.items[0]?.breakdown.matchesCount).toBe(1);
   });
 
+  it("선택 연도에 맞는 playedAt 필터를 Prisma 조회에 전달한다", async () => {
+    const matches = [
+      makeMatch({
+        id: "m-2025",
+        playedAt: "2025-12-30T15:00:00.000Z",
+        winnerTeamNumber: 1,
+      }),
+      makeMatch({
+        id: "m-2026",
+        playedAt: "2026-02-10T00:00:00.000Z",
+        winnerTeamNumber: 1,
+      }),
+    ];
+
+    const prisma = {
+      match: {
+        findMany: vi.fn().mockImplementation(async (args?: { where?: { playedAt?: { gte: Date; lt: Date } } }) => {
+          const playedAt = args?.where?.playedAt;
+          if (!playedAt) {
+            return matches;
+          }
+
+          return matches.filter(
+            (match) => match.playedAt >= playedAt.gte && match.playedAt < playedAt.lt,
+          );
+        }),
+      },
+      matchTeamMember: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            playerId: "a",
+            matchTeam: {
+              teamNumber: 1,
+              match: {
+                winnerTeamNumber: 1,
+              },
+            },
+          },
+          {
+            playerId: "b",
+            matchTeam: {
+              teamNumber: 2,
+              match: {
+                winnerTeamNumber: 1,
+              },
+            },
+          },
+        ]),
+      },
+    };
+
+    const result = await fetchRivalries(prisma as never, {
+      minMatches: 1,
+      limit: 10,
+      takeMatches: 10,
+      includeInsufficientSample: true,
+      year: 2026,
+    });
+
+    expect(prisma.match.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          playedAt: {
+            gte: new Date("2025-12-31T15:00:00.000Z"),
+            lt: new Date("2026-12-31T15:00:00.000Z"),
+          },
+        },
+      }),
+    );
+    expect(prisma.matchTeamMember.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          matchTeam: {
+            match: {
+              playedAt: {
+                gte: new Date("2025-12-31T15:00:00.000Z"),
+                lt: new Date("2026-12-31T15:00:00.000Z"),
+              },
+            },
+          },
+        },
+      }),
+    );
+    expect(result.params.year).toBe(2026);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.lastPlayedAt).toBe("2026-02-10T00:00:00.000Z");
+  });
+
   it("최근 5경기 보너스는 결정전적 3:2/2:3일 때만 반영된다", async () => {
     const prisma = createPrismaMock([
       makeMatch({

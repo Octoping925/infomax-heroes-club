@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerAverageStatsResponse, calculateAverage } from "@/app/api/stats/types";
 import { fetchPlayerMap } from "../../utils/player";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -21,9 +22,22 @@ type PlayerAccumulator = {
  * 평균 스탯 랭킹 조회 (게임 단위)
  * GET /api/stats/rankings/avg-stats
  */
-export async function GET(): Promise<NextResponse<PlayerAverageStatsResponse[]>> {
+export async function GET(request: Request): Promise<NextResponse<PlayerAverageStatsResponse[]>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const playerMap = await fetchPlayerMap();
   const participations = await prisma.gameTeamMember.findMany({
+    where: playedAt
+      ? {
+          gameTeam: {
+            game: {
+              match: {
+                playedAt,
+              },
+            },
+          },
+        }
+      : undefined,
     select: {
       playerId: true,
       kills: true,

@@ -6,6 +6,7 @@ import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
 import { round } from "es-toolkit";
+import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 const ROLE_ORDER = Object.values(HeroRoles);
 const ROLE_LABEL: Record<HeroRole, string> = {
@@ -56,6 +57,7 @@ const RECOMMENDATION_STRATEGIES: readonly Strategy[] = [
 
 export function TeamComposerTab() {
   const { data, error } = useTeamComposerData();
+  const { selectedYear } = useStatsYear();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[] | null>(null);
 
@@ -171,7 +173,8 @@ export function TeamComposerTab() {
       <div className="space-y-2">
         <h3 className="text-xl font-bold text-white">팀 편성 도우미</h3>
         <p className="text-sm text-gray-300">
-          전체/최근 {data.recentMatchCount}회 기준 동팀 경험과 포지션 성향을 함께 보며 팀을 맞출 수 있습니다.
+          {formatStatsYear(selectedYear)} 전체/최근 최대 {data.recentMatchCount}회 기준 동팀 경험과 포지션 성향을 함께
+          보며 팀을 맞출 수 있습니다.
         </p>
       </div>
 

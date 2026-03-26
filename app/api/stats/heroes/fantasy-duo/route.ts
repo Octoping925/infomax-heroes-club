@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { HeroDuoWinRateResponse } from "@/app/api/stats/types";
-import { parseClampedIntegerParam } from "@/app/api/stats/utils/query";
+import { buildPlayedAtYearFilter, parseClampedIntegerParam, parseYearParam } from "@/app/api/stats/utils/query";
 import { buildWinRateStatsFromCounts, calculateTotalGames, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { Hero } from "@/domain/hots/models";
 
@@ -25,9 +25,19 @@ const MAX_LIMIT = 200;
  * - gameTeam.result 기준으로 승/패/무를 계산합니다.
  */
 export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResponse[]>> {
-  const { limit, minCount } = parseQueryParams(req.url);
+  const { limit, minCount, year } = parseQueryParams(req.url);
+  const playedAt = buildPlayedAtYearFilter(year);
 
   const gameTeams = await prisma.gameTeam.findMany({
+    where: playedAt
+      ? {
+          game: {
+            match: {
+              playedAt,
+            },
+          },
+        }
+      : undefined,
     select: {
       result: true,
       members: {
@@ -96,8 +106,10 @@ export async function GET(req: Request): Promise<NextResponse<HeroDuoWinRateResp
 function parseQueryParams(url: string): {
   readonly limit: number;
   readonly minCount: number;
+  readonly year?: number;
 } {
   const { searchParams } = new URL(url);
+  const year = parseYearParam(searchParams.get("year"));
   const limit = parseClampedIntegerParam(searchParams, {
     keys: ["limit"],
     min: 1,
@@ -111,7 +123,7 @@ function parseQueryParams(url: string): {
     fallback: DEFAULT_MIN_GAMES,
   });
 
-  return { limit, minCount };
+  return { limit, minCount, year };
 }
 
 function buildDuoKey(heroA: Hero, heroB: Hero): string {

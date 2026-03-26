@@ -11,6 +11,7 @@ import {
   TooltipContentProps,
 } from "recharts";
 import { MAP_CATALOG } from "@/domain/hots/constants";
+import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 interface Props {
   nickname: string;
 }
@@ -26,6 +27,7 @@ type ChartData = {
 
 export function PersonalMapWinRateChart({ nickname }: Props) {
   const { data } = useMapPlayerWinRate();
+  const { selectedYear } = useStatsYear();
 
   const chartData: ChartData[] = data
     .map<ChartData | null>((curr) => {
@@ -45,6 +47,15 @@ export function PersonalMapWinRateChart({ nickname }: Props) {
     })
     .filter((item): item is ChartData => item !== null)
     .toSorted((a, b) => b.winRate - a.winRate);
+
+  if (chartData.length === 0) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/20 p-6">
+        <h3 className="text-md font-semibold text-gray-400 uppercase tracking-wider">맵별 승률</h3>
+        <p className="mt-3 text-gray-400">{formatStatsYear(selectedYear)} 맵별 전적이 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

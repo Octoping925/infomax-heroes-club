@@ -1,13 +1,16 @@
 import { PlayerHeroWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
-import { SITE_URL } from "@/config/url";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { buildStatsUrl } from "../utils/build-stats-url";
+import { useStatsYear } from "./useStatsYearFilter";
 
 export function usePlayerHeroWinRate(nickname: string) {
+  const { selectedYear } = useStatsYear();
+  const year = selectedYear ?? undefined;
   const { data, error } = useSuspenseQuery<PlayerHeroWinRateResponse>({
-    queryKey: statsQueryKeys.stats.players.heroStats(nickname),
+    queryKey: statsQueryKeys.stats.players.heroStats(nickname, year),
     queryFn: async () => {
-      const response = await fetch(`${SITE_URL}/api/stats/players/${encodeURIComponent(nickname)}/heroes`);
+      const response = await fetch(buildStatsUrl(`/api/stats/players/${encodeURIComponent(nickname)}/heroes`, { year }));
 
       if (response.ok) return (await response.json()) as PlayerHeroWinRateResponse;
 

@@ -260,6 +260,7 @@ export interface RivalryListResponse {
     readonly limit: number;
     readonly takeMatches: number;
     readonly includeInsufficientSample: boolean;
+    readonly year?: number;
   };
   readonly hottest: RivalryCardResponse | null;
   readonly items: ReadonlyArray<RivalryCardResponse>;

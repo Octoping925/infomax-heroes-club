@@ -6,6 +6,7 @@ import { maxBy, round } from "es-toolkit";
 import { NextResponse } from "next/server";
 import { toResultByWinnerTeamNumber, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { GameResult } from "@/generated/prisma/client";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 const RECENT_MATCH_COUNT = 6;
 const ROLE_ORDER = Object.values(HeroRoles);
@@ -32,10 +33,17 @@ type MatchResultCounter = {
  * 팀 편성 도우미 데이터 조회
  * GET /api/stats/team-composer
  */
-export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
+export async function GET(request: Request): Promise<NextResponse<TeamComposerResponse>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const [playerMap, matches, roleRows] = await Promise.all([
     fetchPlayerMap(),
     prisma.match.findMany({
+      where: playedAt
+        ? {
+            playedAt,
+          }
+        : undefined,
       orderBy: [{ playedAt: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
@@ -56,6 +64,17 @@ export async function GET(): Promise<NextResponse<TeamComposerResponse>> {
       },
     }),
     prisma.gameTeamMember.groupBy({
+      where: playedAt
+        ? {
+            gameTeam: {
+              game: {
+                match: {
+                  playedAt,
+                },
+              },
+            },
+          }
+        : undefined,
       by: ["playerId", "position"],
       _count: {
         _all: true,

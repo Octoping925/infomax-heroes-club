@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { fetchPlayerMap, PlayerMap } from "../../utils/player";
-import { parseClampedIntegerParam, parseEnumParam } from "@/app/api/stats/utils/query";
+import { buildPlayedAtYearFilter, parseClampedIntegerParam, parseEnumParam, parseYearParam } from "@/app/api/stats/utils/query";
 import {
   buildWinRateStatsFromCounts,
   calculateTotalGames,
@@ -40,10 +40,11 @@ const MAX_LIMIT = 200;
  * - unit=game: gameTeam.result 기준으로 승/패/무를 계산합니다.
  */
 export async function GET(req: Request): Promise<NextResponse<FantasyDuoWinRateResponse[]>> {
-  const { limit, minCount, unit } = parseQueryParams(req.url);
+  const { limit, minCount, unit, year } = parseQueryParams(req.url);
 
   const playerMap = await fetchPlayerMap();
-  const duoMap = unit === "game" ? await calculateDuoStatsByGame(playerMap) : await calculateDuoStatsByMatch(playerMap);
+  const duoMap =
+    unit === "game" ? await calculateDuoStatsByGame(playerMap, year) : await calculateDuoStatsByMatch(playerMap, year);
 
   const response: FantasyDuoWinRateResponse[] = Array.from(duoMap.values())
     .map((acc) => {
@@ -71,9 +72,11 @@ function parseQueryParams(url: string): {
   readonly limit: number;
   readonly minCount: number;
   readonly unit: UnitType;
+  readonly year?: number;
 } {
   const { searchParams } = new URL(url);
   const unit = parseEnumParam(searchParams, "unit", ["match", "game"], "match");
+  const year = parseYearParam(searchParams.get("year"));
   const limit = parseClampedIntegerParam(searchParams, {
     keys: ["limit"],
     min: 1,
@@ -88,7 +91,7 @@ function parseQueryParams(url: string): {
     fallback: defaultMinCount,
   });
 
-  return { limit, minCount, unit };
+  return { limit, minCount, unit, year };
 }
 
 function buildDuoKey(playerIdA: string, playerIdB: string): string {
@@ -108,8 +111,16 @@ function createAccumulator(input: {
   };
 }
 
-async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByMatch(playerMap: PlayerMap, year?: number): Promise<Map<string, DuoAccumulator>> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const matchTeams = await prisma.matchTeam.findMany({
+    where: playedAt
+      ? {
+          match: {
+            playedAt,
+          },
+        }
+      : undefined,
     select: {
       teamNumber: true,
       match: {
@@ -171,8 +182,18 @@ async function calculateDuoStatsByMatch(playerMap: PlayerMap): Promise<Map<strin
   return duoMap;
 }
 
-async function calculateDuoStatsByGame(playerMap: PlayerMap): Promise<Map<string, DuoAccumulator>> {
+async function calculateDuoStatsByGame(playerMap: PlayerMap, year?: number): Promise<Map<string, DuoAccumulator>> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const gameTeams = await prisma.gameTeam.findMany({
+    where: playedAt
+      ? {
+          game: {
+            match: {
+              playedAt,
+            },
+          },
+        }
+      : undefined,
     select: {
       result: true,
       members: {

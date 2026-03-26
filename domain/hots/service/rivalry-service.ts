@@ -7,6 +7,7 @@ import type {
   RivalrySide,
 } from "@/app/api/stats/types";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
+import { buildPlayedAtYearFilter } from "@/app/api/stats/utils/query";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Hero, MatchType } from "@/generated/prisma/client";
 import { clamp, round, sum, sumBy } from "es-toolkit";
@@ -56,6 +57,7 @@ export type FetchRivalriesParams = {
   /** 최신 match N개만 고려 (집계 비용 보호) */
   readonly takeMatches: number;
   readonly includeInsufficientSample: boolean;
+  readonly year?: number;
 };
 
 const DEFAULT_PARAMS: FetchRivalriesParams = {
@@ -73,7 +75,7 @@ export function normalizeFetchRivalriesParams(input: Partial<FetchRivalriesParam
   const limit = clamp(input.limit ?? DEFAULT_PARAMS.limit, 1, MAX_LIMIT);
   const takeMatches = clamp(input.takeMatches ?? DEFAULT_PARAMS.takeMatches, 1, MAX_TAKE_MATCHES);
   const includeInsufficientSample = input.includeInsufficientSample ?? DEFAULT_PARAMS.includeInsufficientSample;
-  return { minMatches, limit, takeMatches, includeInsufficientSample };
+  return { minMatches, limit, takeMatches, includeInsufficientSample, year: input.year };
 }
 
 /**
@@ -85,10 +87,16 @@ export function normalizeFetchRivalriesParams(input: Partial<FetchRivalriesParam
  */
 export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalriesParams): Promise<RivalryListResponse> {
   const normalizedParams = normalizeFetchRivalriesParams(params);
+  const playedAt = buildPlayedAtYearFilter(normalizedParams.year);
   const playerMap = await fetchPlayerMap();
 
   const [matches, overallWinRateByPlayerId] = await Promise.all([
     prisma.match.findMany({
+      where: playedAt
+        ? {
+            playedAt,
+          }
+        : undefined,
       orderBy: { playedAt: "desc" },
       take: normalizedParams.takeMatches,
       select: {
@@ -127,7 +135,7 @@ export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalrie
         },
       },
     }),
-    fetchOverallMatchWinRateByPlayerId(prisma),
+    fetchOverallMatchWinRateByPlayerId(prisma, normalizedParams.year),
   ]);
 
   const pairMap = new Map<string, PairAccumulator>();
@@ -592,8 +600,21 @@ function toWinRate01(wins: number, losses: number): number {
   return wins / decisions;
 }
 
-async function fetchOverallMatchWinRateByPlayerId(prisma: PrismaClient): Promise<Map<string, OverallWinRate>> {
+async function fetchOverallMatchWinRateByPlayerId(
+  prisma: PrismaClient,
+  year?: number,
+): Promise<Map<string, OverallWinRate>> {
+  const playedAt = buildPlayedAtYearFilter(year);
   const memberships = await prisma.matchTeamMember.findMany({
+    where: playedAt
+      ? {
+          matchTeam: {
+            match: {
+              playedAt,
+            },
+          },
+        }
+      : undefined,
     select: {
       playerId: true,
       matchTeam: {

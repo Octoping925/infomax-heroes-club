@@ -8,6 +8,7 @@ import { commarize } from "@/utils/commarize";
 import { HERO_CATALOG, HeroCatalogEntry } from "@/domain/hots/constants";
 import dayjs from "dayjs";
 import { round } from "es-toolkit";
+import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 type Props = {
   readonly playerId: string;
@@ -18,6 +19,7 @@ type Props = {
 type CardData = {
   readonly playerName: string;
   readonly playerNickname: string;
+  readonly yearLabel: string;
   readonly winRate: number;
   readonly totalGames: number;
   readonly wins: number;
@@ -40,6 +42,8 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPending, startTransition] = useTransition();
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const { selectedYear } = useStatsYear();
+  const yearLabel = formatStatsYear(selectedYear);
   const { data: overallData, error: overallError } = useOverallWinRate();
   const { data: kdaData, error: kdaError } = usePlayerAverageStats();
   const { data: heroData, error: heroError } = usePlayerHeroWinRate(playerNickname);
@@ -63,6 +67,7 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
     return {
       playerName,
       playerNickname,
+      yearLabel,
       winRate: stat.matchStats.winRate,
       totalGames: stat.matchStats.totalGames,
       wins: stat.matchStats.wins,
@@ -110,7 +115,7 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
   if (!cardData) {
     return (
       <div className="flex justify-center py-6">
-        <p className="text-gray-400">전적 카드 데이터를 준비 중입니다.</p>
+        <p className="text-gray-400">{yearLabel} 전적 카드 데이터가 없습니다.</p>
       </div>
     );
   }
@@ -236,7 +241,7 @@ async function drawStatCard(ctx: CanvasRenderingContext2D, data: CardData) {
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = "500 18px sans-serif";
-  ctx.fillText("기준: 내전 경기 / stats.infomax-heroes", 70, CARD_HEIGHT - 28);
+  ctx.fillText(`기준: ${data.yearLabel} 내전 경기 / stats.infomax-heroes`, 70, CARD_HEIGHT - 28);
 
   ctx.fillStyle = "#64748b";
   ctx.font = "500 16px sans-serif";

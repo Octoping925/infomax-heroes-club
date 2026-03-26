@@ -3,6 +3,7 @@ import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { commarize } from "@/utils/commarize";
 import { round } from "es-toolkit";
+import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 type Props = {
   readonly playerId: string;
@@ -11,6 +12,7 @@ type Props = {
 export function OverallStats({ playerId }: Props) {
   const { data: overallData, error } = useOverallWinRate();
   const { data: kdaData } = usePlayerAverageStats();
+  const { selectedYear } = useStatsYear();
 
   const selectedPlayerStat = overallData.find((stat) => stat.playerId === playerId);
   const selectedPlayerKda = kdaData.find((stat) => stat.playerId === playerId);
@@ -26,7 +28,7 @@ export function OverallStats({ playerId }: Props) {
   if (!selectedPlayerStat || !selectedPlayerKda) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-red-400">플레이어 정보를 찾을 수 없습니다.</p>
+        <p className="text-gray-400">{formatStatsYear(selectedYear)} 개인 통계 데이터가 없습니다.</p>
       </div>
     );
   }

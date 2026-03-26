@@ -5,7 +5,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import type { HeroDuoWinRateResponse } from "@/app/api/stats/types";
 import { HeroMap } from "@/domain/hots/constants";
 import { statsQueryKeys } from "@/config/query-keys";
-import { SITE_URL } from "@/config/url";
+import { buildStatsUrl } from "../utils/build-stats-url";
+import { useStatsYear } from "../hooks/useStatsYearFilter";
 
 type DuoRow = {
   readonly duoName: string;
@@ -23,17 +24,15 @@ const DEFAULT_LIMIT: number = 50;
  * 영웅 듀오(같은 팀) 승률 랭킹 (경기 단위)
  */
 export function HeroDuoRankingChart() {
+  const { selectedYear } = useStatsYear();
+  const year = selectedYear ?? undefined;
   const [minCount, setMinCount] = useState<number>(DEFAULT_MIN_GAMES);
   const [limit, setLimit] = useState<number>(DEFAULT_LIMIT);
 
   const { data, error } = useSuspenseQuery<HeroDuoWinRateResponse[]>({
-    queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit }),
+    queryKey: statsQueryKeys.stats.heroes.fantasyDuo({ minCount, limit, year }),
     queryFn: async () => {
-      const url = new URL(`${SITE_URL}/api/stats/heroes/fantasy-duo`);
-      url.searchParams.set("minCount", String(minCount));
-      url.searchParams.set("limit", String(limit));
-
-      const response = await fetch(url);
+      const response = await fetch(buildStatsUrl("/api/stats/heroes/fantasy-duo", { minCount, limit, year }));
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }

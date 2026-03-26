@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import type { RivalryListResponse } from "@/app/api/stats/types";
 import { fetchRivalries, normalizeFetchRivalriesParams } from "@/domain/hots/service/rivalry-service";
-import { parseBoolean, parseNumber } from "@/app/api/stats/utils/query";
+import { parseBoolean, parseNumber, parseYearParam } from "@/app/api/stats/utils/query";
 
 /**
  * 라이벌리 (A vs B) 카드 목록
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RivalryLis
       limit: parseNumber(search.get("limit")),
       takeMatches: parseNumber(search.get("takeMatches")),
       includeInsufficientSample: parseBoolean(search.get("includeInsufficientSample")),
+      year: parseYearParam(search.get("year")),
     });
 
     const response = await fetchRivalries(prisma, params);

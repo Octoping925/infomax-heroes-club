@@ -9,6 +9,7 @@ import {
   toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
+import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 type PlayerAccumulator = {
   readonly playerId: string;
@@ -18,11 +19,22 @@ type PlayerAccumulator = {
   readonly gameStats: ResultCounts;
 };
 
-export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>> {
+export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>> {
+  const year = parseYearParam(new URL(request.url).searchParams.get("year"));
+  const playedAt = buildPlayedAtYearFilter(year);
   const playerMap = await fetchPlayerMap();
 
   const [matchMemberships, gameMemberships] = await Promise.all([
     prisma.matchTeamMember.findMany({
+      where: playedAt
+        ? {
+            matchTeam: {
+              match: {
+                playedAt,
+              },
+            },
+          }
+        : undefined,
       select: {
         playerId: true,
         matchTeam: {
@@ -38,6 +50,17 @@ export async function GET(): Promise<NextResponse<ReadonlyArray<PlayerCombinedWi
       },
     }),
     prisma.gameTeamMember.findMany({
+      where: playedAt
+        ? {
+            gameTeam: {
+              game: {
+                match: {
+                  playedAt,
+                },
+              },
+            },
+          }
+        : undefined,
       select: {
         playerId: true,
         gameTeam: {

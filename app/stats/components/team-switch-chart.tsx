@@ -15,7 +15,8 @@ import {
 } from "recharts";
 import { TeamSwitchWinRateResponse } from "@/app/api/stats/types";
 import { statsQueryKeys } from "@/config/query-keys";
-import { SITE_URL } from "@/config/url";
+import { buildStatsUrl } from "../utils/build-stats-url";
+import { useStatsYear } from "../hooks/useStatsYearFilter";
 
 type ChartData = {
   name: string;
@@ -30,10 +31,12 @@ type ChartData = {
  * 팀 변경 효과 차트
  */
 export function TeamSwitchChart() {
+  const { selectedYear } = useStatsYear();
+  const year = selectedYear ?? undefined;
   const { data, error } = useSuspenseQuery<TeamSwitchWinRateResponse[]>({
-    queryKey: statsQueryKeys.stats.teamSwitch(),
+    queryKey: statsQueryKeys.stats.teamSwitch(year),
     queryFn: async () => {
-      const response = await fetch(`${SITE_URL}/api/stats/team-switch`);
+      const response = await fetch(buildStatsUrl("/api/stats/team-switch", { year }));
       if (!response.ok) {
         throw new Error("데이터를 불러오는데 실패했습니다.");
       }
