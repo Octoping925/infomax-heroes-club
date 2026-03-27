@@ -6,7 +6,7 @@
   --primary: #7de3f2;
   --secondary: #f5b971;
   --accent: #9cd3ff;
-  --font-sans: "Avenir Next", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-sans: var(--font-pretendard), "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   --font-display:
     "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", "Apple SD Gothic Neo", serif;
   --font-mono: "Geist Mono", "SFMono-Regular", "SF Mono", "Consolas", monospace;
