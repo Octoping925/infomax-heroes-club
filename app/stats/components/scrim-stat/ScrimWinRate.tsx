@@ -1,9 +1,8 @@
 "use client";
 import { WinRateStats } from "@/app/api/stats/types";
-import { usePlayerCombinedWinRate } from "../../hooks/usePlayerCombinedWinRate";
+import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { useScrimWinRateTier } from "../../hooks/useScrimWinRateTier";
-import { useMemo, useState } from "react";
-import { LunchDinnerOption } from "@/components/LunchDinnerOption";
+import { useMemo } from "react";
 import { round } from "es-toolkit";
 
 interface ScrimWinRateProps {
@@ -11,51 +10,20 @@ interface ScrimWinRateProps {
 }
 
 export function ScrimWinRate({ onPlayerRowClick }: ScrimWinRateProps) {
-  const { overallData, matchData, gameData } = usePlayerCombinedWinRate();
-  const [unit, setUnit] = useState<"all" | "lunch" | "dinner">("all");
+  const { data } = useOverallWinRate();
   const getTier = useScrimWinRateTier();
 
   const stats = useMemo(() => {
-    if (unit === "all") {
-      return overallData
-        .map((it) => {
-          const tier = getTier(it.matchStats, it.gameStats);
-          return { ...it, tier };
-        })
-        .toSorted((a, b) => b.tier.score - a.tier.score);
-    }
-
-    return overallData
+    return data
       .map((row) => {
-        const matchStat = matchData.find((it) => it.playerNickname === row.playerNickname);
-        const gameStat = gameData.find((it) => it.playerNickname === row.playerNickname);
-
-        const lunchTier = getTier(matchStat?.lunchStats ?? EMPTY_STATS, gameStat?.lunchStats ?? EMPTY_STATS);
-        const dinnerTier = getTier(matchStat?.dinnerStats ?? EMPTY_STATS, gameStat?.dinnerStats ?? EMPTY_STATS);
-
-        if (unit === "lunch") {
-          return {
-            ...row,
-            matchStats: matchStat?.lunchStats ?? EMPTY_STATS,
-            gameStats: gameStat?.lunchStats ?? EMPTY_STATS,
-            tier: lunchTier,
-          };
-        } else {
-          return {
-            ...row,
-            matchStats: matchStat?.dinnerStats ?? EMPTY_STATS,
-            gameStats: gameStat?.dinnerStats ?? EMPTY_STATS,
-            tier: dinnerTier,
-          };
-        }
+        const tier = getTier(row.matchStats, row.gameStats);
+        return { ...row, tier };
       })
-      .filter((it) => it.matchStats.totalGames > 0)
       .toSorted((a, b) => b.tier.score - a.tier.score);
-  }, [unit, matchData, gameData, overallData, getTier]);
+  }, [data, getTier]);
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/10 p-4 bg-black/20">
-      <LunchDinnerOption unit={unit} setUnit={setUnit} />
       <table className="min-w-full text-sm overflow-x-scroll">
         <thead className="bg-white/5 text-gray-300">
           <tr>
@@ -136,11 +104,3 @@ function formatTierScore(score: number): string {
 
   return `${display}%`;
 }
-
-const EMPTY_STATS: WinRateStats = {
-  totalGames: 0,
-  wins: 0,
-  losses: 0,
-  draws: 0,
-  winRate: 0,
-};

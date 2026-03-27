@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
-import type { PlayerListItem } from "@/app/api/players/route";
 
 type SaveResult =
   | { readonly status: "idle" }

@@ -9,8 +9,8 @@ import type {
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { buildPlayedAtYearFilter } from "@/app/api/stats/utils/query";
 import type { PrismaClient } from "@/generated/prisma/client";
-import { Hero, MatchType } from "@/generated/prisma/client";
 import { clamp, round, sum, sumBy } from "es-toolkit";
+import { Hero } from "@domain/hots/models";
 
 type PlayerInfo = {
   readonly playerId: string;
@@ -21,7 +21,6 @@ type PlayerInfo = {
 type H2HMatch = {
   readonly matchId: string;
   readonly playedAt: Date;
-  readonly type: MatchType;
   readonly resultForA: "WIN" | "LOSE" | "DRAW";
 };
 
@@ -33,8 +32,6 @@ type PairAccumulator = {
   winsA: number;
   winsB: number;
   draws: number;
-  lunch: { winsA: number; winsB: number; draws: number };
-  dinner: { winsA: number; winsB: number; draws: number };
   heroCountsA: Map<Hero, number>;
   heroCountsB: Map<Hero, number>;
   perfSamples: {
@@ -102,7 +99,6 @@ export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalrie
       select: {
         id: true,
         playedAt: true,
-        type: true,
         winnerTeamNumber: true,
         teams: {
           select: {
@@ -173,11 +169,10 @@ export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalrie
         acc.matches.push({
           matchId: match.id,
           playedAt: match.playedAt,
-          type: match.type,
           resultForA,
         });
 
-        updateWinLossCounts(acc, resultForA, match.type);
+        updateWinLossCounts(acc, resultForA);
         updateHeroCountsAndPerformance(acc, match.games, a.playerId, b.playerId);
 
         pairMap.set(pairId, acc);
@@ -212,8 +207,6 @@ function createPairAccumulator(id: string, a: PlayerInfo, b: PlayerInfo): PairAc
     winsA: 0,
     winsB: 0,
     draws: 0,
-    lunch: { winsA: 0, winsB: 0, draws: 0 },
-    dinner: { winsA: 0, winsB: 0, draws: 0 },
     heroCountsA: new Map(),
     heroCountsB: new Map(),
     perfSamples: {
@@ -225,20 +218,16 @@ function createPairAccumulator(id: string, a: PlayerInfo, b: PlayerInfo): PairAc
   };
 }
 
-function updateWinLossCounts(acc: PairAccumulator, resultForA: "WIN" | "LOSE" | "DRAW", matchType: MatchType) {
-  const bucket = matchType === MatchType.LUNCH ? acc.lunch : acc.dinner;
+function updateWinLossCounts(acc: PairAccumulator, resultForA: "WIN" | "LOSE" | "DRAW") {
   if (resultForA === "DRAW") {
     acc.draws += 1;
-    bucket.draws += 1;
     return;
   }
   if (resultForA === "WIN") {
     acc.winsA += 1;
-    bucket.winsA += 1;
     return;
   }
   acc.winsB += 1;
-  bucket.winsB += 1;
 }
 
 function updateHeroCountsAndPerformance(
@@ -411,18 +400,6 @@ function buildRivalryCard(
       ...recent5Counts,
       sequence: recentSeq,
     },
-    lunchDinner: {
-      lunch: {
-        winsA: acc.lunch.winsA,
-        winsB: acc.lunch.winsB,
-        draws: acc.lunch.draws,
-      },
-      dinner: {
-        winsA: acc.dinner.winsA,
-        winsB: acc.dinner.winsB,
-        draws: acc.dinner.draws,
-      },
-    },
     topHeroes: {
       playerA: topHeroes(acc.heroCountsA, 2),
       playerB: topHeroes(acc.heroCountsB, 2),
@@ -509,18 +486,6 @@ function buildComment(
   }
   if (recent5Counts.winsA - recent5Counts.winsB >= 2) {
     return `최근 흐름은 ${aNick} 쪽`;
-  }
-
-  // 점심/저녁 분리 멘트
-  const lunch = acc.lunch;
-  const dinner = acc.dinner;
-  const lunchDiff = lunch.winsA - lunch.winsB;
-  const dinnerDiff = dinner.winsA - dinner.winsB;
-  if (lunchDiff >= 2 && dinnerDiff <= -2) {
-    return `점심엔 ${aNick}의 독무대, 저녁엔 ${bNick}의 반격`;
-  }
-  if (lunchDiff <= -2 && dinnerDiff >= 2) {
-    return `점심엔 ${bNick}의 독무대, 저녁엔 ${aNick}의 반격`;
   }
 
   // 기본: 균형/우세 표현

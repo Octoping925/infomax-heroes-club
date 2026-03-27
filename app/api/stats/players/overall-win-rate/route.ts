@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { PlayerCombinedWinRateResponse } from "@/app/api/stats/types";
+import { PlayerOverallWinRateResponse } from "@/app/api/stats/types";
 import { fetchPlayerMap } from "../../utils/player";
 import {
   buildWinRateStatsFromCounts,
@@ -19,7 +19,7 @@ type PlayerAccumulator = {
   readonly gameStats: ResultCounts;
 };
 
-export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<PlayerCombinedWinRateResponse>>> {
+export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<PlayerOverallWinRateResponse>>> {
   const year = parseYearParam(new URL(request.url).searchParams.get("year"));
   const playedAt = buildPlayedAtYearFilter(year);
   const playerMap = await fetchPlayerMap();
@@ -112,7 +112,7 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
     updateCountsByResult(entry.gameStats, membership.gameTeam.result);
   }
 
-  const response: PlayerCombinedWinRateResponse[] = accumulator
+  const response: PlayerOverallWinRateResponse[] = accumulator
     .values()
     .map((entry) => ({
       playerId: entry.playerId,

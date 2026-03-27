@@ -10,17 +10,6 @@ export interface WinRateStats {
   readonly winRate: number; // 0 ~ 100
 }
 
-/** 점심/저녁 승률 응답(게임 단위, Match.type으로 구분) */
-export interface PlayerLunchDinnerWinRateResponse {
-  readonly playerId: string;
-  readonly playerName: string;
-  readonly playerNickname: string;
-  readonly lunchStats: WinRateStats;
-  readonly dinnerStats: WinRateStats;
-  readonly dinnerWinRateDiff: number; // dinner - lunch
-  readonly absWinRateDiff: number;
-}
-
 /** 플레이어 평균 스탯 통계 응답(게임 단위) */
 export interface PlayerAverageStatsResponse {
   readonly playerId: string;
@@ -90,7 +79,7 @@ export interface PlayerFormTrendResponse {
   readonly points: ReadonlyArray<PlayerFormPointResponse>;
 }
 
-export interface PlayerCombinedWinRateResponse {
+export interface PlayerOverallWinRateResponse {
   readonly playerId: string;
   readonly playerName: string;
   readonly playerNickname: string;
@@ -229,18 +218,6 @@ export interface RivalryCardResponse {
     readonly winsB: number;
     readonly draws: number;
     readonly sequence: ReadonlyArray<RivalryRecentResult>;
-  };
-  readonly lunchDinner: {
-    readonly lunch: {
-      readonly winsA: number;
-      readonly winsB: number;
-      readonly draws: number;
-    };
-    readonly dinner: {
-      readonly winsA: number;
-      readonly winsB: number;
-      readonly draws: number;
-    };
   };
   readonly topHeroes: {
     readonly playerA: ReadonlyArray<RivalryHeroPick>;

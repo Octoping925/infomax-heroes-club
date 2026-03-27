@@ -94,27 +94,7 @@ export function RivalryCard({ card, variant }: RivalryCardProps) {
         </section>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="rounded-xl border border-white/10 bg-black/10 p-4">
-          <p className="text-xs text-gray-400">점심/저녁 분리 전적</p>
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs text-gray-500">점심</p>
-              <p className="text-sm text-gray-200">
-                {card.lunchDinner.lunch.winsA}:{card.lunchDinner.lunch.winsB}
-                {card.lunchDinner.lunch.draws > 0 ? ` (무 ${card.lunchDinner.lunch.draws})` : ""}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">저녁</p>
-              <p className="text-sm text-gray-200">
-                {card.lunchDinner.dinner.winsA}:{card.lunchDinner.dinner.winsB}
-                {card.lunchDinner.dinner.draws > 0 ? ` (무 ${card.lunchDinner.dinner.draws})` : ""}
-              </p>
-            </div>
-          </div>
-        </section>
-
+      <div className="mt-4">
         <section className="rounded-xl border border-white/10 bg-black/10 p-4">
           <p className="text-xs text-gray-400">대표 영웅 (상대전 Top2)</p>
           <div className="mt-2 space-y-1">

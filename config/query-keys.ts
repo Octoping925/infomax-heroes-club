@@ -38,7 +38,6 @@ export const statsQueryKeys = {
       heroStats: (nickname: string, year?: number) => ["stats", "players", "hero-stats", nickname, year],
       formTrend: (nickname: string, take: number, year?: number) =>
         ["stats", "players", "form-trend", nickname, take, year],
-      lunchDinner: (unit: LunchDinnerUnit, year?: number) => ["stats", "players", "lunch-dinner", unit, year],
       fantasyDuo: (params: FantasyDuoParams) => ["stats", "players", "fantasy-duo", params],
       matchWinRate: () => ["stats", "players", "match-win-rate"],
       overallWinRate: (year?: number) => ["stats", "players", "overall-win-rate", year],
@@ -48,7 +47,6 @@ export const statsQueryKeys = {
     teamSwitch: (year?: number) => ["stats", "team-switch", year],
     teamComposer: (year?: number) => ["stats", "team-composer", year],
     rankings: {
-      lunchDinnerDiff: () => ["stats", "rankings", "lunch-dinner-diff"],
       avgStats: (year?: number) => ["stats", "rankings", "avg-stats", year],
     },
     rivalries: (params: RivalryParams) => ["stats", "rivalries", params],
