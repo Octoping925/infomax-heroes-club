@@ -352,7 +352,7 @@ function parseRawTeam(input: unknown, label: string): RawTeam {
 
 function parseRawPlayer(input: unknown, label: string): RawPlayerTalent {
   const player = readObject(input, label);
-  const talentsProvided = Object.prototype.hasOwnProperty.call(player, "talents");
+  const talentsProvided = Object.hasOwn(player, "talents");
 
   return {
     name: readString(player.name, `${label}.name`),
