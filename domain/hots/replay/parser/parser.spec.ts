@@ -8,6 +8,7 @@ import {
 
 const OLD_BUILD = 29406;
 const CURRENT_BUILD = 94786;
+const VERIFIED_COMPATIBLE_BUILD = 96881;
 
 function createArchiveFactory(): ReplayArchiveFactory {
   return (source: Buffer): ReplayArchive => {
@@ -60,6 +61,19 @@ describe("parseReplayBuffer", () => {
         code: "UNSUPPORTED_BUILD",
         build: 99999,
       },
+    });
+  });
+
+  it("uses only an explicitly verified compatibility protocol for a newer build", () => {
+    const result = parseReplayBuffer(
+      createReplayBuffer(VERIFIED_COMPATIBLE_BUILD, "verified"),
+      createArchiveFactory(),
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      build: VERIFIED_COMPATIBLE_BUILD,
+      protocolVersion: CURRENT_BUILD,
     });
   });
 

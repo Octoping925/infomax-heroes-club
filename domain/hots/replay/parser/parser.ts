@@ -5,7 +5,7 @@ import { REPLAY_HEROPROTOCOL_SNAPSHOT } from "@/config/replay-import";
 
 export const HEROPROTOCOL_SNAPSHOT = REPLAY_HEROPROTOCOL_SNAPSHOT;
 
-const require = createRequire(import.meta.url);
+const nodeRequire = createRequire(import.meta.url);
 const PROTOCOL_DIRECTORY = join(
   process.cwd(),
   "vendor",
@@ -14,6 +14,19 @@ const PROTOCOL_DIRECTORY = join(
 );
 const PROTOCOL_FILE_PATTERN = /^protocol(\d+)\.js$/;
 const BOOTSTRAP_BUILD = 29406;
+
+/**
+ * Builds proven against the local replay corpus to use the pinned 94786 wire
+ * schema. This is deliberately an allowlist, not a "latest protocol" fallback:
+ * every new build remains unsupported until corpus verification adds it here.
+ */
+export const VERIFIED_PROTOCOL_COMPATIBILITY: Readonly<Record<number, number>> = {
+  95301: 94786,
+  95817: 94786,
+  95918: 94786,
+  96477: 94786,
+  96881: 94786,
+};
 
 export interface ReplayArchive {
   header: {
@@ -86,7 +99,8 @@ export function parseReplayBuffer(
       return { ok: false, error: { code: "INVALID_REPLAY" } };
     }
 
-    const protocol = loadExactProtocol(build);
+    const protocolBuild = VERIFIED_PROTOCOL_COMPATIBILITY[build] ?? build;
+    const protocol = loadExactProtocol(protocolBuild);
     if (!protocol) {
       return {
         ok: false,
@@ -141,9 +155,20 @@ function loadExactProtocol(build: number): ProtocolModule | null {
     return null;
   }
 
-  const loaded: unknown = require(join(PROTOCOL_DIRECTORY, `protocol${build}.js`));
+  const loaded: unknown = loadProtocolModule(build);
   return isProtocolModule(loaded, build) ? loaded : null;
 }
+
+function loadProtocolModule(build: number): unknown {
+  if (typeof __webpack_require__ !== "undefined") {
+    // Webpack must see this relative template to include every pinned protocol.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require(`../../../../vendor/heroprotocol/lib/protocol${build}.js`);
+  }
+  return nodeRequire(join(PROTOCOL_DIRECTORY, `protocol${build}.js`));
+}
+
+declare const __webpack_require__: unknown;
 
 function isProtocolModule(value: unknown, build: number): value is ProtocolModule {
   if (typeof value !== "object" || value === null) {
