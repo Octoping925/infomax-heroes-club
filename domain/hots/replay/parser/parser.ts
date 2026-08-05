@@ -32,12 +32,16 @@ interface ReplayHeader {
   m_version?: {
     m_baseBuild?: number;
   };
+  m_elapsedGameLoops?: number;
   [key: string]: unknown;
 }
 
 interface ProtocolModule {
   version: number;
   decodeReplayHeader(content: Buffer): ReplayHeader;
+  decodeReplayDetails(content: Buffer): unknown;
+  decodeReplayAttributesEvents(content: Buffer): unknown;
+  decodeReplayTrackerEvents(content: Buffer): Iterable<unknown>;
   [key: string]: unknown;
 }
 
@@ -47,6 +51,9 @@ export interface ParsedReplayRuntime {
   protocolVersion: number;
   header: ReplayHeader;
   readRawFile(name: string): Buffer;
+  decodeDetails(): unknown;
+  decodeAttributesEvents(): unknown;
+  decodeTrackerEvents(): ReadonlyArray<unknown>;
 }
 
 export interface ReplayRuntimeFailure {
@@ -101,6 +108,21 @@ export function parseReplayBuffer(
       readRawFile(name: string): Buffer {
         return Buffer.from(archive.readFile(name));
       },
+      decodeDetails(): unknown {
+        return protocol.decodeReplayDetails(archive.readFile("replay.details"));
+      },
+      decodeAttributesEvents(): unknown {
+        return protocol.decodeReplayAttributesEvents(
+          archive.readFile("replay.attributes.events"),
+        );
+      },
+      decodeTrackerEvents(): ReadonlyArray<unknown> {
+        return Array.from(
+          protocol.decodeReplayTrackerEvents(
+            archive.readFile("replay.tracker.events"),
+          ),
+        );
+      },
     };
   } catch {
     return { ok: false, error: { code: "INVALID_REPLAY" } };
@@ -133,6 +155,9 @@ function isProtocolModule(value: unknown, build: number): value is ProtocolModul
   const candidate = value as Record<string, unknown>;
   return (
     candidate.version === build &&
-    typeof candidate.decodeReplayHeader === "function"
+    typeof candidate.decodeReplayHeader === "function" &&
+    typeof candidate.decodeReplayDetails === "function" &&
+    typeof candidate.decodeReplayAttributesEvents === "function" &&
+    typeof candidate.decodeReplayTrackerEvents === "function"
   );
 }
