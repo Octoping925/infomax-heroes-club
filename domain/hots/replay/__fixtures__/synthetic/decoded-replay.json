@@ -1,0 +1,58 @@
+{
+  "status": 1,
+  "match": {
+    "build": 94786,
+    "date": "2025-05-07T15:30:00.000Z",
+    "length": 1234.4,
+    "map": "저주받은 골짜기",
+    "winner": 1,
+    "teams": [
+      {
+        "level": 19,
+        "ids": ["p1", "p2", "p3", "p4", "p5"]
+      },
+      {
+        "level": 20,
+        "ids": ["p6", "p7", "p8", "p9", "p10"]
+      }
+    ],
+    "bans": {
+      "0": [{ "hero": "Abat" }, { "hero": "Demo" }],
+      "1": [{ "hero": "Mura" }, { "hero": "Jain" }]
+    }
+  },
+  "players": {
+    "p1": {
+      "name": "자양동스나이퍼",
+      "hero": "아바투르",
+      "tag": 1234,
+      "talents": { "1": "AbathurPressurizedGlands", "4": "AbathurAdrenalOverload" },
+      "gameStats": {
+        "SoloKill": 1,
+        "Deaths": 2,
+        "Takedowns": 11,
+        "HeroDamage": 12000,
+        "SiegeDamage": 32000,
+        "DamageTaken": 4200,
+        "Healing": 500,
+        "ExperienceContribution": 17000,
+        "TimeSpentDead": 31,
+        "TimeCCdEnemyHeroes": 4,
+        "DPM": 583.4,
+        "MercCampCaptures": 2,
+        "WatchTowerCaptures": 1,
+        "RegenGlobes": 8
+      }
+    },
+    "p2": { "name": "player2", "hero": "무라딘", "talents": {}, "gameStats": {} },
+    "p3": { "name": "player3", "hero": "발라", "talents": {}, "gameStats": {} },
+    "p4": { "name": "player4", "hero": "말퓨리온", "talents": {}, "gameStats": {} },
+    "p5": { "name": "player5", "hero": "소냐", "talents": {}, "gameStats": {} },
+    "p6": { "name": "BrownOgre", "hero": "제이나", "talents": {}, "gameStats": {} },
+    "p7": { "name": "player7", "hero": "디아블로", "talents": {}, "gameStats": {} },
+    "p8": { "name": "player8", "hero": "레가르", "talents": {}, "gameStats": {} },
+    "p9": { "name": "player9", "hero": "제라툴", "talents": {}, "gameStats": {} },
+    "p10": { "name": "player10", "hero": "데하카", "talents": {}, "gameStats": {} }
+  },
+  "events": [{ "private": "must never leave normalization" }]
+}

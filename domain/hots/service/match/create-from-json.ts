@@ -7,99 +7,21 @@ import { GameMap, MatchType } from "@/generated/prisma/enums";
 import { calculateGameResult } from "./common";
 import { MatchServiceError } from "./errors";
 import { insertGameTeamMemberTalents } from "./talent-sql";
-
-type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
-
-type RawTalentEntry = {
-  readonly tier: number;
-  readonly code: string | null;
-};
-
-type RawPlayerStat = {
-  readonly name: string;
-  readonly hero: string;
-  readonly position?: string;
-  readonly talents?: ReadonlyArray<string | null | RawTalentEntry> | RawTalentRecord;
-  readonly kills: number;
-  readonly deaths: number;
-  readonly takedowns: number;
-  readonly heroDamage: number;
-  readonly siegeDamage?: number;
-  readonly damageTaken: number;
-  readonly healingDone?: number;
-  readonly experienceContribution?: number;
-  readonly timeSpentDead?: number;
-  readonly timeCCdEnemyHeroes?: number;
-  readonly dpm?: number;
-  readonly mercCampCaptures?: number;
-  readonly watchTowerCaptures?: number;
-  readonly regenGlobes?: number;
-};
-
-type RawTeam = {
-  readonly win: boolean;
-  readonly level?: number;
-  readonly players: ReadonlyArray<RawPlayerStat>;
-  readonly bans?: ReadonlyArray<string>;
-};
-
-type RawGame = {
-  readonly date: string;
-  readonly idx: number;
-  readonly gameLength?: number;
-  readonly map: string;
-  readonly team1: RawTeam;
-  readonly team2: RawTeam;
-};
-
-type RawData = Record<string, ReadonlyArray<RawGame>>;
+import type {
+  NormalizedGame,
+  NormalizedPlayer,
+  NormalizedTeam,
+  RawGame,
+  RawPlayerStat,
+  RawReplayImportData,
+  RawTalentRecord,
+  RawTeam,
+} from "@/domain/hots/types/replay-import-contract";
 
 export type CreateMatchesFromJsonRequest = {
   readonly team1LeaderId: string;
   readonly team2LeaderId: string;
-  readonly data: RawData;
-};
-
-type NormalizedPlayer = {
-  readonly nickname: string;
-  readonly hero: Hero;
-  readonly position: HeroRole;
-  readonly talents: ReadonlyArray<{
-    readonly tier: TalentTier;
-    readonly rawCode: string;
-    readonly talentKey: string | null;
-  }>;
-  readonly kills: number;
-  readonly deaths: number;
-  readonly takedowns: number;
-  readonly heroDamage: number;
-  readonly siegeDamage: number;
-  readonly damageTaken: number;
-  readonly healingDone: number;
-  readonly experienceContribution: number;
-  readonly timeSpentDead: number;
-  readonly timeCCdEnemyHeroes: number;
-  readonly dpm: number;
-  readonly mercCampCaptures: number;
-  readonly watchTowerCaptures: number;
-  readonly regenGlobes: number;
-};
-
-type NormalizedTeam = {
-  readonly win: boolean;
-  readonly teamLevel: number;
-  readonly players: ReadonlyArray<NormalizedPlayer>;
-  readonly bans: ReadonlyArray<Hero>;
-};
-
-type NormalizedGame = {
-  readonly date: string;
-  readonly idx: number;
-  readonly map: GameMap;
-  readonly gameLength: number;
-  readonly winnerTeamNumber: number | null;
-  readonly team1: NormalizedTeam;
-  readonly team2: NormalizedTeam;
+  readonly data: RawReplayImportData;
 };
 
 export type CreateMatchesFromJsonResponse = {
@@ -317,7 +239,7 @@ function parseRequestBody(input: unknown): CreateMatchesFromJsonRequest {
     throw new MatchServiceError("data는 최소 1개 이상의 날짜 키를 포함해야 합니다.");
   }
 
-  const data: RawData = {};
+  const data: RawReplayImportData = {};
   for (const [dateKey, gamesValue] of entries) {
     if (!DATE_PATTERN.test(dateKey)) {
       throw new MatchServiceError(`잘못된 날짜 키입니다: ${dateKey} (YYYYMMDD 형식이어야 합니다)`);
@@ -670,7 +592,6 @@ function readOptionalTalents(value: unknown, label: string): RawPlayerStat["tale
 
   throw new MatchServiceError(`${label}는 배열 또는 객체여야 합니다.`);
 }
-
 
 function readOptionalString(value: unknown, label: string): string | undefined {
   if (value === undefined || value === null) {
