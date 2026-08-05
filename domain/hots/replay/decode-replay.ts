@@ -50,7 +50,7 @@ export function parseAndNormalizeReplay(
 
 export function decodeReplayRuntime(runtime: ParsedReplayRuntime): unknown {
   const details = readObject(runtime.decodeDetails());
-  const trackerEvents = runtime.decodeTrackerEvents().map(readObject);
+  const trackerEvents = runtime.decodeTrackerEvents();
   const attributes = readObject(runtime.decodeAttributesEvents());
   const playerList = readArray(details.m_playerList);
   const players: Record<string, MutablePlayer> = {};
@@ -78,7 +78,8 @@ export function decodeReplayRuntime(runtime: ParsedReplayRuntime): unknown {
   const coreUnitTags = new Set<string>();
   let gatesOpenLoop = 0;
   let finalGameLoop = readNonNegativeNumber(runtime.header.m_elapsedGameLoops);
-  for (const event of trackerEvents) {
+  for (const rawEvent of trackerEvents) {
+    const event = readObject(rawEvent);
     const eventName = readOptionalString(event.m_eventName);
     if (
       event._eventid === TRACKER_UNIT_BORN_EVENT_ID &&
@@ -225,7 +226,7 @@ function readBans(attributes: Record<string, unknown>): Record<0 | 1, Array<{ he
     if (first === undefined) {
       continue;
     }
-    const hero = readAttributeString(readObject(first).value);
+    const hero = readOptionalString(readObject(first).value);
     if (hero) {
       result[team].push({ hero });
     }
@@ -283,10 +284,6 @@ function readUnitTag(event: Record<string, unknown>): string {
 function readKeyedString(value: unknown, index: number): string | null {
   const entry = readArray(value)[index];
   return entry === undefined ? null : readOptionalString(readObject(entry).m_value);
-}
-
-function readAttributeString(value: unknown): string | null {
-  return readOptionalString(value);
 }
 
 function readObject(value: unknown): Record<string, unknown> {

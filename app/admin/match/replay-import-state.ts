@@ -1,8 +1,9 @@
 import type { PlayerListItem } from "@/app/api/players/route";
 import type { NormalizedReplay } from "@/domain/hots/replay/contracts";
-
-export const REPLAY_FILE_MAX_BYTES = 4_000_000;
-export const REPLAY_BATCH_MAX_FILES = 10;
+import {
+  REPLAY_FILE_MAX_BYTES,
+  REPLAY_MAX_BATCH_FILES,
+} from "@/domain/hots/replay/limits";
 
 export type ReplayFileDescriptor = {
   readonly id: string;
@@ -102,8 +103,7 @@ export type ReplayImportAction =
       readonly gamesCreated: number;
       readonly alreadyImported: boolean;
     }
-  | { readonly type: "CONFIRM_FAILED"; readonly code: string; readonly message: string }
-  | { readonly type: "CONFIRM_RESET" };
+  | { readonly type: "CONFIRM_FAILED"; readonly code: string; readonly message: string };
 
 export type BlockingReasonCode =
   | "NO_VALID_GAMES"
@@ -190,16 +190,18 @@ export function replayImportReducer(
       };
     }
     case "UPLOAD_SUCCEEDED": {
-      const reconciled = reconcileReadyChoices(resetConfirm({
+      const uploaded = resetConfirm({
         ...state,
         queue: state.queue.map((item) => item.id === action.id
           ? { id: item.id, file: item.file, status: "ready", parsed: action.parsed }
           : item),
-      }));
-      if (reconciled.playerDirectory.status !== "ready") return reconciled;
+      });
+      if (uploaded.playerDirectory.status !== "ready") {
+        return reconcileReadyChoices(uploaded);
+      }
       return reconcileReadyChoices({
-        ...reconciled,
-        playerMappings: applySuggestedMappings(reconciled, reconciled.playerDirectory.players),
+        ...uploaded,
+        playerMappings: applySuggestedMappings(uploaded, uploaded.playerDirectory.players),
       });
     }
     case "UPLOAD_FAILED":
@@ -268,8 +270,6 @@ export function replayImportReducer(
       };
     case "CONFIRM_FAILED":
       return { ...state, confirm: { status: "error", code: action.code, message: action.message } };
-    case "CONFIRM_RESET":
-      return resetConfirm(state);
   }
 }
 
@@ -292,7 +292,7 @@ export function validateReplayFiles(
       rejected.push({ file, code: "FILE_TOO_LARGE", message: "리플레이 파일은 4,000,000 bytes 이하여야 합니다." });
       continue;
     }
-    if (currentCount + accepted.length >= REPLAY_BATCH_MAX_FILES) {
+    if (currentCount + accepted.length >= REPLAY_MAX_BATCH_FILES) {
       rejected.push({ file, code: "BATCH_LIMIT_EXCEEDED", message: "한 번에 최대 10개까지 처리할 수 있습니다." });
       continue;
     }
@@ -417,7 +417,6 @@ export function toDomId(value: string): string {
 
 function reconcileReadyChoices(state: ReplayImportState): ReplayImportState {
   const ready = readyItems(state.queue);
-  const hashes = new Set(ready.map((item) => item.parsed.sourceReplayHash));
   const rawNames = new Set(allRawNames(ready));
   const playerMappings = Object.fromEntries(
     Object.entries(state.playerMappings).filter(([rawName]) => rawNames.has(rawName)),
@@ -425,7 +424,7 @@ function reconcileReadyChoices(state: ReplayImportState): ReplayImportState {
   const orientations: Record<string, OrientationChoice> = {};
   ready.forEach((item, index) => {
     const hash = item.parsed.sourceReplayHash;
-    const existing = hashes.has(hash) ? state.orientations[hash] : undefined;
+    const existing = state.orientations[hash];
     if (existing?.source === "manual") {
       orientations[hash] = existing;
       return;

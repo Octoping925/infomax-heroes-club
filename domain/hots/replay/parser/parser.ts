@@ -1,9 +1,6 @@
 import { readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { REPLAY_HEROPROTOCOL_SNAPSHOT } from "@/config/replay-import";
-
-export const HEROPROTOCOL_SNAPSHOT = REPLAY_HEROPROTOCOL_SNAPSHOT;
 
 const nodeRequire = createRequire(import.meta.url);
 const PROTOCOL_DIRECTORY = join(
@@ -14,6 +11,12 @@ const PROTOCOL_DIRECTORY = join(
 );
 const PROTOCOL_FILE_PATTERN = /^protocol(\d+)\.js$/;
 const BOOTSTRAP_BUILD = 29406;
+const BUNDLED_PROTOCOL_BUILD_SET = new Set(
+  readdirSync(PROTOCOL_DIRECTORY).flatMap((file) => {
+    const match = PROTOCOL_FILE_PATTERN.exec(file);
+    return match ? [Number(match[1])] : [];
+  }),
+);
 
 /**
  * Builds proven against the local replay corpus to use the pinned 94786 wire
@@ -64,7 +67,7 @@ export interface ParsedReplayRuntime {
   readRawFile(name: string): Buffer;
   decodeDetails(): unknown;
   decodeAttributesEvents(): unknown;
-  decodeTrackerEvents(): ReadonlyArray<unknown>;
+  decodeTrackerEvents(): Iterable<unknown>;
 }
 
 export interface ReplayRuntimeFailure {
@@ -85,7 +88,7 @@ export function parseReplayBuffer(
   openArchive: ReplayArchiveFactory,
 ): ReplayRuntimeResult {
   try {
-    const archive = openArchive(Buffer.from(source));
+    const archive = openArchive(source);
     const bootstrap = loadExactProtocol(BOOTSTRAP_BUILD);
     if (!bootstrap) {
       return { ok: false, error: { code: "INVALID_REPLAY" } };
@@ -128,11 +131,9 @@ export function parseReplayBuffer(
           archive.readFile("replay.attributes.events"),
         );
       },
-      decodeTrackerEvents(): ReadonlyArray<unknown> {
-        return Array.from(
-          protocol.decodeReplayTrackerEvents(
-            archive.readFile("replay.tracker.events"),
-          ),
+      decodeTrackerEvents(): Iterable<unknown> {
+        return protocol.decodeReplayTrackerEvents(
+          archive.readFile("replay.tracker.events"),
         );
       },
     };
@@ -141,17 +142,8 @@ export function parseReplayBuffer(
   }
 }
 
-export function getBundledProtocolBuilds(): readonly number[] {
-  return readdirSync(PROTOCOL_DIRECTORY)
-    .flatMap((file) => {
-      const match = PROTOCOL_FILE_PATTERN.exec(file);
-      return match ? [Number(match[1])] : [];
-    })
-    .sort((left, right) => left - right);
-}
-
 function loadExactProtocol(build: number): ProtocolModule | null {
-  if (!getBundledProtocolBuilds().includes(build)) {
+  if (!BUNDLED_PROTOCOL_BUILD_SET.has(build)) {
     return null;
   }
 

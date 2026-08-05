@@ -1,9 +1,11 @@
 import { prisma } from "@/config/prisma";
-import { HeroMap } from "@/domain/hots/constants";
+import {
+  HERO_BY_KOREAN_NAME,
+  MAP_BY_KOREAN_NAME,
+} from "@/domain/hots/constants/korean-name-lookups";
 import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
-import { MAP_CATALOG } from "@/domain/hots/constants/maps";
-import { GameMap, MatchType } from "@/generated/prisma/enums";
+import { MatchType } from "@/generated/prisma/enums";
 import { MatchServiceError } from "./errors";
 import { persistNormalizedMatch, type PersistPlayer, type PersistTeam } from "./persist-normalized-match";
 import type {
@@ -28,14 +30,6 @@ export type CreateMatchesFromJsonResponse = {
   readonly gamesCreated: number;
   readonly matchIds: ReadonlyArray<string>;
 };
-
-const koreanToHeroMap: ReadonlyMap<string, Hero> = new Map(
-  Object.entries(HeroMap).map(([heroKey, koreanName]) => [koreanName, heroKey as Hero]),
-);
-
-const koreanToMapMap: ReadonlyMap<string, GameMap> = new Map(
-  Object.entries(MAP_CATALOG).map(([mapKey, map]) => [map.nameKo, mapKey as GameMap]),
-);
 
 const ROLE_SET = new Set<string>(Object.values(HeroRoles));
 const DATE_PATTERN = /^\d{8}$/;
@@ -244,7 +238,7 @@ export function normalizeGame(rawGame: RawGame, context: { dateKey: string; game
     throw new MatchServiceError(`${label}.date(${rawGame.date})가 상위 날짜 키(${context.dateKey})와 다릅니다.`);
   }
 
-  const map = koreanToMapMap.get(rawGame.map);
+  const map = MAP_BY_KOREAN_NAME.get(rawGame.map);
   if (!map) {
     throw new MatchServiceError(`${label}: 알 수 없는 맵 이름(${rawGame.map})`);
   }
@@ -278,7 +272,7 @@ function normalizeTeam(rawTeam: RawTeam, label: string): NormalizedTeam {
 
   const bans =
     rawTeam.bans?.map((ban, index) => {
-      const mapped = koreanToHeroMap.get(ban);
+      const mapped = HERO_BY_KOREAN_NAME.get(ban);
       if (!mapped) {
         throw new MatchServiceError(`${label}.bans[${index}]: 알 수 없는 영웅 이름(${ban})`);
       }
@@ -298,7 +292,7 @@ function normalizeTeam(rawTeam: RawTeam, label: string): NormalizedTeam {
 }
 
 function normalizePlayer(rawPlayer: RawPlayerStat, teamLabel: string): NormalizedPlayer {
-  const hero = koreanToHeroMap.get(rawPlayer.hero);
+  const hero = HERO_BY_KOREAN_NAME.get(rawPlayer.hero);
   if (!hero) {
     throw new MatchServiceError(`${teamLabel}: 알 수 없는 영웅 이름(${rawPlayer.hero})`);
   }

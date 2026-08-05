@@ -1,19 +1,6 @@
 import type { GameMap } from "@/domain/hots/models/map";
 import type { RawGame, RawPlayerStat, RawTeam } from "@/domain/hots/types/replay-import-contract";
 
-export interface DecodedReplayPlayer {
-  readonly name?: unknown;
-  readonly hero?: unknown;
-  readonly talents?: unknown;
-  readonly gameStats?: unknown;
-}
-
-export interface DecodedReplay {
-  readonly status?: unknown;
-  readonly match?: unknown;
-  readonly players?: unknown;
-}
-
 export interface ReplayImportPlayer extends RawPlayerStat {
   readonly rawName: string;
   readonly suggestedNickname: string | null;

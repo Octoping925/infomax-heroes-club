@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/config/prisma";
 import type { NormalizedReplay } from "@/domain/hots/replay/contracts";
+import { REPLAY_MAX_BATCH_FILES } from "@/domain/hots/replay/limits";
 import { ReplayDraftError, verifyReplayDraft } from "@/domain/hots/replay/replay-draft";
 import type { NormalizedGame, RawGame, RawPlayerStat, RawTeam } from "@/domain/hots/types/replay-import-contract";
 import { Prisma } from "@/generated/prisma/client";
@@ -15,8 +16,6 @@ import {
   type PersistTeam,
 } from "./persist-normalized-match";
 
-const MAX_DRAFTS = 10;
-const SHA_256_PATTERN = /^[a-f0-9]{64}$/;
 const existingMatchSelect = {
   id: true,
   type: true,
@@ -105,8 +104,8 @@ export async function createMatchFromReplays(input: unknown): Promise<CreateMatc
 
 function parseRequest(input: unknown): CreateMatchFromReplaysRequest {
   const body = readObject(input, "요청 본문");
-  if (!Array.isArray(body.drafts) || body.drafts.length === 0 || body.drafts.length > MAX_DRAFTS) {
-    throw new MatchServiceError(`drafts는 1개 이상 ${MAX_DRAFTS}개 이하여야 합니다.`);
+  if (!Array.isArray(body.drafts) || body.drafts.length === 0 || body.drafts.length > REPLAY_MAX_BATCH_FILES) {
+    throw new MatchServiceError(`drafts는 1개 이상 ${REPLAY_MAX_BATCH_FILES}개 이하여야 합니다.`);
   }
   const mappingsObject = readObject(body.playerMappings, "playerMappings");
   if (Object.keys(mappingsObject).length > 100) {
@@ -149,9 +148,6 @@ function verifyDrafts(request: CreateMatchFromReplaysRequest): ReadonlyArray<Ver
   try {
     const verified = sorted.map((draft) => {
       const claims = verifyReplayDraft(draft.token);
-      if (!SHA_256_PATTERN.test(claims.sourceReplayHash)) {
-        throw new MatchServiceError("리플레이 해시가 올바르지 않습니다.");
-      }
       return {
         replay: claims.normalizedReplay,
         sourceReplayHash: claims.sourceReplayHash,
@@ -302,7 +298,7 @@ function validateOrientationPlausibility(game: PersistGame, originalTeam1: Set<s
 async function validateRegisteredPlayers(tx: Prisma.TransactionClient, input: PersistMatchInput): Promise<void> {
   const requested = [...input.originalTeam1PlayerIds, ...input.originalTeam2PlayerIds];
   const players = await tx.player.findMany({ where: { id: { in: requested } }, select: { id: true } });
-  if (players.length !== requested.length || new Set(players.map((player) => player.id)).size !== requested.length) {
+  if (players.length !== requested.length) {
     throw new MatchServiceError("등록되지 않은 플레이어가 매핑에 포함되어 있습니다.");
   }
 }

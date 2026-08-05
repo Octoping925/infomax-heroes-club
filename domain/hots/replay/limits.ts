@@ -1,0 +1,2 @@
+export const REPLAY_MAX_BATCH_FILES = 10;
+export const REPLAY_FILE_MAX_BYTES = 4_000_000;
