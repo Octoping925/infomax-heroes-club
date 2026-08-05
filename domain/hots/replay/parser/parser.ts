@@ -1,11 +1,9 @@
 import { readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { REPLAY_HEROPROTOCOL_SNAPSHOT } from "@/config/replay-import";
 
-export const HEROPROTOCOL_SNAPSHOT = {
-  version: "2.0.2",
-  commit: "9cc5bccc93a8872b79a877d9f0301917effa5576",
-} as const;
+export const HEROPROTOCOL_SNAPSHOT = REPLAY_HEROPROTOCOL_SNAPSHOT;
 
 const require = createRequire(import.meta.url);
 const PROTOCOL_DIRECTORY = join(
