@@ -1,13 +1,20 @@
 import { createRequire } from "node:module";
+import {
+  REPLAY_FILE_MAX_BYTES,
+  REPLAY_MPQ_MAX_MEMBER_BYTES,
+  REPLAY_MPQ_MAX_SECTOR_COUNT,
+  REPLAY_MPQ_MAX_TABLE_ENTRIES,
+  REPLAY_MPQ_MAX_TOTAL_OUTPUT_BYTES,
+} from "@/config/replay-import";
 import type { ReplayArchive } from "./parser/parser";
 import { ReplayParseError } from "./replay-errors";
 import { MPQArchive, MpqError } from "../../../vendor/empeeku/mpyq";
 
-export const MAX_MPQ_ARCHIVE_BYTES = 4_000_000;
-export const MAX_MPQ_TABLE_ENTRIES = 1_024;
-export const MAX_MPQ_MEMBER_BYTES = 16 * 1024 * 1024;
-export const MAX_MPQ_TOTAL_OUTPUT_BYTES = 64 * 1024 * 1024;
-export const MAX_MPQ_SECTOR_COUNT = 32_768;
+export const MAX_MPQ_ARCHIVE_BYTES = REPLAY_FILE_MAX_BYTES;
+export const MAX_MPQ_TABLE_ENTRIES = REPLAY_MPQ_MAX_TABLE_ENTRIES;
+export const MAX_MPQ_MEMBER_BYTES = REPLAY_MPQ_MAX_MEMBER_BYTES;
+export const MAX_MPQ_TOTAL_OUTPUT_BYTES = REPLAY_MPQ_MAX_TOTAL_OUTPUT_BYTES;
+export const MAX_MPQ_SECTOR_COUNT = REPLAY_MPQ_MAX_SECTOR_COUNT;
 
 export interface ReplayArchiveOptions {
   readonly maxArchiveBytes?: number;

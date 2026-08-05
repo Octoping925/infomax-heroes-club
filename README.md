@@ -48,4 +48,17 @@ Create `.env.local` with:
 ```bash
 DATABASE_URL=postgres://...
 MONGODB_URI=mongodb://...
+REPLAY_TOKEN_SECRET=base64url-secret...
 ```
+
+`REPLAY_TOKEN_SECRET`은 최소 32 random bytes를 padding 없는 base64url로
+인코딩한 값이어야 합니다. 로컬에서는 다음처럼 생성할 수 있습니다.
+
+```bash
+openssl rand -base64 32 | tr -d '\n=' | tr '+/' '-_'
+```
+
+Vercel의 Development, Preview, Production 환경마다 서로 다른 값을 설정하세요.
+이 값은 리플레이 검토 초안의 HMAC 서명에만 사용하며 로그나 클라이언트 설정에
+넣지 않습니다. 값을 회전하면 기존 초안은 즉시 검증되지 않으므로 리플레이를
+다시 파싱해야 합니다.
