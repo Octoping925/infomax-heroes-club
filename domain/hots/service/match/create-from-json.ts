@@ -4,9 +4,8 @@ import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier 
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
 import { GameMap, MatchType } from "@/generated/prisma/enums";
-import { calculateGameResult } from "./common";
 import { MatchServiceError } from "./errors";
-import { insertGameTeamMemberTalents } from "./talent-sql";
+import { persistNormalizedMatch, type PersistPlayer, type PersistTeam } from "./persist-normalized-match";
 import type {
   NormalizedGame,
   NormalizedPlayer,
@@ -87,129 +86,29 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
       throw new MatchServiceError(`${dateKey}: team2LeaderId가 1경기 2팀 멤버가 아닙니다.`);
     }
 
-    const team1Wins = normalizedGames.filter((game) => game.winnerTeamNumber === 1).length;
-    const team2Wins = normalizedGames.filter((game) => game.winnerTeamNumber === 2).length;
-    const matchWinnerTeamNumber = team1Wins > team2Wins ? 1 : team2Wins > team1Wins ? 2 : null;
-
     const playedAt = parsePlayedAt(dateKey);
-
     const match = await prisma.$transaction(
-      async (tx) => {
-        const newMatch = await tx.match.create({
-          data: {
-            type: MatchType.DINNER,
-            playedAt,
-            winnerTeamNumber: matchWinnerTeamNumber,
-          },
-        });
-
-        const [matchTeam1, matchTeam2] = await tx.matchTeam.createManyAndReturn({
-          data: [
-            {
-              matchId: newMatch.id,
-              teamNumber: 1,
-              leaderId: body.team1LeaderId,
-            },
-            {
-              matchId: newMatch.id,
-              teamNumber: 2,
-              leaderId: body.team2LeaderId,
-            },
-          ],
-        });
-
-        await tx.matchTeamMember.createMany({
-          data: [
-            ...matchTeam1PlayerIds.map((playerId) => ({
-              matchTeamId: matchTeam1.id,
-              playerId,
-            })),
-            ...matchTeam2PlayerIds.map((playerId) => ({
-              matchTeamId: matchTeam2.id,
-              playerId,
-            })),
-          ],
-        });
-
-        for (const game of normalizedGames) {
-          const newGame = await tx.game.create({
-            data: {
-              matchId: newMatch.id,
-              gameNumber: game.idx,
-              gameLength: game.gameLength,
-              map: game.map,
-              winnerTeamNumber: game.winnerTeamNumber,
-            },
-          });
-
-          for (const teamNumber of [1, 2] as const) {
-            const team = teamNumber === 1 ? game.team1 : game.team2;
-            const sourceMatchTeamId = teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
-            const result = calculateGameResult(teamNumber, game.winnerTeamNumber);
-
-            const gameTeam = await tx.gameTeam.create({
-              data: {
-                gameId: newGame.id,
-                teamNumber,
-                sourceMatchTeamId,
-                result,
-                teamLevel: team.teamLevel,
-              },
-            });
-
-            const createdMembers = await tx.gameTeamMember.createManyAndReturn({
-              data: team.players.map((player) => ({
-                gameTeamId: gameTeam.id,
-                playerId: playerIdByNickname.get(player.nickname)!,
-                hero: player.hero,
-                position: player.position,
-                kills: player.kills,
-                deaths: player.deaths,
-                takedowns: player.takedowns,
-                heroDamage: player.heroDamage,
-                siegeDamage: player.siegeDamage,
-                damageTaken: player.damageTaken,
-                healingDone: player.healingDone,
-                experienceContribution: player.experienceContribution,
-                timeSpentDead: player.timeSpentDead,
-                timeCCdEnemyHeroes: player.timeCCdEnemyHeroes,
-                dpm: player.dpm,
-                mercCampCaptures: player.mercCampCaptures,
-                watchTowerCaptures: player.watchTowerCaptures,
-                regenGlobes: player.regenGlobes,
-              })),
-            });
-
-            const talentsToCreate = createdMembers.flatMap((member) => {
-              const player = team.players.find((entry) => playerIdByNickname.get(entry.nickname) === member.playerId);
-              if (!player || player.talents.length === 0) {
-                return [];
-              }
-
-              return player.talents.map((talent) => ({
-                gameTeamMemberId: member.id,
-                tier: talent.tier,
-                rawCode: talent.rawCode,
-                talentKey: talent.talentKey,
-              }));
-            });
-
-            await insertGameTeamMemberTalents(tx, talentsToCreate);
-
-            if (team.bans.length > 0) {
-              await tx.gameTeamBan.createMany({
-                data: team.bans.map((hero, index) => ({
-                  gameTeamId: gameTeam.id,
-                  hero,
-                  banOrder: index + 1,
-                })),
-              });
-            }
-          }
-        }
-
-        return newMatch;
-      },
+      (tx) =>
+        persistNormalizedMatch(tx, {
+          type: MatchType.DINNER,
+          playedAt,
+          replayImportFingerprint: null,
+          team1LeaderId: body.team1LeaderId,
+          team2LeaderId: body.team2LeaderId,
+          originalTeam1PlayerIds: matchTeam1PlayerIds,
+          originalTeam2PlayerIds: matchTeam2PlayerIds,
+          games: normalizedGames.map((game) => ({
+            gameNumber: game.idx,
+            gameLength: game.gameLength,
+            map: game.map,
+            winnerTeamNumber: game.winnerTeamNumber,
+            sourceReplayHash: null,
+            teams: [
+              toPersistTeam(game.team1, 1, playerIdByNickname),
+              toPersistTeam(game.team2, 2, playerIdByNickname),
+            ],
+          })),
+        }),
       {
         timeout: 15000,
         maxWait: 15000,
@@ -224,6 +123,23 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
     matchesCreated: createdMatchIds.length,
     gamesCreated,
     matchIds: createdMatchIds,
+  };
+}
+
+function toPersistTeam(
+  team: NormalizedTeam,
+  teamNumber: 1 | 2,
+  playerIdByNickname: ReadonlyMap<string, string>,
+): PersistTeam {
+  return {
+    teamNumber,
+    sourceTeamNumber: teamNumber,
+    teamLevel: team.teamLevel,
+    bans: [...team.bans],
+    players: team.players.map(({ nickname, ...stats }): PersistPlayer => ({
+      playerId: playerIdByNickname.get(nickname)!,
+      ...stats,
+    })),
   };
 }
 
@@ -318,7 +234,7 @@ function parseRawPlayer(input: unknown, label: string): RawPlayerStat {
   };
 }
 
-function normalizeGame(rawGame: RawGame, context: { dateKey: string; gameIndex: number }): NormalizedGame {
+export function normalizeGame(rawGame: RawGame, context: { dateKey: string; gameIndex: number }): NormalizedGame {
   const label = `${context.dateKey}#${context.gameIndex}`;
 
   if (!DATE_PATTERN.test(rawGame.date)) {
