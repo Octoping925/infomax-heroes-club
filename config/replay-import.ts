@@ -1,7 +1,9 @@
 const MINIMUM_SECRET_BYTES = 32;
 
-export const REPLAY_MAX_BATCH_FILES = 10;
-export const REPLAY_FILE_MAX_BYTES = 4_000_000;
+export {
+  REPLAY_FILE_MAX_BYTES,
+  REPLAY_MAX_BATCH_FILES,
+} from "@/domain/hots/replay/limits";
 export const REPLAY_MPQ_MAX_TABLE_ENTRIES = 1_024;
 export const REPLAY_MPQ_MAX_MEMBER_BYTES = 16 * 1024 * 1024;
 export const REPLAY_MPQ_MAX_TOTAL_OUTPUT_BYTES = 64 * 1024 * 1024;

@@ -1,3 +1,7 @@
+import {
+  HERO_BY_KOREAN_NAME,
+  MAP_BY_KOREAN_NAME,
+} from "@/domain/hots/constants/korean-name-lookups";
 import { HERO_CATALOG } from "@/domain/hots/constants/hero-catalog";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
 import type { Hero } from "@/domain/hots/models/hero";
@@ -5,13 +9,6 @@ import type { GameMap } from "@/domain/hots/models/map";
 import type { NormalizedReplay, ReplayImportPlayer, ReplayImportTeam } from "./contracts";
 import { getSuggestedPlayerNickname } from "./player-aliases";
 import { ReplayParseError } from "./replay-errors";
-
-const heroByKoreanName = new Map<string, Hero>(
-  Object.entries(HERO_CATALOG).map(([hero, entry]) => [entry.nameKo, hero as Hero]),
-);
-const mapByKoreanName = new Map<string, GameMap>(
-  Object.entries(MAP_CATALOG).map(([map, entry]) => [entry.nameKo, map as GameMap]),
-);
 
 const HERO_ATTRIBUTE_TO_HERO: Readonly<Record<string, Hero>> = {
   Abat: "Abathur",
@@ -255,7 +252,7 @@ function readMap(value: unknown): GameMap {
   if (raw in MAP_CATALOG) {
     return raw as GameMap;
   }
-  const map = mapByKoreanName.get(raw);
+  const map = MAP_BY_KOREAN_NAME.get(raw);
   if (!map) {
     throw new ReplayParseError("UNSUPPORTED_MAP", { map: raw });
   }
@@ -270,7 +267,7 @@ function readHero(value: unknown): Hero {
   if (raw === "Lúcio") {
     return "Lucio";
   }
-  const hero = heroByKoreanName.get(raw);
+  const hero = HERO_BY_KOREAN_NAME.get(raw);
   if (!hero) {
     throw new ReplayParseError("UNSUPPORTED_HERO", { hero: raw });
   }
