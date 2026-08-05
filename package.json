@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:replays": "vite-node --config vitest.config.ts scripts/verify-replay-parser.mjs",
     "lint": "eslint",
     "ts:check": "tsc --noEmit",
     "postinstall": "prisma generate",
