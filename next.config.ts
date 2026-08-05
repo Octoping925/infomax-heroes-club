@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  outputFileTracingIncludes: {
+    "/*": ["./vendor/heroprotocol/lib/**/*.js"],
+  },
   images: {
     remotePatterns: [new URL("https://nexuscompendium.com/images/portraits/*")],
   },
