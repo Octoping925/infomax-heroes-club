@@ -17,6 +17,13 @@ const players = Array.from({ length: 10 }, (_, index) => ({
 }));
 
 describe("replay import state", () => {
+  it("defaults new imports to dinner", () => {
+    const state = createInitialReplayImportState();
+
+    expect(state.matchType).toBe("DINNER");
+    expect(buildConfirmRequest(state).type).toBe("DINNER");
+  });
+
   it("uploads three accepted files strictly one at a time", () => {
     let state = createInitialReplayImportState();
     state = replayImportReducer(state, {
@@ -137,6 +144,31 @@ describe("replay import state", () => {
     expect(state.orientations["b".repeat(64)]).toEqual({ value: "SWAPPED", source: "manual" });
   });
 
+  it("keeps the first ready game anchored to the original team direction", () => {
+    let state = readyState();
+
+    state = replayImportReducer(state, {
+      type: "ORIENTATION_SELECTED",
+      sourceReplayHash: "a".repeat(64),
+      orientation: "SWAPPED",
+    });
+
+    expect(state.orientations["a".repeat(64)]).toEqual({ value: "NORMAL", source: "inferred" });
+  });
+
+  it("reanchors the next ready game when the first game is retried", () => {
+    let state = readyState();
+    state = replayImportReducer(state, {
+      type: "ORIENTATION_SELECTED",
+      sourceReplayHash: "b".repeat(64),
+      orientation: "SWAPPED",
+    });
+
+    state = replayImportReducer(state, { type: "FILE_RETRY_REQUESTED", id: "first" });
+
+    expect(state.orientations["b".repeat(64)]).toEqual({ value: "NORMAL", source: "inferred" });
+  });
+
   it("clears choices that depend on a changed hash and roster while preserving referenced mappings", () => {
     let state = readyState();
     state = replayImportReducer(state, { type: "PLAYER_MAPPED", rawName: "raw-1", playerId: "player-1" });
@@ -152,7 +184,7 @@ describe("replay import state", () => {
     expect(state.orientations["a".repeat(64)]).toBeUndefined();
     expect(state.team1LeaderId).toBe("");
     expect(state.team2LeaderId).toBe("");
-    expect(state.matchType).toBe("LUNCH");
+    expect(state.matchType).toBe("DINNER");
   });
 
   it("removes mappings that are no longer referenced after a parsed game is removed", () => {

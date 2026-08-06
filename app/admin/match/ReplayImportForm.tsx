@@ -13,6 +13,7 @@ import {
 } from "react";
 import type { PlayerListItem } from "@/app/api/players/route";
 import type { ReplayImportPlayer } from "@/domain/hots/replay/contracts";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 import {
   buildConfirmRequest,
   createInitialReplayImportState,
@@ -40,7 +41,7 @@ type ManualSaveState =
   | { readonly status: "saving" }
   | { readonly status: "success" | "error"; readonly message: string };
 
-export function ReplayImportForm() {
+export default function ReplayImportForm() {
   const [state, dispatch] = useReducer(replayImportReducer, undefined, createInitialReplayImportState);
   const [announcement, setAnnouncement] = useState("리플레이 파일을 선택해 주세요.");
   const [isDragging, setIsDragging] = useState(false);
@@ -61,7 +62,7 @@ export function ReplayImportForm() {
   const loadPlayers = useCallback(async (): Promise<void> => {
     dispatch({ type: "PLAYER_DIRECTORY_LOADING" });
     try {
-      const response = await fetch("/api/players", { cache: "no-store" });
+      const response = await fetchWithTimeout("/api/players", { cache: "no-store" });
       const data: unknown = await response.json();
       if (!response.ok || !Array.isArray(data)) throw new Error(readApiMessage(data, "선수 목록을 불러오지 못했습니다."));
       const players = data.filter(isPlayerListItem);
@@ -96,7 +97,7 @@ export function ReplayImportForm() {
       }
       setAnnouncement(`${uploading.file.name} 분석을 시작했습니다.`);
       try {
-        const response = await fetch("/api/matches/replays/parse", {
+        const response = await fetchWithTimeout("/api/matches/replays/parse", {
           method: "POST",
           headers: { "Content-Type": "application/octet-stream" },
           body: source,
@@ -189,7 +190,7 @@ export function ReplayImportForm() {
     dispatch({ type: "CONFIRM_STARTED" });
     setAnnouncement("검토한 매치를 저장하고 있습니다.");
     try {
-      const response = await fetch("/api/matches/replays/confirm", {
+      const response = await fetchWithTimeout("/api/matches/replays/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildConfirmRequest(state)),
@@ -438,6 +439,7 @@ function ReplayGameReview({ item, index, count, orientation, onOrientation, onMo
             id={`orientation-${item.id}`}
             value={orientation?.value ?? ""}
             onChange={(event) => onOrientation(event.target.value as "NORMAL" | "SWAPPED")}
+            disabled={index === 0}
             aria-label={`${index + 1}경기 팀 방향`}
             aria-invalid={!orientation?.value}
             className="rounded-lg border border-white/10 bg-[#141421] px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400"
@@ -532,7 +534,7 @@ function ManualJsonFallback({ players, isPlayerDirectoryReady }: { readonly play
     }
     setResult({ status: "saving" });
     try {
-      const response = await fetch("/api/matches/json", {
+      const response = await fetchWithTimeout("/api/matches/json", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ team1LeaderId, team2LeaderId, data }),

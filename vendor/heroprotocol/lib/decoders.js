@@ -58,7 +58,6 @@ function BitPackedBuffer(contents, endian) {
 exports.BitPackedBuffer = BitPackedBuffer;
 
 BitPackedBuffer.prototype.toString = function() {
-  console.log(this._data);
   return 'buffer(' +
     (this._nextbits && this._next || 0).toString(16) + '/' + this._nextbits +
     ',[' + this._used + ']=' + ((this._used < this._data.length) ? this._data.readUInt8(this._used).toString(16) : '--') +

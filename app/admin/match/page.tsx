@@ -1,5 +1,5 @@
 import { TopBar } from "@/components/TopBar";
-import { ReplayImportForm } from "./ReplayImportForm";
+import ReplayImportForm from "./ReplayImportForm";
 
 export default function MatchInputPage() {
   return (

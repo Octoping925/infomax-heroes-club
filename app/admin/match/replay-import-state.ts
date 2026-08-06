@@ -148,7 +148,7 @@ export function createInitialReplayImportState(): ReplayImportState {
     orientations: {},
     team1LeaderId: "",
     team2LeaderId: "",
-    matchType: "LUNCH",
+    matchType: "DINNER",
     confirm: { status: "idle" },
   };
 }
@@ -205,19 +205,19 @@ export function replayImportReducer(
       });
     }
     case "UPLOAD_FAILED":
-      return {
+      return reconcileReadyChoices({
         ...state,
         queue: state.queue.map((item) => item.id === action.id
           ? { id: item.id, file: item.file, status: "error", failure: action.failure, message: action.message }
           : item),
-      };
+      });
     case "FILE_RETRY_REQUESTED":
-      return resetConfirm({
+      return reconcileReadyChoices(resetConfirm({
         ...state,
         queue: state.queue.map((item) => item.id === action.id
           ? { id: item.id, file: item.file, status: "queued" }
           : item),
-      });
+      }));
     case "FILE_REMOVED":
       return reconcileReadyChoices(resetConfirm({
         ...state,
@@ -242,7 +242,9 @@ export function replayImportReducer(
           ? { ...state.playerMappings, [action.rawName]: action.playerId }
           : omitKey(state.playerMappings, action.rawName),
       }));
-    case "ORIENTATION_SELECTED":
+    case "ORIENTATION_SELECTED": {
+      const first = readyItems(state.queue)[0];
+      if (first?.parsed.sourceReplayHash === action.sourceReplayHash) return state;
       return resetConfirm({
         ...state,
         orientations: {
@@ -250,6 +252,7 @@ export function replayImportReducer(
           [action.sourceReplayHash]: { value: action.orientation, source: "manual" },
         },
       });
+    }
     case "LEADER_SELECTED":
       return resetConfirm(action.team === 1
         ? { ...state, team1LeaderId: action.playerId }
@@ -424,13 +427,17 @@ function reconcileReadyChoices(state: ReplayImportState): ReplayImportState {
   const orientations: Record<string, OrientationChoice> = {};
   ready.forEach((item, index) => {
     const hash = item.parsed.sourceReplayHash;
+    if (index === 0) {
+      orientations[hash] = { value: "NORMAL", source: "inferred" };
+      return;
+    }
     const existing = state.orientations[hash];
     if (existing?.source === "manual") {
       orientations[hash] = existing;
       return;
     }
     orientations[hash] = {
-      value: index === 0 ? "NORMAL" : inferOrientation(ready[0], item, playerMappings),
+      value: inferOrientation(ready[0], item, playerMappings),
       source: "inferred",
     };
   });
