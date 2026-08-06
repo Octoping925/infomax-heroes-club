@@ -202,7 +202,15 @@ describe("createMatchFromReplays", () => {
     ["subset", () => ({ ...request(), drafts: [request().drafts[0]] })],
     ["different order", () => {
       const base = request();
-      return { ...base, drafts: [{ ...base.drafts[1], gameNumber: 1 }, { ...base.drafts[0], gameNumber: 2 }] };
+      return {
+        ...base,
+        team1LeaderId: "p6",
+        team2LeaderId: "p1",
+        drafts: [
+          { ...base.drafts[1], gameNumber: 1, orientation: "NORMAL" as const },
+          { ...base.drafts[0], gameNumber: 2, orientation: "SWAPPED" as const },
+        ],
+      };
     }],
     ["different mapping", () => ({ ...request(), playerMappings: { ...request().playerMappings, p1: "p2", p2: "p1" } })],
     ["different leader", () => ({ ...request(), team1LeaderId: "p2" })],
@@ -241,6 +249,10 @@ describe("createMatchFromReplays", () => {
 
   it.each([
     ["mixed dates", () => ({ ...request(), drafts: [{ ...request().drafts[0] }, { token: issueReplayDraft({ normalizedReplay: replay("20260806"), sourceReplayHash: HASH_2 }), gameNumber: 2, orientation: "SWAPPED" as const }] })],
+    ["swapped first game", () => {
+      const base = request();
+      return { ...base, drafts: [{ ...base.drafts[0], orientation: "SWAPPED" as const }, base.drafts[1]] };
+    }],
     ["duplicate order", () => ({ ...request(), drafts: request().drafts.map((draft) => ({ ...draft, gameNumber: 1 })) })],
     ["non-contiguous order", () => ({ ...request(), drafts: request().drafts.map((draft, index) => ({ ...draft, gameNumber: index + 2 })) })],
     ["colliding players", () => ({ ...request(), playerMappings: { ...request().playerMappings, p2: "p1" } })],

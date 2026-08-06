@@ -94,8 +94,10 @@ npm run verify:replays
 
 - 지원 빌드는 legacy 정규화 결과와 map, winner, date, team, player, stat, talent,
   ban, duration이 일치해야 합니다.
-- `INVALID_REPLAY`, `INVALID_TEAM_SIZE`, `WINNER_NOT_FOUND`는 기존 파서가 AI/불완전
-  로스터를 통과시키거나 승자를 임의로 1팀으로 만들던 동작을 제거한 의도된 교정입니다.
+- 기존 파서가 통과시켰지만 새 파서가 거절해야 하는 리플레이는
+  `scripts/replay-accepted-corrections.json`에 SHA-256과 기대 오류 코드를 함께 기록합니다.
+  전체 코퍼스에서 동일한 해시와 코드가 재현되어야만 의도된 교정으로 인정되므로,
+  새로운 거절을 오류 코드만으로 포괄 승인하지 않습니다.
 - 새 게임 빌드는 자동으로 최신 protocol에 폴백하지 않습니다. 대표 리플레이를 corpus에
   추가해 전체 parity를 통과시킨 뒤 `VERIFIED_PROTOCOL_COMPATIBILITY`에 실제 빌드와
   고정 protocol을 명시적으로 추가합니다.

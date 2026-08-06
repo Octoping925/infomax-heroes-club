@@ -145,6 +145,9 @@ function verifyDrafts(request: CreateMatchFromReplaysRequest): ReadonlyArray<Ver
       throw new MatchServiceError("경기 순서는 1부터 연속되어야 하며 중복될 수 없습니다.");
     }
   });
+  if (sorted[0]?.orientation !== "NORMAL") {
+    throw new MatchServiceError("첫 경기의 팀 방향은 NORMAL이어야 합니다.");
+  }
   try {
     const verified = sorted.map((draft) => {
       const claims = verifyReplayDraft(draft.token);

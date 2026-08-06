@@ -7,10 +7,17 @@ import { performance } from "node:perf_hooks";
 import { parseAndNormalizeReplay } from "../domain/hots/replay/decode-replay";
 import { normalizeDecodedReplay } from "../domain/hots/replay/normalize-replay";
 import { issueReplayDraft } from "../domain/hots/replay/replay-draft";
+import {
+  matchesAcceptedCorrection,
+  readAcceptedCorrections,
+} from "./replay-corpus-expectations";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const corpusDirectory = requireDirectory("REPLAY_CORPUS_DIR");
 const legacyRoot = requireDirectory("LEGACY_HOTS_DIR");
+const acceptedCorrections = readAcceptedCorrections(JSON.parse(
+  readFileSync(join(repositoryRoot, "scripts", "replay-accepted-corrections.json"), "utf8"),
+));
 const replayFiles = readdirSync(corpusDirectory)
   .filter((name) => name.toLowerCase().endsWith(".stormreplay"))
   .sort();
@@ -30,6 +37,7 @@ process.env.REPLAY_TOKEN_SECRET ??= Buffer.alloc(32, 7).toString("base64url");
   const report = createReport(replayFiles.length);
   const successfulDrafts = [];
   const productionResults = new Map();
+  const matchedCorrections = new Set();
   let largestRequestBytes = 0;
   let largestResponseBytes = 0;
   let peakRssBytes = process.memoryUsage().rss;
@@ -49,11 +57,8 @@ process.env.REPLAY_TOKEN_SECRET ??= Buffer.alloc(32, 7).toString("base64url");
       increment(report.production.builds, String(normalized.build ?? "unknown"));
     } catch (error) {
       const code = readErrorCode(error);
-      productionResults.set(fileName, { rejection: code });
+      productionResults.set(fileName, { rejection: code, sourceReplayHash });
       increment(report.production.rejections, code);
-      if (!isAcceptedCorrection(code)) {
-        report.unexpectedRejections += 1;
-      }
     }
     const durationMs = performance.now() - startedAt;
     if (report.performance.samples === 0) {
@@ -86,8 +91,20 @@ process.env.REPLAY_TOKEN_SECRET ??= Buffer.alloc(32, 7).toString("base64url");
       join(corpusDirectory, fileName),
     );
     if (production?.rejection) {
-      if (legacy?.status === 1) report.acceptedLegacyCorrections += 1;
-      else report.legacyAlsoRejected += 1;
+      if (legacy?.status === 1) {
+        if (matchesAcceptedCorrection(
+          acceptedCorrections,
+          production.sourceReplayHash,
+          production.rejection,
+        )) {
+          matchedCorrections.add(production.sourceReplayHash);
+          report.acceptedLegacyCorrections += 1;
+        } else {
+          report.unexpectedRejections += 1;
+        }
+      } else {
+        report.legacyAlsoRejected += 1;
+      }
       continue;
     }
     const legacyNormalized = normalizeLegacy(legacy, normalizeDecodedReplay);
@@ -126,6 +143,7 @@ process.env.REPLAY_TOKEN_SECRET ??= Buffer.alloc(32, 7).toString("base64url");
     report.performance.warmTotalParseMs / Math.max(report.performance.samples - 1, 1),
   );
   report.performance.maxParseMs = round(report.performance.maxParseMs);
+  report.unusedAcceptedCorrections = Object.keys(acceptedCorrections).length - matchedCorrections.size;
   delete report.performance.totalParseMs;
   delete report.performance.warmTotalParseMs;
   delete report.performance.samples;
@@ -140,6 +158,7 @@ process.env.REPLAY_TOKEN_SECRET ??= Buffer.alloc(32, 7).toString("base64url");
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   if (
     report.unexpectedRejections > 0 ||
+    report.unusedAcceptedCorrections > 0 ||
     report.legacyFailures > 0 ||
     report.parityMismatchedReplays > 0
   ) {
@@ -251,6 +270,7 @@ function createReport(total) {
     corpusFiles: total,
     production: { success: 0, rejections: {}, builds: {} },
     acceptedLegacyCorrections: 0,
+    unusedAcceptedCorrections: 0,
     legacyAlsoRejected: 0,
     unexpectedRejections: 0,
     legacyFailures: 0,
@@ -293,10 +313,6 @@ function readErrorCode(error) {
   return typeof error === "object" && error !== null && "code" in error
     ? String(error.code)
     : "UNKNOWN";
-}
-
-function isAcceptedCorrection(code) {
-  return code === "INVALID_REPLAY" || code === "INVALID_TEAM_SIZE" || code === "WINNER_NOT_FOUND";
 }
 
 function increment(record, key) {
