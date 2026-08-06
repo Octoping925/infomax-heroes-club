@@ -1,33 +1,9 @@
 import { DoorayBotMessage } from "./types";
 
-export class DoorayBotMessageSender {
-  private _header: Record<string, string> = {};
-  private _body: DoorayBotMessage = {};
-
-  constructor(private readonly url: string) {}
-
-  static url(url: string) {
-    return new DoorayBotMessageSender(url);
-  }
-
-  token(token: string) {
-    this._header.token = token;
-    return this;
-  }
-
-  body(body: DoorayBotMessage) {
-    this._body = body;
-    return this;
-  }
-
-  async send() {
-    return fetch(this.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...this._header,
-      },
-      body: JSON.stringify(this._body),
-    });
-  }
+export function sendDoorayBotMessage(url: string, body: DoorayBotMessage) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
