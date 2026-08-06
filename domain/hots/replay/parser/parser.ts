@@ -29,6 +29,7 @@ export const VERIFIED_PROTOCOL_COMPATIBILITY: Readonly<Record<number, number>> =
   95918: 94786,
   96477: 94786,
   96881: 94786,
+  97650: 94786,
 };
 
 export interface ReplayArchive {

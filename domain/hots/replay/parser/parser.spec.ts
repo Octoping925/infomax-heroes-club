@@ -8,7 +8,7 @@ import {
 
 const OLD_BUILD = 29406;
 const CURRENT_BUILD = 94786;
-const VERIFIED_COMPATIBLE_BUILD = 96881;
+const VERIFIED_COMPATIBLE_BUILD = 97650;
 
 function createArchiveFactory(): ReplayArchiveFactory {
   return (source: Buffer): ReplayArchive => {
