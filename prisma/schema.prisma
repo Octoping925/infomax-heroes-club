@@ -167,6 +167,7 @@ model Match {
   type             MatchType
   playedAt         DateTime // 내전 날짜
   winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부
+  replayImportFingerprint String? // 리플레이 순서·매핑·팀 방향·리더·유형의 정확 재시도 식별자
   youtubeUrl       String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -232,6 +233,7 @@ model Game {
   id               String   @id @default(cuid())
   matchId          String
   gameNumber       Int // 경기 순서 (1, 2, 3...)
+  sourceReplayHash String?  @unique // 리플레이 확정 저장의 SHA-256, 수동 입력은 null
   gameLength       Int @default(0) // 경기 시간 (초)
   map              GameMap
   winnerTeamNumber Int? // 승리 팀 번호 (1 or 2), null이면 무승부

@@ -1,5 +1,6 @@
 export * from "./match/common";
 export * from "./match/create-from-json";
+export * from "./match/create-from-replays";
 export * from "./match/create";
 export * from "./match/errors";
 export * from "./match/history";

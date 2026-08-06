@@ -29,7 +29,7 @@ export function proxy(request: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         { error: "ADMIN_ACCESS_PASSWORD 환경 변수가 설정되지 않았습니다." },
-        { status: 503 },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
       );
     }
 
@@ -44,7 +44,10 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "관리자 로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json(
+      { error: "관리자 로그인이 필요합니다." },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const loginUrl = new URL(ADMIN_LOGIN_PATH, request.url);

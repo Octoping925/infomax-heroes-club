@@ -1,105 +1,28 @@
 import { prisma } from "@/config/prisma";
-import { HeroMap } from "@/domain/hots/constants";
+import {
+  HERO_BY_KOREAN_NAME,
+  MAP_BY_KOREAN_NAME,
+} from "@/domain/hots/constants/korean-name-lookups";
 import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
-import { MAP_CATALOG } from "@/domain/hots/constants/maps";
-import { GameMap, MatchType } from "@/generated/prisma/enums";
-import { calculateGameResult } from "./common";
+import { MatchType } from "@/generated/prisma/enums";
 import { MatchServiceError } from "./errors";
-import { insertGameTeamMemberTalents } from "./talent-sql";
-
-type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
-
-type RawTalentEntry = {
-  readonly tier: number;
-  readonly code: string | null;
-};
-
-type RawPlayerStat = {
-  readonly name: string;
-  readonly hero: string;
-  readonly position?: string;
-  readonly talents?: ReadonlyArray<string | null | RawTalentEntry> | RawTalentRecord;
-  readonly kills: number;
-  readonly deaths: number;
-  readonly takedowns: number;
-  readonly heroDamage: number;
-  readonly siegeDamage?: number;
-  readonly damageTaken: number;
-  readonly healingDone?: number;
-  readonly experienceContribution?: number;
-  readonly timeSpentDead?: number;
-  readonly timeCCdEnemyHeroes?: number;
-  readonly dpm?: number;
-  readonly mercCampCaptures?: number;
-  readonly watchTowerCaptures?: number;
-  readonly regenGlobes?: number;
-};
-
-type RawTeam = {
-  readonly win: boolean;
-  readonly level?: number;
-  readonly players: ReadonlyArray<RawPlayerStat>;
-  readonly bans?: ReadonlyArray<string>;
-};
-
-type RawGame = {
-  readonly date: string;
-  readonly idx: number;
-  readonly gameLength?: number;
-  readonly map: string;
-  readonly team1: RawTeam;
-  readonly team2: RawTeam;
-};
-
-type RawData = Record<string, ReadonlyArray<RawGame>>;
+import { persistNormalizedMatch, type PersistPlayer, type PersistTeam } from "./persist-normalized-match";
+import type {
+  NormalizedGame,
+  NormalizedPlayer,
+  NormalizedTeam,
+  RawGame,
+  RawPlayerStat,
+  RawReplayImportData,
+  RawTalentRecord,
+  RawTeam,
+} from "@/domain/hots/types/replay-import-contract";
 
 export type CreateMatchesFromJsonRequest = {
   readonly team1LeaderId: string;
   readonly team2LeaderId: string;
-  readonly data: RawData;
-};
-
-type NormalizedPlayer = {
-  readonly nickname: string;
-  readonly hero: Hero;
-  readonly position: HeroRole;
-  readonly talents: ReadonlyArray<{
-    readonly tier: TalentTier;
-    readonly rawCode: string;
-    readonly talentKey: string | null;
-  }>;
-  readonly kills: number;
-  readonly deaths: number;
-  readonly takedowns: number;
-  readonly heroDamage: number;
-  readonly siegeDamage: number;
-  readonly damageTaken: number;
-  readonly healingDone: number;
-  readonly experienceContribution: number;
-  readonly timeSpentDead: number;
-  readonly timeCCdEnemyHeroes: number;
-  readonly dpm: number;
-  readonly mercCampCaptures: number;
-  readonly watchTowerCaptures: number;
-  readonly regenGlobes: number;
-};
-
-type NormalizedTeam = {
-  readonly win: boolean;
-  readonly teamLevel: number;
-  readonly players: ReadonlyArray<NormalizedPlayer>;
-  readonly bans: ReadonlyArray<Hero>;
-};
-
-type NormalizedGame = {
-  readonly date: string;
-  readonly idx: number;
-  readonly map: GameMap;
-  readonly gameLength: number;
-  readonly winnerTeamNumber: number | null;
-  readonly team1: NormalizedTeam;
-  readonly team2: NormalizedTeam;
+  readonly data: RawReplayImportData;
 };
 
 export type CreateMatchesFromJsonResponse = {
@@ -107,14 +30,6 @@ export type CreateMatchesFromJsonResponse = {
   readonly gamesCreated: number;
   readonly matchIds: ReadonlyArray<string>;
 };
-
-const koreanToHeroMap: ReadonlyMap<string, Hero> = new Map(
-  Object.entries(HeroMap).map(([heroKey, koreanName]) => [koreanName, heroKey as Hero]),
-);
-
-const koreanToMapMap: ReadonlyMap<string, GameMap> = new Map(
-  Object.entries(MAP_CATALOG).map(([mapKey, map]) => [map.nameKo, mapKey as GameMap]),
-);
 
 const ROLE_SET = new Set<string>(Object.values(HeroRoles));
 const DATE_PATTERN = /^\d{8}$/;
@@ -165,129 +80,29 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
       throw new MatchServiceError(`${dateKey}: team2LeaderId가 1경기 2팀 멤버가 아닙니다.`);
     }
 
-    const team1Wins = normalizedGames.filter((game) => game.winnerTeamNumber === 1).length;
-    const team2Wins = normalizedGames.filter((game) => game.winnerTeamNumber === 2).length;
-    const matchWinnerTeamNumber = team1Wins > team2Wins ? 1 : team2Wins > team1Wins ? 2 : null;
-
     const playedAt = parsePlayedAt(dateKey);
-
     const match = await prisma.$transaction(
-      async (tx) => {
-        const newMatch = await tx.match.create({
-          data: {
-            type: MatchType.DINNER,
-            playedAt,
-            winnerTeamNumber: matchWinnerTeamNumber,
-          },
-        });
-
-        const [matchTeam1, matchTeam2] = await tx.matchTeam.createManyAndReturn({
-          data: [
-            {
-              matchId: newMatch.id,
-              teamNumber: 1,
-              leaderId: body.team1LeaderId,
-            },
-            {
-              matchId: newMatch.id,
-              teamNumber: 2,
-              leaderId: body.team2LeaderId,
-            },
-          ],
-        });
-
-        await tx.matchTeamMember.createMany({
-          data: [
-            ...matchTeam1PlayerIds.map((playerId) => ({
-              matchTeamId: matchTeam1.id,
-              playerId,
-            })),
-            ...matchTeam2PlayerIds.map((playerId) => ({
-              matchTeamId: matchTeam2.id,
-              playerId,
-            })),
-          ],
-        });
-
-        for (const game of normalizedGames) {
-          const newGame = await tx.game.create({
-            data: {
-              matchId: newMatch.id,
-              gameNumber: game.idx,
-              gameLength: game.gameLength,
-              map: game.map,
-              winnerTeamNumber: game.winnerTeamNumber,
-            },
-          });
-
-          for (const teamNumber of [1, 2] as const) {
-            const team = teamNumber === 1 ? game.team1 : game.team2;
-            const sourceMatchTeamId = teamNumber === 1 ? matchTeam1.id : matchTeam2.id;
-            const result = calculateGameResult(teamNumber, game.winnerTeamNumber);
-
-            const gameTeam = await tx.gameTeam.create({
-              data: {
-                gameId: newGame.id,
-                teamNumber,
-                sourceMatchTeamId,
-                result,
-                teamLevel: team.teamLevel,
-              },
-            });
-
-            const createdMembers = await tx.gameTeamMember.createManyAndReturn({
-              data: team.players.map((player) => ({
-                gameTeamId: gameTeam.id,
-                playerId: playerIdByNickname.get(player.nickname)!,
-                hero: player.hero,
-                position: player.position,
-                kills: player.kills,
-                deaths: player.deaths,
-                takedowns: player.takedowns,
-                heroDamage: player.heroDamage,
-                siegeDamage: player.siegeDamage,
-                damageTaken: player.damageTaken,
-                healingDone: player.healingDone,
-                experienceContribution: player.experienceContribution,
-                timeSpentDead: player.timeSpentDead,
-                timeCCdEnemyHeroes: player.timeCCdEnemyHeroes,
-                dpm: player.dpm,
-                mercCampCaptures: player.mercCampCaptures,
-                watchTowerCaptures: player.watchTowerCaptures,
-                regenGlobes: player.regenGlobes,
-              })),
-            });
-
-            const talentsToCreate = createdMembers.flatMap((member) => {
-              const player = team.players.find((entry) => playerIdByNickname.get(entry.nickname) === member.playerId);
-              if (!player || player.talents.length === 0) {
-                return [];
-              }
-
-              return player.talents.map((talent) => ({
-                gameTeamMemberId: member.id,
-                tier: talent.tier,
-                rawCode: talent.rawCode,
-                talentKey: talent.talentKey,
-              }));
-            });
-
-            await insertGameTeamMemberTalents(tx, talentsToCreate);
-
-            if (team.bans.length > 0) {
-              await tx.gameTeamBan.createMany({
-                data: team.bans.map((hero, index) => ({
-                  gameTeamId: gameTeam.id,
-                  hero,
-                  banOrder: index + 1,
-                })),
-              });
-            }
-          }
-        }
-
-        return newMatch;
-      },
+      (tx) =>
+        persistNormalizedMatch(tx, {
+          type: MatchType.DINNER,
+          playedAt,
+          replayImportFingerprint: null,
+          team1LeaderId: body.team1LeaderId,
+          team2LeaderId: body.team2LeaderId,
+          originalTeam1PlayerIds: matchTeam1PlayerIds,
+          originalTeam2PlayerIds: matchTeam2PlayerIds,
+          games: normalizedGames.map((game) => ({
+            gameNumber: game.idx,
+            gameLength: game.gameLength,
+            map: game.map,
+            winnerTeamNumber: game.winnerTeamNumber,
+            sourceReplayHash: null,
+            teams: [
+              toPersistTeam(game.team1, 1, playerIdByNickname),
+              toPersistTeam(game.team2, 2, playerIdByNickname),
+            ],
+          })),
+        }),
       {
         timeout: 15000,
         maxWait: 15000,
@@ -305,6 +120,23 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
   };
 }
 
+function toPersistTeam(
+  team: NormalizedTeam,
+  teamNumber: 1 | 2,
+  playerIdByNickname: ReadonlyMap<string, string>,
+): PersistTeam {
+  return {
+    teamNumber,
+    sourceTeamNumber: teamNumber,
+    teamLevel: team.teamLevel,
+    bans: [...team.bans],
+    players: team.players.map(({ nickname, ...stats }): PersistPlayer => ({
+      playerId: playerIdByNickname.get(nickname)!,
+      ...stats,
+    })),
+  };
+}
+
 function parseRequestBody(input: unknown): CreateMatchesFromJsonRequest {
   const body = readObject(input, "요청 본문");
 
@@ -317,7 +149,7 @@ function parseRequestBody(input: unknown): CreateMatchesFromJsonRequest {
     throw new MatchServiceError("data는 최소 1개 이상의 날짜 키를 포함해야 합니다.");
   }
 
-  const data: RawData = {};
+  const data: RawReplayImportData = {};
   for (const [dateKey, gamesValue] of entries) {
     if (!DATE_PATTERN.test(dateKey)) {
       throw new MatchServiceError(`잘못된 날짜 키입니다: ${dateKey} (YYYYMMDD 형식이어야 합니다)`);
@@ -396,7 +228,7 @@ function parseRawPlayer(input: unknown, label: string): RawPlayerStat {
   };
 }
 
-function normalizeGame(rawGame: RawGame, context: { dateKey: string; gameIndex: number }): NormalizedGame {
+export function normalizeGame(rawGame: RawGame, context: { dateKey: string; gameIndex: number }): NormalizedGame {
   const label = `${context.dateKey}#${context.gameIndex}`;
 
   if (!DATE_PATTERN.test(rawGame.date)) {
@@ -406,7 +238,7 @@ function normalizeGame(rawGame: RawGame, context: { dateKey: string; gameIndex: 
     throw new MatchServiceError(`${label}.date(${rawGame.date})가 상위 날짜 키(${context.dateKey})와 다릅니다.`);
   }
 
-  const map = koreanToMapMap.get(rawGame.map);
+  const map = MAP_BY_KOREAN_NAME.get(rawGame.map);
   if (!map) {
     throw new MatchServiceError(`${label}: 알 수 없는 맵 이름(${rawGame.map})`);
   }
@@ -440,7 +272,7 @@ function normalizeTeam(rawTeam: RawTeam, label: string): NormalizedTeam {
 
   const bans =
     rawTeam.bans?.map((ban, index) => {
-      const mapped = koreanToHeroMap.get(ban);
+      const mapped = HERO_BY_KOREAN_NAME.get(ban);
       if (!mapped) {
         throw new MatchServiceError(`${label}.bans[${index}]: 알 수 없는 영웅 이름(${ban})`);
       }
@@ -460,7 +292,7 @@ function normalizeTeam(rawTeam: RawTeam, label: string): NormalizedTeam {
 }
 
 function normalizePlayer(rawPlayer: RawPlayerStat, teamLabel: string): NormalizedPlayer {
-  const hero = koreanToHeroMap.get(rawPlayer.hero);
+  const hero = HERO_BY_KOREAN_NAME.get(rawPlayer.hero);
   if (!hero) {
     throw new MatchServiceError(`${teamLabel}: 알 수 없는 영웅 이름(${rawPlayer.hero})`);
   }
@@ -670,7 +502,6 @@ function readOptionalTalents(value: unknown, label: string): RawPlayerStat["tale
 
   throw new MatchServiceError(`${label}는 배열 또는 객체여야 합니다.`);
 }
-
 
 function readOptionalString(value: unknown, label: string): string | undefined {
   if (value === undefined || value === null) {

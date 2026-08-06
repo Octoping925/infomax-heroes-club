@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:replays": "vite-node --config vitest.config.ts scripts/verify-replay-parser.mjs",
     "lint": "eslint",
     "ts:check": "tsc --noEmit",
     "postinstall": "prisma generate",
@@ -27,7 +28,8 @@
     "pg": "^8.16.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.5.1"
+    "recharts": "^3.5.1",
+    "seek-bzip": "^1.0.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

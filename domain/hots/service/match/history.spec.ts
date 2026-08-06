@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockPrisma, mockFetchPlayerMap } = vi.hoisted(() => ({
   mockPrisma: {
+    $queryRaw: vi.fn(),
     match: {
       findMany: vi.fn(),
     },
@@ -21,6 +22,7 @@ import { getMatchHistory } from "./history";
 
 describe("getMatchHistory", () => {
   beforeEach(() => {
+    mockPrisma.$queryRaw.mockReset().mockResolvedValue([]);
     mockPrisma.match.findMany.mockReset();
     mockFetchPlayerMap.mockReset();
   });
