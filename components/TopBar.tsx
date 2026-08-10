@@ -17,6 +17,7 @@ export function TopBar({ value = "home", title }: TopBarProps) {
         <nav className="-mx-1 md:mx-0 overflow-x-auto scrollbar-hide">
           <div className="flex w-max gap-2 px-1 md:px-0">
             <NavLink label="홈" href="/" isSelected={value === "home"} />
+            <NavLink label="가이드" href="/guide" isSelected={value === "guide"} />
             <NavLink label="통계" href="/stats" isSelected={value === "stats"} />
             <NavLink label="단어장" href="/glossary" isSelected={value === "glossary"} />
             <NavLink label="갤러리" href="/gallery" isSelected={value === "gallery"} />

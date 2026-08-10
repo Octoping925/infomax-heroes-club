@@ -49,6 +49,7 @@ type DestinationLink = {
 
 const navigationItems: NavigationItem[] = [
   { href: "/", label: "홈" },
+  { href: "/guide", label: "가이드" },
   { href: "/stats", label: "통계" },
   { href: "/glossary", label: "단어장" },
   { href: "/gallery", label: "갤러리" },
