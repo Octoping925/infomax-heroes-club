@@ -3,6 +3,8 @@ import { MatchHistory } from "./MatchHistory";
 import { Suspense } from "react";
 import { Loading } from "@/components/Loading";
 
+export const dynamic = "force-dynamic";
+
 export default function MatchHistoryPage() {
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white">
