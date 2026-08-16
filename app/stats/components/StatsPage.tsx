@@ -15,6 +15,7 @@ import { RivalryTab } from "../rivalry/rivalry-tab";
 import { MapStatTab } from "./map-stat/map-stat-tab";
 import { CounterPickTab } from "./counter-pick-tab";
 import { TeamComposerTab } from "./team-composer/team-composer-tab";
+import { TeammateFrequencyTab } from "./teammate-frequency-tab";
 import { StatsYearContext, useStatsYearFilter } from "../hooks/useStatsYearFilter";
 
 type TabType =
@@ -25,6 +26,7 @@ type TabType =
   | "teamSwitch"
   | "avgKillsDeathsRanking"
   | "fantasyDuo"
+  | "teammateFrequency"
   | "heroDuo"
   | "counterPicks"
   | "teamComposer";
@@ -37,12 +39,13 @@ const TABS: { id: TabType; label: string; mobileLabel: string; icon: string }[] 
   { id: "teamSwitch", label: "팀 변경 효과", mobileLabel: "팀 변경", icon: "🔄" },
   { id: "avgKillsDeathsRanking", label: "평균 킬/데스", mobileLabel: "킬/데스", icon: "💥" },
   { id: "fantasyDuo", label: "환상의 듀오", mobileLabel: "환상 듀오", icon: "🤝" },
+  { id: "teammateFrequency", label: "팀 동료", mobileLabel: "팀 동료", icon: "👥" },
   { id: "heroDuo", label: "영웅 듀오", mobileLabel: "영웅 듀오", icon: "🧩" },
   { id: "counterPicks", label: "카운터픽", mobileLabel: "카운터", icon: "⚔️" },
   { id: "teamComposer", label: "팀 편성 도우미", mobileLabel: "팀 편성", icon: "🧠" },
 ];
 
-const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats"]);
+const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats", "teammateFrequency"]);
 
 export const SelectedPlayerContext = createContext<PlayerListItem | null>(null);
 
@@ -169,6 +172,7 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                   {activeTab === "teamSwitch" && <TeamSwitchChart />}
                   {activeTab === "avgKillsDeathsRanking" && <AvgStatsRankingChart />}
                   {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
+                  {activeTab === "teammateFrequency" && <TeammateFrequencyTab />}
                   {activeTab === "heroDuo" && <HeroDuoRankingChart />}
                   {activeTab === "counterPicks" && <CounterPickTab />}
                   {activeTab === "teamComposer" && <TeamComposerTab />}
