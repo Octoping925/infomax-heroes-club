@@ -20,10 +20,12 @@ export function TeammateFrequencyTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-400">두 사람이 함께 참가한 매치 중 같은 팀이었던 비율입니다.</p>
+      <p className="text-sm text-gray-400">
+        두 사람이 함께 참가한 매치 중 같은 팀이었던 비율과, 같은 팀이었을 때의 승률입니다.
+      </p>
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-white/5 text-gray-300">
             <tr>
               <th scope="col" className="px-4 py-3 text-left">
@@ -38,6 +40,12 @@ export function TeammateFrequencyTab() {
               <th scope="col" className="px-4 py-3 text-right">
                 같은 팀 비율
               </th>
+              <th scope="col" className="px-4 py-3 text-right">
+                같은 팀 전적
+              </th>
+              <th scope="col" className="px-4 py-3 text-right">
+                같은 팀 승률
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -50,6 +58,13 @@ export function TeammateFrequencyTab() {
                 <td className="px-4 py-3 text-right text-gray-200">{row.sameTeamMatches}</td>
                 <td className="px-4 py-3 text-right text-gray-200">{row.encounterMatches}</td>
                 <td className="px-4 py-3 text-right font-medium text-cyan-300">{row.sameTeamRate.toFixed(1)}%</td>
+                <td className="px-4 py-3 text-right text-gray-200">
+                  {row.sameTeamWins}승 {row.sameTeamLosses}패
+                  {row.sameTeamDraws > 0 ? ` ${row.sameTeamDraws}무` : ""}
+                </td>
+                <td className="px-4 py-3 text-right font-medium text-emerald-300">
+                  {row.sameTeamMatches > 0 ? `${row.sameTeamWinRate.toFixed(1)}%` : "-"}
+                </td>
               </tr>
             ))}
           </tbody>

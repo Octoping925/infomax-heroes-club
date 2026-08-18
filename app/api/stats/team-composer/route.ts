@@ -4,22 +4,33 @@ import { prisma } from "@/config/prisma";
 import { HeroRole, HeroRoles } from "@/domain/hots/models";
 import { maxBy, round } from "es-toolkit";
 import { NextResponse } from "next/server";
-import { toResultByWinnerTeamNumber, updateCountsByResult } from "@/app/api/stats/utils/stats";
+import {
+  buildWinRateStatsFromCounts,
+  createResultCounts,
+  ResultCounts,
+  toResultByWinnerTeamNumber,
+  updateCountsByResult,
+} from "@/app/api/stats/utils/stats";
 import { GameResult } from "@/generated/prisma/client";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 const RECENT_MATCH_COUNT = 6;
 const ROLE_ORDER = Object.values(HeroRoles);
 
+type PairWindowCounter = {
+  encounterMatches: number;
+  sameTeamMatches: number;
+  sameTeamCounts: ResultCounts;
+};
+
 type PairCounter = {
-  allTime: {
-    encounterMatches: number;
-    sameTeamMatches: number;
-  };
-  recent6: {
-    encounterMatches: number;
-    sameTeamMatches: number;
-  };
+  allTime: PairWindowCounter;
+  recent6: PairWindowCounter;
+};
+
+type PairTeam = {
+  readonly playerIds: ReadonlyArray<string>;
+  readonly result: GameResult;
 };
 
 type MatchResultCounter = {
@@ -89,11 +100,7 @@ export async function GET(request: Request): Promise<NextResponse<TeamComposerRe
   const recentUsedCountByPlayer = new Map<string, number>();
 
   for (const match of matches) {
-    accumulatePairStats(
-      match.teams.map((team) => team.members.map((member) => member.playerId)),
-      "allTime",
-      pairStats,
-    );
+    accumulatePairStats(toPairTeams(match), "allTime", pairStats);
 
     const uniquePlayerIds = new Set(match.teams.flatMap((team) => team.members.map((member) => member.playerId)));
     for (const playerId of uniquePlayerIds) {
@@ -115,11 +122,7 @@ export async function GET(request: Request): Promise<NextResponse<TeamComposerRe
   }
 
   for (const recentMatch of matches.slice(0, RECENT_MATCH_COUNT)) {
-    accumulatePairStats(
-      recentMatch.teams.map((team) => team.members.map((member) => member.playerId)),
-      "recent6",
-      pairStats,
-    );
+    accumulatePairStats(toPairTeams(recentMatch), "recent6", pairStats);
   }
 
   const roleCountByPlayer = new Map<string, Map<HeroRole, number>>();
@@ -194,12 +197,25 @@ export async function GET(request: Request): Promise<NextResponse<TeamComposerRe
   );
 }
 
+function toPairTeams(match: {
+  readonly winnerTeamNumber: number | null;
+  readonly teams: ReadonlyArray<{
+    readonly teamNumber: number;
+    readonly members: ReadonlyArray<{ readonly playerId: string }>;
+  }>;
+}): PairTeam[] {
+  return match.teams.map((team) => ({
+    playerIds: team.members.map((member) => member.playerId),
+    result: toResultByWinnerTeamNumber(match.winnerTeamNumber, team.teamNumber),
+  }));
+}
+
 function accumulatePairStats(
-  teams: ReadonlyArray<ReadonlyArray<string>>,
+  teams: ReadonlyArray<PairTeam>,
   window: "allTime" | "recent6",
   pairStats: Map<string, PairCounter>,
 ) {
-  const uniquePlayers = Array.from(new Set(teams.flat()));
+  const uniquePlayers = Array.from(new Set(teams.flatMap((team) => team.playerIds)));
 
   for (let i = 0; i < uniquePlayers.length; i += 1) {
     for (let j = i + 1; j < uniquePlayers.length; j += 1) {
@@ -210,12 +226,13 @@ function accumulatePairStats(
   }
 
   for (const team of teams) {
-    const uniqueTeam = Array.from(new Set(team));
+    const uniqueTeam = Array.from(new Set(team.playerIds));
     for (let i = 0; i < uniqueTeam.length; i += 1) {
       for (let j = i + 1; j < uniqueTeam.length; j += 1) {
         const key = toPairKey(uniqueTeam[i], uniqueTeam[j]);
         const counter = ensurePairCounter(pairStats, key);
         counter[window].sameTeamMatches += 1;
+        updateCountsByResult(counter[window].sameTeamCounts, team.result);
       }
     }
   }
@@ -232,20 +249,26 @@ function ensurePairCounter(pairStats: Map<string, PairCounter>, key: string): Pa
   }
 
   const created: PairCounter = {
-    allTime: { encounterMatches: 0, sameTeamMatches: 0 },
-    recent6: { encounterMatches: 0, sameTeamMatches: 0 },
+    allTime: { encounterMatches: 0, sameTeamMatches: 0, sameTeamCounts: createResultCounts() },
+    recent6: { encounterMatches: 0, sameTeamMatches: 0, sameTeamCounts: createResultCounts() },
   };
   pairStats.set(key, created);
   return created;
 }
 
-function toWindowStats(counter: { encounterMatches: number; sameTeamMatches: number }): TeamingWindowStats {
+function toWindowStats(counter: PairWindowCounter): TeamingWindowStats {
   const sameTeamRate =
     counter.encounterMatches > 0 ? round((counter.sameTeamMatches / counter.encounterMatches) * 100, 1) : 0;
+  const sameTeamStats = buildWinRateStatsFromCounts(counter.sameTeamCounts);
+
   return {
     encounterMatches: counter.encounterMatches,
     sameTeamMatches: counter.sameTeamMatches,
     sameTeamRate,
+    sameTeamWins: sameTeamStats.wins,
+    sameTeamLosses: sameTeamStats.losses,
+    sameTeamDraws: sameTeamStats.draws,
+    sameTeamWinRate: sameTeamStats.winRate,
   };
 }
 

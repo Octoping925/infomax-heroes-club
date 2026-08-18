@@ -576,6 +576,10 @@ function emptyWindowStats(): TeamingWindowStats {
     encounterMatches: 0,
     sameTeamMatches: 0,
     sameTeamRate: 0,
+    sameTeamWins: 0,
+    sameTeamLosses: 0,
+    sameTeamDraws: 0,
+    sameTeamWinRate: 0,
   };
 }
 

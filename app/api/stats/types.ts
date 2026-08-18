@@ -248,6 +248,11 @@ export interface TeamingWindowStats {
   readonly sameTeamMatches: number;
   /** 0 ~ 100 */
   readonly sameTeamRate: number;
+  readonly sameTeamWins: number;
+  readonly sameTeamLosses: number;
+  readonly sameTeamDraws: number;
+  /** 0 ~ 100, 같은 팀이었던 매치 기준(무승부는 0.5승) */
+  readonly sameTeamWinRate: number;
 }
 
 export interface TeamingPairStatResponse {

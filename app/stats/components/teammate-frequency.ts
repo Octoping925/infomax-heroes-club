@@ -1,13 +1,14 @@
-import type { TeamingPairStatResponse, TeamingPlayerProfileResponse } from "@/app/api/stats/types";
+import type {
+  TeamingPairStatResponse,
+  TeamingPlayerProfileResponse,
+  TeamingWindowStats,
+} from "@/app/api/stats/types";
 
 type TeammatePlayer = Pick<TeamingPlayerProfileResponse, "playerId" | "playerName" | "playerNickname">;
 
 export type TeammateRow = {
   readonly player: TeammatePlayer;
-  readonly encounterMatches: number;
-  readonly sameTeamMatches: number;
-  readonly sameTeamRate: number;
-};
+} & TeamingWindowStats;
 
 export function buildTeammateRows(
   selectedPlayerId: string,
