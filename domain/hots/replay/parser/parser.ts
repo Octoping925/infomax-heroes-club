@@ -153,15 +153,10 @@ function loadExactProtocol(build: number): ProtocolModule | null {
 }
 
 function loadProtocolModule(build: number): unknown {
-  if (typeof __webpack_require__ !== "undefined") {
-    // Webpack must see this relative template to include every pinned protocol.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require(`../../../../vendor/heroprotocol/lib/protocol${build}.js`);
-  }
-  return nodeRequire(join(PROTOCOL_DIRECTORY, `protocol${build}.js`));
+  return nodeRequire(
+    /* turbopackIgnore: true */ join(PROTOCOL_DIRECTORY, `protocol${build}.js`),
+  );
 }
-
-declare const __webpack_require__: unknown;
 
 function isProtocolModule(value: unknown, build: number): value is ProtocolModule {
   if (typeof value !== "object" || value === null) {
