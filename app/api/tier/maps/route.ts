@@ -102,6 +102,11 @@ const MAP_CONFIGS: ReadonlyArray<MapConfig> = [
     name: "Warhead Junction",
     aliases: ["핵탄두 격전지", "핵탄두격전지", "핵", "핵탄두"],
   },
+  {
+    slug: "haunted-mines",
+    name: "Haunted Mines",
+    aliases: ["죽음의 광산", "죽음의광산", "죽광", "광산"],
+  },
 ];
 
 const MAP_LOOKUP: ReadonlyMap<string, MapConfig> = buildMapLookup(MAP_CONFIGS);
