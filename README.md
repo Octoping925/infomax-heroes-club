@@ -68,7 +68,7 @@ Vercel의 Development, Preview, Production 환경마다 서로 다른 값을 설
 
 ## Heroes Profile 메타 티어
 
-`/tier`는 Heroes Profile의 폭풍 리그 통계로 영웅별 역할 상대 S~D 등급을 계산해
+`/tier`는 Heroes Profile의 폭풍 리그 통계로 영웅별 역할 상대 1~5티어를 계산해
 보여줍니다. 플레이어 리그는 `전체`와 `상위 티어 (플래티넘 이상)` 두 분류를
 제공하고, 둘 다 전체 지역·전체 맵·최신 메이저 서브 패치 조건입니다. 100경기 미만의
 영웅은 등급을 보류합니다. 기존 `/stats`의 동호회 내전 티어와는 별도 데이터입니다.

@@ -18,4 +18,16 @@ describe("selectVisibleRows", () => {
     const visible = selectVisibleRows(rows, { role: "HEALER", search: "", sort: "win" });
     expect(visible.map((row) => row.hero)).toEqual(["Anduin", "Ana"]);
   });
+
+  it("keeps role-relative tiers together before sorting by score", () => {
+    const mixedRoles: HeroMetaRow[] = [
+      { ...rows[0], tier: "S", tierScore: 60 },
+      { ...rows[1], tier: "A", tierScore: 70 },
+      { ...rows[2], tier: "S", tierScore: 80 },
+      { ...rows[0], hero: "Brightwing", tier: null, tierScore: null },
+    ];
+
+    expect(selectVisibleRows(mixedRoles, { role: "ALL", search: "", sort: "tier" }).map((row) => row.hero))
+      .toEqual(["Diablo", "Ana", "Anduin", "Brightwing"]);
+  });
 });
