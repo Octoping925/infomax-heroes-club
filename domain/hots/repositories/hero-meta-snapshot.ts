@@ -2,8 +2,10 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { HeroMetaSnapshotStore } from "../service/hero-meta-loader";
 import type { HeroMetaDailySnapshot, HeroMetaDailyStore } from "../service/hero-meta-daily-refresh";
 import type { HeroMetaAudience } from "../service/hero-meta-filters";
-import type { HeroMetaStat } from "../service/hero-meta-tier";
+import type { HeroMetaMapStats, HeroMetaStat } from "../service/hero-meta-tier";
+import type { GameMap } from "../models/map";
 import { HERO_CATALOG } from "../constants";
+import { MAP_CATALOG } from "../constants/maps";
 
 function readStats(raw: unknown): HeroMetaStat[] | null {
   if (raw === null) return null;
@@ -18,6 +20,19 @@ function readStats(raw: unknown): HeroMetaStat[] | null {
     }
     return row as unknown as HeroMetaStat;
   });
+}
+
+function readMapStats(raw: unknown): HeroMetaMapStats | null {
+  if (raw === null) return null;
+  if (typeof raw !== "object" || Array.isArray(raw)) throw new Error("저장된 맵별 영웅 통계가 손상되었습니다.");
+  const mapStats: HeroMetaMapStats = {};
+  for (const [map, value] of Object.entries(raw)) {
+    if (!Object.hasOwn(MAP_CATALOG, map)) throw new Error("저장된 맵별 영웅 통계가 손상되었습니다.");
+    const stats = readStats(value);
+    if (!stats) throw new Error("저장된 맵별 영웅 통계가 손상되었습니다.");
+    mapStats[map as GameMap] = stats;
+  }
+  return mapStats;
 }
 
 export function createHeroMetaSnapshotStore(client: Pick<PrismaClient, "heroMetaSnapshot">): HeroMetaSnapshotStore {
@@ -71,6 +86,12 @@ export function createHeroMetaDailyStore(client: Pick<PrismaClient, "heroMetaSna
         jobPath: row.jobPath,
         pendingPatch: row.pendingPatch,
         nextPollAt: row.nextPollAt,
+        mapStats: readMapStats(row.mapStats),
+        mapPatch: row.mapPatch,
+        mapFetchedAt: row.mapFetchedAt,
+        mapJobPath: row.mapJobPath,
+        mapPendingPatch: row.mapPendingPatch,
+        mapNextPollAt: row.mapNextPollAt,
       };
     },
     async claimDaily(audience: HeroMetaAudience, runDate: string, now: Date, leaseUntil: Date) {
@@ -112,6 +133,33 @@ export function createHeroMetaDailyStore(client: Pick<PrismaClient, "heroMetaSna
       await model.update({
         where: { key: audience },
         data: { lastError: message, leaseUntil: null },
+      });
+    },
+    async saveMapReady(audience, patch, stats, fetchedAt) {
+      await model.update({
+        where: { key: audience },
+        data: {
+          mapStats: stats as unknown as Prisma.InputJsonValue,
+          mapPatch: patch,
+          mapFetchedAt: fetchedAt,
+          mapJobPath: null,
+          mapPendingPatch: null,
+          mapNextPollAt: null,
+          mapLastError: null,
+          leaseUntil: null,
+        },
+      });
+    },
+    async saveMapPending(audience, patch, jobPath, nextPollAt) {
+      await model.update({
+        where: { key: audience },
+        data: { mapPendingPatch: patch, mapJobPath: jobPath, mapNextPollAt: nextPollAt, leaseUntil: null },
+      });
+    },
+    async saveMapFailure(audience, message) {
+      await model.update({
+        where: { key: audience },
+        data: { mapLastError: message, leaseUntil: null },
       });
     },
   };

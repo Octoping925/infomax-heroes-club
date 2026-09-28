@@ -1,5 +1,5 @@
 import type { HeroMetaAudience } from "./hero-meta-filters";
-import { parseHeroStats, type HeroMetaStat } from "./hero-meta-tier";
+import { parseGroupedHeroStats, parseHeroStats, type HeroMetaMapStats, type HeroMetaStat } from "./hero-meta-tier";
 import type { HeroMetaSourceResult } from "./hero-meta-loader";
 
 export interface HeroMetaDailySnapshot {
@@ -9,6 +9,12 @@ export interface HeroMetaDailySnapshot {
   readonly jobPath: string | null;
   readonly pendingPatch: string | null;
   readonly nextPollAt: Date | null;
+  readonly mapStats: HeroMetaMapStats | null;
+  readonly mapPatch: string | null;
+  readonly mapFetchedAt: Date | null;
+  readonly mapJobPath: string | null;
+  readonly mapPendingPatch: string | null;
+  readonly mapNextPollAt: Date | null;
 }
 
 export interface HeroMetaDailyStore {
@@ -17,11 +23,15 @@ export interface HeroMetaDailyStore {
   saveReady(audience: HeroMetaAudience, patch: string, stats: HeroMetaStat[], fetchedAt: Date): Promise<void>;
   savePending(audience: HeroMetaAudience, patch: string | null, jobPath: string | null, nextPollAt: Date | null): Promise<void>;
   saveFailure(audience: HeroMetaAudience, message: string): Promise<void>;
+  saveMapReady(audience: HeroMetaAudience, patch: string, stats: HeroMetaMapStats, fetchedAt: Date): Promise<void>;
+  saveMapPending(audience: HeroMetaAudience, patch: string | null, jobPath: string | null, nextPollAt: Date | null): Promise<void>;
+  saveMapFailure(audience: HeroMetaAudience, message: string): Promise<void>;
 }
 
 export interface HeroMetaDailySource {
   getLatestMajorPatch(): Promise<string>;
   fetchStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
+  fetchMapStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   pollJob(path: string): Promise<HeroMetaSourceResult>;
 }
 
@@ -30,6 +40,7 @@ export interface HeroMetaRefreshResult {
   readonly status: "ready" | "pending" | "failed" | "already-ran";
   readonly patch: string;
   readonly rows: number;
+  readonly mapRows?: number;
   readonly error?: string;
 }
 
@@ -83,49 +94,115 @@ async function refreshAudience(
   if (snapshot?.jobPath && snapshot.pendingPatch !== patch) {
     await store.savePending(audience, null, null, null);
   }
-  let jobPath = snapshot?.pendingPatch === patch ? snapshot.jobPath : null;
+  if (snapshot?.mapJobPath && snapshot.mapPendingPatch !== patch) {
+    await store.saveMapPending(audience, null, null, null);
+  }
+
+  const [overall, maps] = await Promise.all([
+    refreshDataset({
+      patch,
+      deadline,
+      state: {
+        jobPath: snapshot?.pendingPatch === patch ? snapshot.jobPath : null,
+        pendingPatch: snapshot?.pendingPatch ?? null,
+        nextPollAt: snapshot?.nextPollAt ?? null,
+      },
+      fetch: () => source.fetchStats(patch, audience),
+      poll: (path) => source.pollJob(path),
+      parse: parseHeroStats,
+      count: (stats) => stats.length,
+      saveReady: (stats, fetchedAt) => store.saveReady(audience, patch, stats, fetchedAt),
+      savePending: (pendingPatch, jobPath, nextPollAt) => store.savePending(audience, pendingPatch, jobPath, nextPollAt),
+      saveFailure: (message) => store.saveFailure(audience, message),
+      emptyMessage: "Heroes Profile 응답에 저장할 수 있는 영웅 통계가 없습니다.",
+    }),
+    refreshDataset({
+      patch,
+      deadline,
+      state: {
+        jobPath: snapshot?.mapPendingPatch === patch ? snapshot.mapJobPath : null,
+        pendingPatch: snapshot?.mapPendingPatch ?? null,
+        nextPollAt: snapshot?.mapNextPollAt ?? null,
+      },
+      fetch: () => source.fetchMapStats(patch, audience),
+      poll: (path) => source.pollJob(path),
+      parse: parseGroupedHeroStats,
+      count: (stats) => Object.values(stats).reduce((total, rows) => total + rows.length, 0),
+      saveReady: (stats, fetchedAt) => store.saveMapReady(audience, patch, stats, fetchedAt),
+      savePending: (pendingPatch, jobPath, nextPollAt) => store.saveMapPending(audience, pendingPatch, jobPath, nextPollAt),
+      saveFailure: (message) => store.saveMapFailure(audience, message),
+      emptyMessage: "Heroes Profile 응답에 저장할 수 있는 맵별 영웅 통계가 없습니다.",
+    }),
+  ]);
+
+  const status = overall.status === "failed" || maps.status === "failed"
+    ? "failed"
+    : overall.status === "pending" || maps.status === "pending"
+      ? "pending"
+      : "ready";
+  const error = [overall.error, maps.error].filter(Boolean).join("; ") || undefined;
+  return { audience, status, patch, rows: overall.rows, mapRows: maps.rows, ...(error ? { error } : {}) };
+}
+
+async function refreshDataset<T>(deps: {
+  readonly patch: string;
+  readonly deadline: number;
+  readonly state: { readonly jobPath: string | null; readonly pendingPatch: string | null; readonly nextPollAt: Date | null };
+  readonly fetch: () => Promise<HeroMetaSourceResult>;
+  readonly poll: (path: string) => Promise<HeroMetaSourceResult>;
+  readonly parse: (raw: unknown) => T;
+  readonly count: (stats: T) => number;
+  readonly saveReady: (stats: T, fetchedAt: Date) => Promise<void>;
+  readonly savePending: (patch: string | null, jobPath: string | null, nextPollAt: Date | null) => Promise<void>;
+  readonly saveFailure: (message: string) => Promise<void>;
+  readonly emptyMessage: string;
+}): Promise<{ status: "ready" | "pending" | "failed"; rows: number; error?: string }> {
+  const { patch, deadline, fetch, poll, parse, count, saveReady, savePending, saveFailure, emptyMessage } = deps;
+  let jobPath = deps.state.pendingPatch === patch ? deps.state.jobPath : null;
   let retriedExpiredJob = false;
 
-  if (jobPath && snapshot?.nextPollAt && snapshot.nextPollAt.getTime() > Date.now()) {
-    const delay = snapshot.nextPollAt.getTime() - Date.now();
+  if (jobPath && deps.state.nextPollAt && deps.state.nextPollAt.getTime() > Date.now()) {
+    const delay = deps.state.nextPollAt.getTime() - Date.now();
     if (Date.now() + delay >= deadline) {
-      await store.savePending(audience, patch, jobPath, snapshot.nextPollAt);
-      return { audience, status: "pending", patch, rows: 0 };
+      await savePending(patch, jobPath, deps.state.nextPollAt);
+      return { status: "pending", rows: 0 };
     }
     await sleep(delay);
   }
 
   while (Date.now() < deadline) {
     try {
-      const response = jobPath ? await source.pollJob(jobPath) : await source.fetchStats(patch, audience);
+      const response = jobPath ? await poll(jobPath) : await fetch();
       if (response.kind === "ready") {
-        const stats = parseHeroStats(response.raw);
-        if (stats.length === 0) throw new Error("Heroes Profile 응답에 저장할 수 있는 영웅 통계가 없습니다.");
-        await store.saveReady(audience, patch, stats, new Date());
-        return { audience, status: "ready", patch, rows: stats.length };
+        const stats = parse(response.raw);
+        const rows = count(stats);
+        if (rows === 0) throw new Error(emptyMessage);
+        await saveReady(stats, new Date());
+        return { status: "ready", rows };
       }
 
       jobPath = response.jobPath;
       const nextPollAt = new Date(Date.now() + retryAfterSeconds(response) * 1000);
-      await store.savePending(audience, patch, jobPath, nextPollAt);
+      await savePending(patch, jobPath, nextPollAt);
       const delay = nextPollAt.getTime() - Date.now();
-      if (Date.now() + delay >= deadline) return { audience, status: "pending", patch, rows: 0 };
+      if (Date.now() + delay >= deadline) return { status: "pending", rows: 0 };
       await sleep(delay);
     } catch (error) {
       const status = statusOf(error);
       if (jobPath && !retriedExpiredJob && (status === 404 || status === 500)) {
         retriedExpiredJob = true;
         jobPath = null;
-        await store.savePending(audience, null, null, null);
+        await savePending(null, null, null);
         continue;
       }
-      await store.saveFailure(audience, errorMessage(error));
-      return { audience, status: "failed", patch, rows: 0, error: errorMessage(error) };
+      const message = errorMessage(error);
+      await saveFailure(message);
+      return { status: "failed", rows: 0, error: message };
     }
   }
 
-  await store.savePending(audience, patch, jobPath, new Date(Date.now() + 10_000));
-  return { audience, status: "pending", patch, rows: 0 };
+  await savePending(patch, jobPath, new Date(Date.now() + 10_000));
+  return { status: "pending", rows: 0 };
 }
 
 export async function refreshHeroMetaDaily(deps: {

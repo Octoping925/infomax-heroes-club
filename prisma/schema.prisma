@@ -344,6 +344,13 @@ model HeroMetaSnapshot {
   jobPath      String?
   pendingPatch String?
   nextPollAt   DateTime?
+  mapStats     Json?
+  mapPatch     String?
+  mapFetchedAt DateTime?
+  mapJobPath   String?
+  mapPendingPatch String?
+  mapNextPollAt DateTime?
+  mapLastError String?
   leaseUntil   DateTime?
   lastRunDate  String?
   lastError    String?

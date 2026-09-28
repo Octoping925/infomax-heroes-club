@@ -7,6 +7,7 @@ import { HERO_CATALOG } from "@/domain/hots/constants";
 import type { HeroRole } from "@/domain/hots/models";
 import type { HeroMetaAudience } from "@/domain/hots/service/hero-meta-filters";
 import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import type { GameMap } from "@/domain/hots/models/map";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 
 interface PageResult {
@@ -15,6 +16,8 @@ interface PageResult {
   readonly updatedAt: string | null;
   readonly patch: string | null;
   readonly stale?: boolean;
+  readonly maps?: ReadonlyArray<{ readonly id: GameMap; readonly name: string }>;
+  readonly map?: GameMap | null;
   readonly error?: string;
 }
 
@@ -78,9 +81,11 @@ export function parsePageResult(status: number, body: unknown): PageResult {
 
 export function TierPageClient() {
   const [audience, setAudience] = useState<HeroMetaAudience>("all");
+  const [selectedMap, setSelectedMap] = useState<"ALL" | GameMap>("ALL");
   const [selection, setSelection] = useState<VisibleRowsSelection>({ role: "ALL", search: "", sort: "tier" });
   const [result, setResult] = useState<PageResult | null>(null);
-  const [resultAudience, setResultAudience] = useState<HeroMetaAudience | null>(null);
+  const [resultKey, setResultKey] = useState<string | null>(null);
+  const [availableMaps, setAvailableMaps] = useState<ReadonlyArray<{ readonly id: GameMap; readonly name: string }>>([]);
   const [selectedHero, setSelectedHero] = useState<HeroMetaRow["hero"] | null>(null);
 
   useEffect(() => {
@@ -88,33 +93,36 @@ export function TierPageClient() {
 
     async function loadSnapshot() {
       try {
-        const response = await fetch(`/api/tier/heroes?audience=${audience}`, { signal: controller.signal });
+        const mapQuery = selectedMap === "ALL" ? "" : `&map=${encodeURIComponent(selectedMap)}`;
+        const response = await fetch(`/api/tier/heroes?audience=${audience}${mapQuery}`, { signal: controller.signal });
         const body = await response.json();
         const next = parsePageResult(response.status, body);
         if (!controller.signal.aborted) {
           setResult(next);
-          setResultAudience(audience);
+          setAvailableMaps(next.maps ?? []);
+          setResultKey(`${audience}:${selectedMap}`);
         }
       } catch (error) {
         if (!controller.signal.aborted) {
           setResult({ status: "error", rows: [], updatedAt: null, patch: null, error: error instanceof Error ? error.message : "티어 정보를 불러오지 못했습니다." });
-          setResultAudience(audience);
+          setResultKey(`${audience}:${selectedMap}`);
         }
       }
     }
     void loadSnapshot();
     return () => controller.abort();
-  }, [audience]);
+  }, [audience, selectedMap]);
 
-  const currentResult = resultAudience === audience ? result : null;
+  const currentResult = resultKey === `${audience}:${selectedMap}` ? result : null;
   const loading = currentResult === null;
   const rows = useMemo(() => selectVisibleRows(currentResult?.rows ?? [], selection), [currentResult, selection]);
   const detail = rows.find((row) => row.hero === selectedHero) ?? null;
+  const mapLabel = selectedMap === "ALL" ? "전체 맵" : availableMaps.find((map) => map.id === selectedMap)?.name ?? "선택 맵";
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-6 md:py-12">
       <section className="space-y-4 border-b border-white/10 pb-8">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Heroes Profile · Global Meta</p>
-        <h2 className="text-3xl font-bold tracking-tight md:text-5xl">전체 메타 티어</h2>
+        <h2 className="text-3xl font-bold tracking-tight md:text-5xl">{mapLabel} 메타 티어</h2>
         <p className="max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
           전 세계 경기 통계를 바탕으로 영웅의 역할별 상대 등급을 확인하세요. S~D 티어는 Heroes Profile이 제공하는 등급이 아니라 이 사이트가 계산한 결과입니다.
         </p>
@@ -127,10 +135,11 @@ export function TierPageClient() {
       <section className="rounded-xl border border-white/15 bg-white/5 p-4 md:p-6" aria-label="통계 조건">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div><h3 className="text-lg font-bold">통계 조건</h3><p className="mt-1 text-sm text-slate-400">하루 한 번 저장한 폭풍 리그 통계를 표시합니다.</p></div>
-          <span className="text-xs text-slate-400">전체 지역 · 전체 맵 · 최신 주요 패치</span>
+          <span className="text-xs text-slate-400">전체 지역 · {mapLabel} · 최신 주요 패치</span>
         </div>
-        <div className="grid max-w-sm grid-cols-1 gap-4">
-          <FilterSelect label="플레이어 리그" value={audience} onChange={(value) => { setSelectedHero(null); setAudience(value as HeroMetaAudience); }} choices={AUDIENCES} />
+        <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
+          <FilterSelect label="플레이어 리그" value={audience} onChange={(value) => { setSelectedHero(null); setSelectedMap("ALL"); setAudience(value as HeroMetaAudience); }} choices={AUDIENCES} />
+          <FilterSelect label="맵" value={selectedMap} onChange={(value) => { setSelectedHero(null); setSelectedMap(value as "ALL" | GameMap); }} choices={[{ value: "ALL", label: "전체 맵" }, ...availableMaps.map((map) => ({ value: map.id, label: map.name }))]} />
         </div>
       </section>
 

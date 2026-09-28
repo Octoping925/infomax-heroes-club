@@ -76,7 +76,9 @@ export function getLatestMajorPatch(apiKey: string, fetcher: typeof fetch = fetc
   })();
 }
 
-export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetch): HeroMetaSource {
+export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetch): HeroMetaSource & {
+  fetchGroupedMapStats(filters: HeroMetaFilters): Promise<HeroMetaSourceResult>;
+} {
   async function request(path: string): Promise<HeroMetaSourceResult> {
     const response = await fetcher(`${BASE_URL}${path}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -101,6 +103,12 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
       if (filters.leagueTier) params.set("league_tier", filters.leagueTier);
       return request(`/heroes/stats?${params.toString()}`);
     },
+    fetchGroupedMapStats: async (filters: HeroMetaFilters) => {
+      const params = new URLSearchParams({ timeframe_type: "major", timeframe: filters.patch, game_type: filters.mode, group_by_map: "true" });
+      if (filters.region !== "ALL") params.set("region", filters.region);
+      if (filters.leagueTier) params.set("league_tier", filters.leagueTier);
+      return request(`/heroes/stats?${params.toString()}`);
+    },
     pollJob: async (path: string) => {
       if (!/^\/jobs\/[a-zA-Z0-9-]+$/.test(path)) throw new Error("Heroes Profile 작업 주소가 올바르지 않습니다.");
       return request(path);
@@ -111,12 +119,20 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
 export function heroesProfileDailySource(apiKey: string, fetcher: typeof fetch = fetch): {
   getLatestMajorPatch(): Promise<string>;
   fetchStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
+  fetchMapStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   pollJob(path: string): Promise<HeroMetaSourceResult>;
 } {
   const source = heroesProfileSource(apiKey, fetcher);
   return {
     getLatestMajorPatch: () => getLatestMajorPatch(apiKey, fetcher),
     fetchStats: (patch, audience) => source.fetchStats({
+      mode: "sl",
+      region: "ALL",
+      patch,
+      map: null,
+      leagueTier: audience === "platinum_plus" ? "4,5,6" : null,
+    }),
+    fetchMapStats: (patch, audience) => source.fetchGroupedMapStats({
       mode: "sl",
       region: "ALL",
       patch,

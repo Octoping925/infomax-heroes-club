@@ -1,6 +1,6 @@
-import type { Hero } from "../models";
+import type { GameMap, Hero } from "../models";
 import type { HeroRole } from "../models/hero-role";
-import { HERO_CATALOG } from "../constants";
+import { HERO_CATALOG, MAP_CATALOG } from "../constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 
 export interface HeroMetaStat {
@@ -13,6 +13,8 @@ export interface HeroMetaStat {
   readonly banRate: number | null;
 }
 
+export type HeroMetaMapStats = Partial<Record<GameMap, HeroMetaStat[]>>;
+
 export type HeroMetaGrade = "S" | "A" | "B" | "C" | "D";
 
 export interface HeroMetaRow extends HeroMetaStat {
@@ -24,9 +26,22 @@ export interface HeroMetaRow extends HeroMetaStat {
 const HERO_BY_NORMALIZED_NAME = new Map(
   Object.keys(HERO_CATALOG).map((name) => [normalizeName(name), name as Hero]),
 );
+const MAP_BY_NORMALIZED_NAME = new Map<string, GameMap>(
+  Object.keys(MAP_CATALOG).flatMap((map) => [
+    [normalizeName(map), map as GameMap],
+  ]),
+);
+MAP_BY_NORMALIZED_NAME.set(normalizeName("Garden of Terror"), "HauntedWoods");
+MAP_BY_NORMALIZED_NAME.set(normalizeName("Hanamura Temple"), "Hanamura");
 
 function normalizeName(name: string): string {
   return name.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
 }
 
 function numeric(value: unknown): number | null {
@@ -69,6 +84,26 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
   }
   if (unknownHeroes.size > 0) console.warn("Unmapped Heroes Profile hero names:", [...unknownHeroes]);
   return rows;
+}
+
+export function parseGroupedHeroStats(raw: unknown): HeroMetaMapStats {
+  const grouped = asRecord(asRecord(raw)?.data);
+  if (!grouped) throw new Error("맵별 통계 응답 형식이 올바르지 않습니다.");
+
+  const mapStats: HeroMetaMapStats = {};
+  for (const [mapName, rows] of Object.entries(grouped)) {
+    if (!Array.isArray(rows)) throw new Error("맵별 통계 응답 형식이 올바르지 않습니다.");
+    const gameMap = MAP_BY_NORMALIZED_NAME.get(normalizeName(mapName));
+    if (!gameMap) {
+      console.warn("Unmapped Heroes Profile map name:", mapName);
+      continue;
+    }
+    if (mapStats[gameMap]) throw new Error(`중복된 맵 통계가 있습니다: ${mapName}`);
+    mapStats[gameMap] = parseHeroStats({ data: rows });
+  }
+
+  if (Object.keys(mapStats).length === 0) throw new Error("지원 가능한 맵 통계가 없습니다.");
+  return mapStats;
 }
 
 function percentileRank(value: number, values: ReadonlyArray<number>): number {

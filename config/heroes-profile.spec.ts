@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { heroesProfileSource, HeroesProfileRequestError, parseReferenceOptions, validateJobLocation } from "./heroes-profile";
+import { heroesProfileDailySource, heroesProfileSource, HeroesProfileRequestError, parseReferenceOptions, validateJobLocation } from "./heroes-profile";
 
 describe("validateJobLocation", () => {
   it("accepts only Heroes Profile v1 jobs", () => {
@@ -43,6 +43,21 @@ describe("heroesProfileSource", () => {
     expect(await source.fetchStats(filters)).toEqual({ kind: "pending", jobPath: "/jobs/abc-123", retryAfterSeconds: 10 });
     expect(await source.pollJob("/jobs/abc-123")).toEqual({ kind: "pending", jobPath: "/jobs/abc-123", retryAfterSeconds: 12 });
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("heroesProfileDailySource", () => {
+  it("requests all playable map groups in one query for the selected audience", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: {} })));
+    const source = heroesProfileDailySource("test-key", fetcher);
+
+    await source.fetchMapStats("2.55", "platinum_plus");
+
+    const url = String(fetcher.mock.calls[0]?.[0]);
+    expect(url).toContain("group_by_map=true");
+    expect(url).toContain("game_type=sl");
+    expect(url).toContain("league_tier=4%2C5%2C6");
+    expect(url).not.toContain("game_map=");
   });
 });
 

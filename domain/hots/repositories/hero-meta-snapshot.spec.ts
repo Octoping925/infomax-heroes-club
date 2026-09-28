@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createHeroMetaSnapshotStore } from "./hero-meta-snapshot";
+import { createHeroMetaDailyStore, createHeroMetaSnapshotStore } from "./hero-meta-snapshot";
 import type { PrismaClient } from "@/generated/prisma/client";
 
 describe("createHeroMetaSnapshotStore", () => {
@@ -27,5 +27,24 @@ describe("createHeroMetaSnapshotStore", () => {
     } } as unknown as Pick<PrismaClient, "heroMetaSnapshot">);
     const now = new Date("2026-09-28T00:00:00.000Z");
     expect(await store.claim("key", now, new Date(now.getTime() + 60_000), null)).toBe(false);
+  });
+});
+
+describe("createHeroMetaDailyStore map snapshots", () => {
+  it("stores map freshness independently from the overall patch fields", async () => {
+    const update = vi.fn(async (args: unknown) => { void args; return {}; });
+    const store = createHeroMetaDailyStore({ heroMetaSnapshot: {
+      findUnique: vi.fn(), upsert: vi.fn(), updateMany: vi.fn(), update,
+    } } as unknown as Pick<PrismaClient, "heroMetaSnapshot">);
+    const fetchedAt = new Date("2026-09-28T00:00:00.000Z");
+
+    await store.saveMapReady("all", "2.55", { SkyTemple: [] }, fetchedAt);
+
+    expect(update).toHaveBeenCalledWith({
+      where: { key: "all" },
+      data: expect.objectContaining({ mapPatch: "2.55", mapFetchedAt: fetchedAt }),
+    });
+    const updateArgs = update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
+    expect(updateArgs.data).not.toHaveProperty("patch");
   });
 });

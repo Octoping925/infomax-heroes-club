@@ -6,10 +6,12 @@ import { TierPageClient, parsePageResult } from "./TierPageClient";
 describe("TierPageClient", () => {
   it("introduces derived meta tiers and links to the club tier list", () => {
     const html = renderToStaticMarkup(createElement(TierPageClient));
-    expect(html).toContain("전체 메타 티어");
+    expect(html).toContain("전체 맵 메타 티어");
     expect(html).toContain("Heroes Profile");
     expect(html).toContain("내전 티어");
     expect(html).toContain("/stats#scrimStats");
+    expect(html).toContain("<option value=\"ALL\" selected=\"\">전체 맵</option>");
+    expect(html).toContain("맵");
   });
 });
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { gradeHeroStats, parseHeroStats, type HeroMetaStat } from "./hero-meta-tier";
+import { gradeHeroStats, parseGroupedHeroStats, parseHeroStats, type HeroMetaStat } from "./hero-meta-tier";
 
 describe("parseHeroStats", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -35,6 +35,26 @@ describe("parseHeroStats", () => {
       { name: "Ana", wins: 50, pick_rate: 10 },
       { name: "Anduin", games_played: 100, wins: 50, losses: 50 },
     ] })).toEqual([]);
+  });
+});
+
+describe("parseGroupedHeroStats", () => {
+  it("maps Heroes Profile grouped map names to local map keys", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const maps = parseGroupedHeroStats({ data: {
+      "Alterac Pass": [{ name: "Yrel", games_played: 120, wins: 60, losses: 60, win_rate: 50, pick_rate: 10 }],
+      "Garden of Terror": [{ name: "Ana", games_played: 130, wins: 65, losses: 65, win_rate: 50, pick_rate: 11 }],
+      "Unknown Map": [{ name: "Anduin", games_played: 100, wins: 50, losses: 50, win_rate: 50, pick_rate: 8 }],
+    } });
+
+    expect(maps.AlteracPass?.map((row) => row.hero)).toEqual(["Yrel"]);
+    expect(maps.HauntedWoods?.map((row) => row.hero)).toEqual(["Ana"]);
+    expect("Unknown Map" in maps).toBe(false);
+    expect(warn).toHaveBeenCalledWith("Unmapped Heroes Profile map name:", "Unknown Map");
+  });
+
+  it("rejects a response without grouped map data", () => {
+    expect(() => parseGroupedHeroStats({ data: [] })).toThrow("맵별 통계 응답 형식이 올바르지 않습니다.");
   });
 });
 
