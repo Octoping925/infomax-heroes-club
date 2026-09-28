@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { gradeHeroStats, parseHeroStats, type HeroMetaStat } from "./hero-meta-tier";
 
 describe("parseHeroStats", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it("matches punctuated and accented Heroes Profile names to local heroes", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const rows = parseHeroStats({ data: [
       { name: "E.T.C.", games_played: "100", wins: "55", losses: "45", pick_rate: "12.5", ban_rate: "4" },
       { name: "Lúcio", games_played: 120, wins: 62, losses: 58, pick_rate: 10, ban_rate: null },
@@ -12,6 +15,7 @@ describe("parseHeroStats", () => {
     expect(rows.map((row) => row.hero)).toEqual(["ETC", "Lucio"]);
     expect(rows[0]).toMatchObject({ games: 100, wins: 55, pickRate: 12.5, banRate: 4 });
     expect(rows[1]?.banRate).toBeNull();
+    expect(warn).toHaveBeenCalledWith("Unmapped Heroes Profile hero names:", ["Unknown Hero"]);
   });
 
   it("accepts v1 popularity and derives games from wins and losses", () => {

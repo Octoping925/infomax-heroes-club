@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-- `npm test`: 224 tests passed, including the v1 popularity parser case.
+- `npm test`: 238 tests passed, including v1 patch/popularity parsing, saved reference fallback, race-safe refresh claims, Retry-After timing, and error-envelope handling.
 - `npm run lint`: passed.
 - `npm run ts:check`: passed.
 - `DATABASE_URL=postgresql://local:local@localhost:5432/local npx prisma validate`: passed.

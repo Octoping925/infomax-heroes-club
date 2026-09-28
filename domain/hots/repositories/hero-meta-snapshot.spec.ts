@@ -11,9 +11,9 @@ describe("createHeroMetaSnapshotStore", () => {
     const now = new Date("2026-09-28T00:00:00.000Z");
     const leaseUntil = new Date(now.getTime() + 60_000);
 
-    expect(await store.claim("key", now, leaseUntil)).toBe(true);
+    expect(await store.claim("key", now, leaseUntil, null)).toBe(true);
     expect(updateMany).toHaveBeenCalledWith({
-      where: { key: "key", AND: [
+      where: { key: "key", fetchedAt: null, AND: [
         { OR: [{ leaseUntil: null }, { leaseUntil: { lte: now } }] },
         { OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
       ] },
@@ -26,6 +26,6 @@ describe("createHeroMetaSnapshotStore", () => {
       upsert: vi.fn(), updateMany: vi.fn(async () => ({ count: 0 })), update: vi.fn(),
     } } as unknown as Pick<PrismaClient, "heroMetaSnapshot">);
     const now = new Date("2026-09-28T00:00:00.000Z");
-    expect(await store.claim("key", now, new Date(now.getTime() + 60_000))).toBe(false);
+    expect(await store.claim("key", now, new Date(now.getTime() + 60_000), null)).toBe(false);
   });
 });

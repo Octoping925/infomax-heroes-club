@@ -31,9 +31,9 @@ export function createHeroMetaSnapshotStore(client: Pick<PrismaClient, "heroMeta
         leaseUntil: row.leaseUntil,
       };
     },
-    async claim(key, now, leaseUntil) {
+    async claim(key, now, leaseUntil, expectedFetchedAt) {
       const result = await model.updateMany({
-        where: { key, AND: [
+        where: { key, fetchedAt: expectedFetchedAt, AND: [
           { OR: [{ leaseUntil: null }, { leaseUntil: { lte: now } }] },
           { OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
         ] },

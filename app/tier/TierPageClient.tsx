@@ -70,6 +70,13 @@ function toQuery(filters: HeroMetaFilters): string {
   return params.toString();
 }
 
+export function parsePageResult(status: number, body: unknown): PageResult {
+  const value = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  if (status >= 400) throw new Error(typeof value.error === "string" ? value.error : "티어 정보를 불러오지 못했습니다.");
+  if (!Array.isArray(value.rows)) throw new Error("티어 정보 형식이 올바르지 않습니다.");
+  return value as unknown as PageResult;
+}
+
 export function TierPageClient() {
   const [options, setOptions] = useState<FilterOptions | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -111,12 +118,12 @@ export function TierPageClient() {
       try {
         const response = await fetch(`/api/tier/heroes?${toQuery(filters)}`, { signal: controller.signal });
         const body = await response.json();
-        if (!response.ok && body.status !== "error") throw new Error(body.error ?? "티어 정보를 불러오지 못했습니다.");
+        const next = parsePageResult(response.status, body);
         if (!controller.signal.aborted) {
-          setResult(body as PageResult);
+          setResult(next);
           setLoading(false);
-          if ((body.status === "pending" || body.status === "stale") && body.retryAfterSeconds) {
-            timer = setTimeout(() => { void loadStats(); }, Math.max(1, body.retryAfterSeconds) * 1000);
+          if ((next.status === "pending" || next.status === "stale") && next.retryAfterSeconds) {
+            timer = setTimeout(() => { void loadStats(); }, Math.max(1, next.retryAfterSeconds) * 1000);
           }
         }
       } catch (error) {

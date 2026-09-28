@@ -34,9 +34,18 @@ describe("loadHeroMeta", () => {
   it("persists a cold 202 job and returns pending", async () => {
     const deps = setup();
     vi.mocked(deps.source.fetchStats).mockResolvedValue({ kind: "pending", jobPath: "/jobs/abc-123", retryAfterSeconds: 10 });
-    const result = await loadHeroMeta(filters, { ...deps, now });
+    const result = await loadHeroMeta(filters, { ...deps, now, nowAfterRequest: () => now });
     expect(result.status).toBe("pending");
     expect(deps.store.savePending).toHaveBeenCalledWith(expect.any(String), "/jobs/abc-123", new Date(now.getTime() + 10_000));
+  });
+
+  it("honors Retry-After above five minutes from the time the response arrives", async () => {
+    const deps = setup();
+    const responseAt = new Date(now.getTime() + 8_000);
+    vi.mocked(deps.source.fetchStats).mockResolvedValue({ kind: "pending", jobPath: "/jobs/abc-123", retryAfterSeconds: 600 });
+    const result = await loadHeroMeta(filters, { ...deps, now, nowAfterRequest: () => responseAt });
+    expect(result.retryAfterSeconds).toBe(600);
+    expect(deps.store.savePending).toHaveBeenCalledWith(expect.any(String), "/jobs/abc-123", new Date(responseAt.getTime() + 600_000));
   });
 
   it("waits until Retry-After and then polls the saved job", async () => {
@@ -69,6 +78,17 @@ describe("loadHeroMeta", () => {
   it("does not duplicate an upstream call when another request owns the refresh", async () => {
     const deps = setup(null, false);
     expect((await loadHeroMeta(filters, { ...deps, now })).status).toBe("pending");
+    expect(deps.source.fetchStats).not.toHaveBeenCalled();
+  });
+
+  it("re-reads the snapshot when its atomic refresh claim loses a race", async () => {
+    const stale = { stats: [{ hero: "Ana" as const, games: 100, wins: 60, losses: 40, winRate: 60, pickRate: 10, banRate: 2 }], fetchedAt: new Date(now.getTime() - 86_400_000), jobPath: null, nextPollAt: null, leaseUntil: null };
+    const fresh = { ...stale, fetchedAt: now };
+    const deps = setup(stale, false);
+    vi.mocked(deps.store.getOrCreate).mockResolvedValueOnce(stale).mockResolvedValueOnce(fresh);
+    const result = await loadHeroMeta(filters, { ...deps, now });
+    expect(result.status).toBe("ready");
+    expect(result.updatedAt).toBe(now.toISOString());
     expect(deps.source.fetchStats).not.toHaveBeenCalled();
   });
 });

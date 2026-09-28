@@ -61,7 +61,8 @@ export const ModelName = {
   GameTeamBan: 'GameTeamBan',
   GameTeamMember: 'GameTeamMember',
   GameTeamMemberTalent: 'GameTeamMemberTalent',
-  HeroMetaSnapshot: 'HeroMetaSnapshot'
+  HeroMetaSnapshot: 'HeroMetaSnapshot',
+  HeroMetaReference: 'HeroMetaReference'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -222,6 +223,15 @@ export const HeroMetaSnapshotScalarFieldEnum = {
 export type HeroMetaSnapshotScalarFieldEnum = (typeof HeroMetaSnapshotScalarFieldEnum)[keyof typeof HeroMetaSnapshotScalarFieldEnum]
 
 
+export const HeroMetaReferenceScalarFieldEnum = {
+  key: 'key',
+  options: 'options',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type HeroMetaReferenceScalarFieldEnum = (typeof HeroMetaReferenceScalarFieldEnum)[keyof typeof HeroMetaReferenceScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -236,6 +246,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

@@ -11,7 +11,7 @@ export interface HeroMetaSnapshot {
 
 export interface HeroMetaSnapshotStore {
   getOrCreate(key: string): Promise<HeroMetaSnapshot>;
-  claim(key: string, now: Date, leaseUntil: Date): Promise<boolean>;
+  claim(key: string, now: Date, leaseUntil: Date, expectedFetchedAt: Date | null): Promise<boolean>;
   saveReady(key: string, stats: HeroMetaStat[], fetchedAt: Date): Promise<void>;
   savePending(key: string, jobPath: string, nextPollAt: Date): Promise<void>;
   saveError(key: string, nextRetryAt: Date): Promise<void>;
@@ -40,6 +40,7 @@ export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
   readonly store: HeroMetaSnapshotStore;
   readonly source: HeroMetaSource;
   readonly now: Date;
+  readonly nowAfterRequest?: () => Date;
 }): Promise<HeroMetaResult> {
   const { store, source, now } = deps;
   const key = JSON.stringify([filters.mode, filters.region, filters.patch, filters.map, filters.leagueTier]);
@@ -55,15 +56,25 @@ export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
     return { status: snapshot.stats ? "stale" : "pending", rows, updatedAt, retryAfterSeconds: Math.ceil((waitUntil.getTime() - now.getTime()) / 1000) };
   }
 
-  if (!(await store.claim(key, now, new Date(now.getTime() + 60_000)))) {
-    return { status: snapshot.stats ? "stale" : "pending", rows, updatedAt, retryAfterSeconds: 10 };
+  if (!(await store.claim(key, now, new Date(now.getTime() + 60_000), snapshot.fetchedAt))) {
+    const latest = await store.getOrCreate(key);
+    const latestRows = latest.stats ? gradeHeroStats(latest.stats) : [];
+    const latestUpdatedAt = latest.fetchedAt?.toISOString() ?? null;
+    const latestStale = latest.fetchedAt === null || now.getTime() - latest.fetchedAt.getTime() >= 86_400_000;
+    return {
+      status: latestStale ? (latest.stats ? "stale" : "pending") : "ready",
+      rows: latestRows,
+      updatedAt: latestUpdatedAt,
+      retryAfterSeconds: latestStale ? 10 : null,
+    };
   }
 
   try {
     const response = snapshot.jobPath ? await source.pollJob(snapshot.jobPath) : await source.fetchStats(filters);
     if (response.kind === "pending") {
-      const retryAfterSeconds = Math.max(1, Math.min(300, response.retryAfterSeconds));
-      await store.savePending(key, response.jobPath, new Date(now.getTime() + retryAfterSeconds * 1000));
+      const retryAfterSeconds = Math.max(1, response.retryAfterSeconds);
+      const pollFrom = deps.nowAfterRequest?.() ?? new Date();
+      await store.savePending(key, response.jobPath, new Date(pollFrom.getTime() + retryAfterSeconds * 1000));
       return { status: snapshot.stats ? "stale" : "pending", rows, updatedAt, retryAfterSeconds };
     }
     const stats = parseHeroStats(response.raw);
@@ -74,7 +85,8 @@ export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
     await store.saveReady(key, stats, now);
     return { status: "ready", rows: gradeHeroStats(stats), updatedAt: now.toISOString(), retryAfterSeconds: null };
   } catch (error) {
-    await store.saveError(key, new Date(now.getTime() + 300_000));
+    const errorAt = deps.nowAfterRequest?.() ?? new Date();
+    await store.saveError(key, new Date(errorAt.getTime() + 300_000));
     return {
       status: snapshot.stats ? "stale" : "error",
       rows,

@@ -41,10 +41,12 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
   }
 
   const rows: HeroMetaStat[] = [];
+  const unknownHeroes = new Set<string>();
   for (const item of raw.data) {
     if (typeof item !== "object" || item === null) continue;
     const source = item as Record<string, unknown>;
     const hero = typeof source.name === "string" ? HERO_BY_NORMALIZED_NAME.get(normalizeName(source.name)) : undefined;
+    if (!hero && typeof source.name === "string" && unknownHeroes.size < 20) unknownHeroes.add(source.name.slice(0, 80));
     const rawWins = numeric(source.wins);
     const rawLosses = numeric(source.losses);
     const games = numeric(source.games_played) ?? numeric(source.games) ??
@@ -65,6 +67,7 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
       banRate: numeric(source.ban_rate),
     });
   }
+  if (unknownHeroes.size > 0) console.warn("Unmapped Heroes Profile hero names:", [...unknownHeroes]);
   return rows;
 }
 

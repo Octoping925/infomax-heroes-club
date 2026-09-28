@@ -394,7 +394,8 @@ export const ModelName = {
   GameTeamBan: 'GameTeamBan',
   GameTeamMember: 'GameTeamMember',
   GameTeamMemberTalent: 'GameTeamMemberTalent',
-  HeroMetaSnapshot: 'HeroMetaSnapshot'
+  HeroMetaSnapshot: 'HeroMetaSnapshot',
+  HeroMetaReference: 'HeroMetaReference'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "player" | "match" | "matchHighlight" | "matchTeam" | "matchTeamMember" | "game" | "gameTeam" | "gameTeamBan" | "gameTeamMember" | "gameTeamMemberTalent" | "heroMetaSnapshot"
+    modelProps: "player" | "match" | "matchHighlight" | "matchTeam" | "matchTeamMember" | "game" | "gameTeam" | "gameTeamBan" | "gameTeamMember" | "gameTeamMemberTalent" | "heroMetaSnapshot" | "heroMetaReference"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1228,6 +1229,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HeroMetaReference: {
+      payload: Prisma.$HeroMetaReferencePayload<ExtArgs>
+      fields: Prisma.HeroMetaReferenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HeroMetaReferenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HeroMetaReferenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        findFirst: {
+          args: Prisma.HeroMetaReferenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HeroMetaReferenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        findMany: {
+          args: Prisma.HeroMetaReferenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>[]
+        }
+        create: {
+          args: Prisma.HeroMetaReferenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        createMany: {
+          args: Prisma.HeroMetaReferenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HeroMetaReferenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>[]
+        }
+        delete: {
+          args: Prisma.HeroMetaReferenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        update: {
+          args: Prisma.HeroMetaReferenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        deleteMany: {
+          args: Prisma.HeroMetaReferenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HeroMetaReferenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HeroMetaReferenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>[]
+        }
+        upsert: {
+          args: Prisma.HeroMetaReferenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaReferencePayload>
+        }
+        aggregate: {
+          args: Prisma.HeroMetaReferenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHeroMetaReference>
+        }
+        groupBy: {
+          args: Prisma.HeroMetaReferenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroMetaReferenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HeroMetaReferenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroMetaReferenceCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1409,6 +1484,15 @@ export const HeroMetaSnapshotScalarFieldEnum = {
 export type HeroMetaSnapshotScalarFieldEnum = (typeof HeroMetaSnapshotScalarFieldEnum)[keyof typeof HeroMetaSnapshotScalarFieldEnum]
 
 
+export const HeroMetaReferenceScalarFieldEnum = {
+  key: 'key',
+  options: 'options',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type HeroMetaReferenceScalarFieldEnum = (typeof HeroMetaReferenceScalarFieldEnum)[keyof typeof HeroMetaReferenceScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1423,6 +1507,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1701,6 +1792,7 @@ export type GlobalOmitConfig = {
   gameTeamMember?: Prisma.GameTeamMemberOmit
   gameTeamMemberTalent?: Prisma.GameTeamMemberTalentOmit
   heroMetaSnapshot?: Prisma.HeroMetaSnapshotOmit
+  heroMetaReference?: Prisma.HeroMetaReferenceOmit
 }
 
 /* Types for Logging */
