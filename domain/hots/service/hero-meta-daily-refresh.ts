@@ -29,7 +29,7 @@ export interface HeroMetaDailyStore {
 }
 
 export interface HeroMetaDailySource {
-  getLatestMajorPatch(): Promise<string>;
+  getLatestMajorSubPatch(): Promise<string>;
   fetchStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   fetchMapStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   pollJob(path: string): Promise<HeroMetaSourceResult>;
@@ -211,6 +211,6 @@ export async function refreshHeroMetaDaily(deps: {
   readonly store: HeroMetaDailyStore;
   readonly source: HeroMetaDailySource;
 }): Promise<HeroMetaRefreshResult[]> {
-  const patch = await deps.source.getLatestMajorPatch();
+  const patch = await deps.source.getLatestMajorSubPatch();
   return Promise.all(AUDIENCES.map((audience) => refreshAudience(audience, patch, deps)));
 }

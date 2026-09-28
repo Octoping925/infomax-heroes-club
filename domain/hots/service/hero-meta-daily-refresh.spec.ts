@@ -18,7 +18,7 @@ function setup(mapResult: Awaited<ReturnType<HeroMetaDailySource["fetchStats"]>>
     saveMapFailure: vi.fn(async () => {}),
   } as unknown as HeroMetaDailyStore;
   const source: HeroMetaDailySource = {
-    getLatestMajorPatch: vi.fn(async () => "2.55"),
+    getLatestMajorSubPatch: vi.fn(async () => "2.55.17"),
     fetchStats: vi.fn(async () => ({ kind: "ready" as const, raw: overallRaw })),
     fetchMapStats: vi.fn(async () => mapResult),
     pollJob: vi.fn(async () => ({ kind: "ready" as const, raw: groupedRaw })),

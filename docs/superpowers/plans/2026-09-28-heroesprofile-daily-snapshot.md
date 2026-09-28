@@ -42,7 +42,7 @@
 
 **Files:** Modify `config/heroes-profile.ts`, `domain/hots/service/hero-meta-loader.ts`, `domain/hots/service/hero-meta-tier.ts`, and their specs; create `app/api/cron/hero-meta/route.ts` and its spec; modify `vercel.json`.
 
-**Interfaces:** `refreshHeroMeta(now, deadline, store, source)` processes both audiences. `source.getLatestMajorPatch()` reads `/patches`; `source.fetchStats(patch, audience)` requests `/heroes/stats` with `game_type=sl`, `timeframe_type=major`, and `league_tier=4,5,6` only for `platinum_plus`. `source.pollJob(jobPath)` follows a validated same-origin v1 job path.
+**Interfaces:** `refreshHeroMeta(now, deadline, store, source)` processes both audiences. `source.getLatestMajorSubPatch()` reads `/patches`; `source.fetchStats(patch, audience)` requests `/heroes/stats` with `game_type=sl`, `timeframe_type=major_grouped`, and `league_tier=4,5,6` only for `platinum_plus`. `source.pollJob(jobPath)` follows a validated same-origin v1 job path.
 
 - [ ] With the local key, check the real `/patches` shape and one request for each audience; record only status, response shape, patch, and counts. Confirm paid-plan access and public snapshot reuse terms before release; never log the key.
 - [ ] Write failing tests for the real v1 response shape, 200, 202→200, 202 past deadline, `Retry-After`, 404/500 job expiration, 401/403/429, malformed/empty data, duplicate cron delivery, and patch change while a job is pending.

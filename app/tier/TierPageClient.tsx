@@ -135,7 +135,7 @@ export function TierPageClient() {
       <section className="rounded-xl border border-white/15 bg-white/5 p-4 md:p-6" aria-label="통계 조건">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div><h3 className="text-lg font-bold">통계 조건</h3><p className="mt-1 text-sm text-slate-400">하루 한 번 저장한 폭풍 리그 통계를 표시합니다.</p></div>
-          <span className="text-xs text-slate-400">전체 지역 · {mapLabel} · 최신 주요 패치</span>
+          <span className="text-xs text-slate-400">전체 지역 · {mapLabel} · 최신 메이저 서브 패치</span>
         </div>
         <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
           <FilterSelect label="플레이어 리그" value={audience} onChange={(value) => { setSelectedHero(null); setSelectedMap("ALL"); setAudience(value as HeroMetaAudience); }} choices={AUDIENCES} />

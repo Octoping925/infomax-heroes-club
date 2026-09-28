@@ -60,7 +60,22 @@ export function parseReferenceOptions(patches: unknown, maps: unknown): FilterOp
   return { patches: majorPatches, maps: mapNames };
 }
 
-export function getLatestMajorPatch(apiKey: string, fetcher: typeof fetch = fetch): Promise<string> {
+export function parseLatestMajorSubPatch(patches: unknown): string {
+  const patchRows = object(patches)?.patches;
+  if (!Array.isArray(patchRows)) throw new Error("Heroes Profile 패치 옵션 형식이 올바르지 않습니다.");
+  const subPatches = patchRows.flatMap((row) => {
+    const item = object(row);
+    if (item?.valid_globals === false) return [];
+    const version = typeof row === "string" ? row : item?.game_version ?? item?.version ?? item?.patch;
+    const match = typeof version === "string" ? version.match(/^(\d+\.\d+\.\d+)(?:\.\d+)?$/) : null;
+    return match ? [match[1]] : [];
+  });
+  const latest = [...new Set(subPatches)].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
+  if (!latest) throw new Error("사용 가능한 메이저 서브 패치가 없습니다.");
+  return latest;
+}
+
+export function getLatestMajorSubPatch(apiKey: string, fetcher: typeof fetch = fetch): Promise<string> {
   return (async () => {
     const response = await fetcher(`${BASE_URL}/patches`, {
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -69,10 +84,7 @@ export function getLatestMajorPatch(apiKey: string, fetcher: typeof fetch = fetc
     });
     if (!response.ok) throw new HeroesProfileRequestError(response.status);
     const raw = await response.json() as unknown;
-    const patches = parseReferenceOptions(raw, { maps: [] }).patches;
-    const latest = patches[0];
-    if (!latest) throw new Error("Heroes Profile에서 사용할 수 있는 주요 패치를 찾지 못했습니다.");
-    return latest;
+    return parseLatestMajorSubPatch(raw);
   })();
 }
 
@@ -97,14 +109,14 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
 
   return {
     fetchStats: async (filters: HeroMetaFilters) => {
-      const params = new URLSearchParams({ timeframe_type: "major", timeframe: filters.patch, game_type: filters.mode });
+      const params = new URLSearchParams({ timeframe_type: "major_grouped", timeframe: filters.patch, game_type: filters.mode });
       if (filters.region !== "ALL") params.set("region", filters.region);
       if (filters.map) params.set("game_map", filters.map);
       if (filters.leagueTier) params.set("league_tier", filters.leagueTier);
       return request(`/heroes/stats?${params.toString()}`);
     },
     fetchGroupedMapStats: async (filters: HeroMetaFilters) => {
-      const params = new URLSearchParams({ timeframe_type: "major", timeframe: filters.patch, game_type: filters.mode, group_by_map: "true" });
+      const params = new URLSearchParams({ timeframe_type: "major_grouped", timeframe: filters.patch, game_type: filters.mode, group_by_map: "true" });
       if (filters.region !== "ALL") params.set("region", filters.region);
       if (filters.leagueTier) params.set("league_tier", filters.leagueTier);
       return request(`/heroes/stats?${params.toString()}`);
@@ -117,14 +129,14 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
 }
 
 export function heroesProfileDailySource(apiKey: string, fetcher: typeof fetch = fetch): {
-  getLatestMajorPatch(): Promise<string>;
+  getLatestMajorSubPatch(): Promise<string>;
   fetchStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   fetchMapStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   pollJob(path: string): Promise<HeroMetaSourceResult>;
 } {
   const source = heroesProfileSource(apiKey, fetcher);
   return {
-    getLatestMajorPatch: () => getLatestMajorPatch(apiKey, fetcher),
+    getLatestMajorSubPatch: () => getLatestMajorSubPatch(apiKey, fetcher),
     fetchStats: (patch, audience) => source.fetchStats({
       mode: "sl",
       region: "ALL",
