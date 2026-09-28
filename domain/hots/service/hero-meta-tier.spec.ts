@@ -24,6 +24,12 @@ describe("parseHeroStats", () => {
     ] })).toMatchObject([{ hero: "Ana", games: 100, pickRate: 12.5 }]);
   });
 
+  it("uses the Heroes Profile win rate instead of recalculating a rounded source rate", () => {
+    expect(parseHeroStats({ data: [
+      { name: "Yrel", games_played: 158234, wins: 75245, losses: 82989, win_rate: 47.55, pick_rate: 3.27 },
+    ] })).toMatchObject([{ hero: "Yrel", winRate: 47.55 }]);
+  });
+
   it("drops rows missing required game or popularity fields", () => {
     expect(parseHeroStats({ data: [
       { name: "Ana", wins: 50, pick_rate: 10 },

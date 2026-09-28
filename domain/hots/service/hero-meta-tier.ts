@@ -56,7 +56,7 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
     if (!hero || games === null || pickRate === null || (rawWins === null && rawWinRate === null)) continue;
     const wins = Math.min(games, rawWins ?? Math.round((games * rawWinRate!) / 100));
     const losses = Math.max(0, Math.min(games - wins, rawLosses ?? games - wins));
-    const winRate = games === 0 ? 0 : (wins / games) * 100;
+    const winRate = games === 0 ? 0 : rawWinRate ?? (wins / games) * 100;
     rows.push({
       hero,
       games,

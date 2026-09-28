@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: "ready",
       audience,
-      rows: gradeHeroStats(snapshot.stats),
+      rows: gradeHeroStats(snapshot.stats.map((row) => ({
+        ...row,
+        // Older snapshots stored a full-precision wins/games ratio, while Heroes Profile publishes two decimals.
+        winRate: Number(row.winRate.toFixed(2)),
+      }))),
       updatedAt: snapshot.fetchedAt.toISOString(),
       patch: snapshot.patch,
       stale: Date.now() - snapshot.fetchedAt.getTime() >= 86_400_000,

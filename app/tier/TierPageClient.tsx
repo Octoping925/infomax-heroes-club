@@ -64,7 +64,9 @@ function TierBadge({ tier, games }: { readonly tier: HeroMetaGrade | null; reado
 }
 
 function formatRate(value: number | null): string {
-  return value === null ? "-" : `${value.toFixed(1)}%`;
+  if (value === null) return "-";
+  const rounded = Math.round((value + Number.EPSILON) * 10) / 10;
+  return `${rounded.toFixed(1)}%`;
 }
 
 export function parsePageResult(status: number, body: unknown): PageResult {

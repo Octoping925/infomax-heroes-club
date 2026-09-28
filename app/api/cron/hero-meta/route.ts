@@ -7,10 +7,10 @@ import { refreshHeroMetaDaily } from "@/domain/hots/service/hero-meta-daily-refr
 export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
-  // const secret = process.env.CRON_SECRET;
-  // if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
-  //   return new NextResponse("Unauthorized", { status: 401, headers: { "Cache-Control": "no-store" } });
-  // }
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+    return new NextResponse("Unauthorized", { status: 401, headers: { "Cache-Control": "no-store" } });
+  }
 
   const apiKey = process.env.HEROES_PROFILE_API_KEY;
   if (!apiKey) {
