@@ -16,8 +16,9 @@
 - The map collector adds one grouped request per audience (two extra requests daily total); visitor requests continue to read Postgres only.
 - The live grouped map endpoint returned 429 during implementation, so map response behavior was verified against the official response contract and deterministic fixtures without retrying the vendor call.
 - Map migration `20260928180000_hero_meta_map_snapshots` has been applied to the configured Postgres database; `npx prisma migrate status` reports the schema is up to date.
-- `npm test`: passed, 237 tests across 48 files. `npm run lint`, `npm run ts:check`, `npx prisma validate`, and `git diff --check`: passed.
+- `npm test`: passed, 241 tests across 48 files after switching to major subpatches. `npm run lint`, `npm run ts:check`, `npx prisma validate`, and `git diff --check`: passed.
 - `npm run build`: passed after granting the build read access to the configured DB; `/stats` prerendered. Existing warnings remain for the replay parser's dynamic dependency and chart dimensions during static rendering.
+- A manual invocation of the cron handler selected subpatch `2.55.17`. Both all-map audiences stored 90 hero rows. Both grouped-map requests returned HTTP 429, so their previous snapshots were retained for the next daily run.
 
 ## Database and browser checks
 
