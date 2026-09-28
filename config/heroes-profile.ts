@@ -43,9 +43,9 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
     });
     if (response.status === 202) {
       const location = response.headers.get("Location");
-      if (!location) throw new Error("Heroes Profile 작업 주소가 없습니다.");
+      if (!location && !path.startsWith("/jobs/")) throw new Error("Heroes Profile 작업 주소가 없습니다.");
       const retryAfter = Number(response.headers.get("Retry-After") ?? "10");
-      return { kind: "pending", jobPath: validateJobLocation(location), retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : 10 };
+      return { kind: "pending", jobPath: location ? validateJobLocation(location) : path, retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : 10 };
     }
     if (!response.ok) throw new Error(`Heroes Profile 응답 오류 (${response.status})`);
     return { kind: "ready", raw: await response.json() };
