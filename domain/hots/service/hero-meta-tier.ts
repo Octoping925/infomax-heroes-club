@@ -45,13 +45,15 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
     if (typeof item !== "object" || item === null) continue;
     const source = item as Record<string, unknown>;
     const hero = typeof source.name === "string" ? HERO_BY_NORMALIZED_NAME.get(normalizeName(source.name)) : undefined;
-    const games = numeric(source.games_played);
-    const pickRate = numeric(source.pick_rate);
     const rawWins = numeric(source.wins);
+    const rawLosses = numeric(source.losses);
+    const games = numeric(source.games_played) ?? numeric(source.games) ??
+      (rawWins !== null && rawLosses !== null ? rawWins + rawLosses : null);
+    const pickRate = numeric(source.pick_rate) ?? numeric(source.popularity);
     const rawWinRate = numeric(source.win_rate);
     if (!hero || games === null || pickRate === null || (rawWins === null && rawWinRate === null)) continue;
     const wins = Math.min(games, rawWins ?? Math.round((games * rawWinRate!) / 100));
-    const losses = Math.max(0, Math.min(games - wins, numeric(source.losses) ?? games - wins));
+    const losses = Math.max(0, Math.min(games - wins, rawLosses ?? games - wins));
     const winRate = games === 0 ? 0 : (wins / games) * 100;
     rows.push({
       hero,

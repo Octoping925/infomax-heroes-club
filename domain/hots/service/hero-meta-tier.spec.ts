@@ -14,9 +14,15 @@ describe("parseHeroStats", () => {
     expect(rows[1]?.banRate).toBeNull();
   });
 
-  it("drops rows missing required game or pick rate fields", () => {
+  it("accepts v1 popularity and derives games from wins and losses", () => {
     expect(parseHeroStats({ data: [
-      { name: "Ana", wins: 50, losses: 50, pick_rate: 10 },
+      { name: "Ana", wins: 55, losses: 45, popularity: 12.5, ban_rate: 3 },
+    ] })).toMatchObject([{ hero: "Ana", games: 100, pickRate: 12.5 }]);
+  });
+
+  it("drops rows missing required game or popularity fields", () => {
+    expect(parseHeroStats({ data: [
+      { name: "Ana", wins: 50, pick_rate: 10 },
       { name: "Anduin", games_played: 100, wins: 50, losses: 50 },
     ] })).toEqual([]);
   });
