@@ -1,4 +1,4 @@
-import type { FilterOptions, HeroMetaFilters } from "@/domain/hots/service/hero-meta-filters";
+import type { FilterOptions, HeroMetaAudience, HeroMetaFilters } from "@/domain/hots/service/hero-meta-filters";
 import type { HeroMetaSource, HeroMetaSourceResult } from "@/domain/hots/service/hero-meta-loader";
 
 const BASE_URL = "https://www.heroesprofile.com/api/external/v1";
@@ -30,15 +30,27 @@ function object(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
 }
 
+function parseRetryAfter(value: string | null): number {
+  if (value === null) return 10;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return seconds;
+  const retryAt = Date.parse(value);
+  return Number.isNaN(retryAt) ? 10 : Math.max(0, (retryAt - Date.now()) / 1000);
+}
+
 export function parseReferenceOptions(patches: unknown, maps: unknown): FilterOptions {
   const patchRows = object(patches)?.patches;
   const mapRows = object(maps)?.maps;
   if (!Array.isArray(patchRows) || !Array.isArray(mapRows)) throw new Error("Heroes Profile 옵션 형식이 올바르지 않습니다.");
   const majorPatches = [...new Set(patchRows.flatMap((row) => {
     const item = object(row);
-    const version = typeof row === "string" ? row : item?.version ?? item?.patch ?? item?.major;
+    const version = typeof row === "string" ? row : item?.game_version ?? item?.version ?? item?.patch ?? item?.major;
     const match = typeof version === "string" ? version.match(/^(\d+\.\d+)/) : null;
-    return match ? [match[1]] : [];
+    if (match && item?.valid_globals !== false) return [match[1]];
+    if (typeof item?.major === "number" && typeof item.minor === "number" && item.valid_globals !== false) {
+      return [`${item.major}.${item.minor}`];
+    }
+    return [];
   }))].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
   const mapNames = mapRows.flatMap((row) => {
     const item = object(row);
@@ -46,6 +58,22 @@ export function parseReferenceOptions(patches: unknown, maps: unknown): FilterOp
   }).sort((a, b) => a.localeCompare(b));
   if (majorPatches.length === 0) throw new Error("사용 가능한 패치가 없습니다.");
   return { patches: majorPatches, maps: mapNames };
+}
+
+export function getLatestMajorPatch(apiKey: string, fetcher: typeof fetch = fetch): Promise<string> {
+  return (async () => {
+    const response = await fetcher(`${BASE_URL}/patches`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (!response.ok) throw new HeroesProfileRequestError(response.status);
+    const raw = await response.json() as unknown;
+    const patches = parseReferenceOptions(raw, { maps: [] }).patches;
+    const latest = patches[0];
+    if (!latest) throw new Error("Heroes Profile에서 사용할 수 있는 주요 패치를 찾지 못했습니다.");
+    return latest;
+  })();
 }
 
 export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetch): HeroMetaSource {
@@ -58,8 +86,8 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
     if (response.status === 202) {
       const location = response.headers.get("Location");
       if (!location && !path.startsWith("/jobs/")) throw new Error("Heroes Profile 작업 주소가 없습니다.");
-      const retryAfter = Number(response.headers.get("Retry-After") ?? "10");
-      return { kind: "pending", jobPath: location ? validateJobLocation(location) : path, retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : 10 };
+      const retryAfterSeconds = parseRetryAfter(response.headers.get("Retry-After"));
+      return { kind: "pending", jobPath: location ? validateJobLocation(location) : path, retryAfterSeconds };
     }
     if (!response.ok) throw new HeroesProfileRequestError(response.status);
     return { kind: "ready", raw: await response.json() };
@@ -80,13 +108,21 @@ export function heroesProfileSource(apiKey: string, fetcher: typeof fetch = fetc
   };
 }
 
-export async function getHeroMetaOptions(apiKey: string, fetcher: typeof fetch = fetch): Promise<FilterOptions> {
-  const headers = { Authorization: `Bearer ${apiKey}` };
-  const request = async (path: string) => {
-    const response = await fetcher(`${BASE_URL}${path}`, { headers, next: { revalidate: 86_400 } });
-    if (!response.ok) throw new HeroesProfileRequestError(response.status);
-    return response.json() as Promise<unknown>;
+export function heroesProfileDailySource(apiKey: string, fetcher: typeof fetch = fetch): {
+  getLatestMajorPatch(): Promise<string>;
+  fetchStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
+  pollJob(path: string): Promise<HeroMetaSourceResult>;
+} {
+  const source = heroesProfileSource(apiKey, fetcher);
+  return {
+    getLatestMajorPatch: () => getLatestMajorPatch(apiKey, fetcher),
+    fetchStats: (patch, audience) => source.fetchStats({
+      mode: "sl",
+      region: "ALL",
+      patch,
+      map: null,
+      leagueTier: audience === "platinum_plus" ? "4,5,6" : null,
+    }),
+    pollJob: (path) => source.pollJob(path),
   };
-  const [patches, maps] = await Promise.all([request("/patches"), request("/maps")]);
-  return parseReferenceOptions(patches, maps);
 }

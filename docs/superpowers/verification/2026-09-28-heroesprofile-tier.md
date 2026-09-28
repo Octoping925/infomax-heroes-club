@@ -1,21 +1,17 @@
 # Heroes Profile tier page verification — 2026-09-28
 
-## Automated checks
+## Daily snapshot implementation
 
-- `npm test`: 238 tests passed, including v1 patch/popularity parsing, saved reference fallback, race-safe refresh claims, Retry-After timing, and error-envelope handling.
+- `npx prisma generate`: passed.
 - `npm run lint`: passed.
 - `npm run ts:check`: passed.
-- `DATABASE_URL=postgresql://local:local@localhost:5432/local npx prisma validate`: passed.
-- `npx prisma generate`: passed.
-- `npm run build`: application compilation and TypeScript completed, then `/stats` prerender failed with Prisma `ECONNREFUSED` because the local Postgres instance is unavailable. This route already reads the DB during page render.
+- `npm run build`: passed. Next.js listed `/api/cron/hero-meta` and `/api/tier/heroes`, with no `/api/tier/options` route. The build retains an existing dynamic dependency warning in the replay parser.
+- Read-only Heroes Profile checks used the local `.env` key without printing it: `/patches` returned 200 and the newest valid major patch was `2.55`; Storm League all-player and `league_tier=4,5,6` statistics each returned 200 with 90 hero rows.
+- `git diff --check`: passed.
 
-## Manual browser checks
+## Database and browser checks
 
-- Open `http://localhost:3001/tier` at desktop width (1280 px): heading, source links, navigation, calculation note, and no-key state rendered. Browser capture inspected in the task session.
-- Set a 390 px mobile viewport: copy wrapped without clipping, links stayed visible, and the no-key card fit the viewport. Browser capture inspected in the task session.
-- Open `/stats#scrimStats`: local Postgres connection refused, so the existing stats page could not render for a visual comparison. The shared table's server-rendered markup tests passed, including scrim-specific cells.
-- With an active key and migrated DB, repeat these checks using a populated result: every filter, S–D distribution, 100-game cutoff, detail selection, keyboard navigation, narrow-screen table scrolling, 202 job completion, saved snapshot, and daily refresh.
-
-## External verification pending
-
-No `HEROES_PROFILE_API_KEY` is available yet. The v1 request paths and job behavior were checked against Heroes Profile's official API migration guide and specification, and API responses were mocked in tests. After purchasing access, compare a real response with the parser, verify the plan permits public display and storage, and check the API quota before enabling the page in production.
+- The migration `20260928120000_hero_meta_daily_snapshots` is present but has not been applied. The configured `DATABASE_URL` points to a remote Prisma database, so the migration needs to be applied in the intended deployment environment.
+- A populated `/tier` browser check and screenshots were not captured because the new columns and snapshots are not present in that database. After migration and the first cron run, check `/tier` at 1280 px and 390 px, switch between both league classifications, verify the displayed patch and refresh time, and confirm `/stats#scrimStats` still renders.
+- Configure `HEROES_PROFILE_API_KEY` and `CRON_SECRET` in Vercel Production. Confirm the first run stores both audiences and then verify repeated page loads do not call Heroes Profile.
+- Confirm the Heroes Profile plan permits public display and storage of collected statistics before release.

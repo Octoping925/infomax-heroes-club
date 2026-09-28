@@ -1,51 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { heroesProfileSource, HeroesProfileRequestError } from "@/config/heroes-profile";
-import { parseHeroMetaFilters, validateFixedHeroMetaFilters } from "@/domain/hots/service/hero-meta-filters";
-import { loadHeroMeta } from "@/domain/hots/service/hero-meta-loader";
-import { createHeroMetaSnapshotStore } from "@/domain/hots/repositories/hero-meta-snapshot";
-import { createHeroMetaOptionsStore } from "@/domain/hots/repositories/hero-meta-options";
+import { createHeroMetaDailyStore } from "@/domain/hots/repositories/hero-meta-snapshot";
+import { parseHeroMetaAudience } from "@/domain/hots/service/hero-meta-filters";
+import { gradeHeroStats } from "@/domain/hots/service/hero-meta-tier";
 
 export async function GET(request: NextRequest) {
-  const apiKey = process.env.HEROES_PROFILE_API_KEY;
+  const audienceValue = request.nextUrl.searchParams.get("audience");
+  const audience = parseHeroMetaAudience(audienceValue);
   const headers = { "Cache-Control": "no-store" };
+  if (!audience) {
+    return NextResponse.json({ status: "invalid", error: "지원하지 않는 리그 분류입니다." }, { status: 400, headers });
+  }
+
   try {
-    try {
-      validateFixedHeroMetaFilters(request.nextUrl.searchParams);
-    } catch (error) {
-      return NextResponse.json({ status: "invalid", error: error instanceof Error ? error.message : "필터가 올바르지 않습니다." }, { status: 400, headers });
+    const snapshot = await createHeroMetaDailyStore(prisma).get(audience);
+    if (!snapshot?.stats || !snapshot.fetchedAt || !snapshot.patch) {
+      return NextResponse.json({ status: "pending", audience, rows: [], updatedAt: null, patch: null }, { headers });
     }
-    const optionSnapshot = await createHeroMetaOptionsStore(prisma).get();
-    if (!optionSnapshot) {
-      const status = apiKey ? "pending" : "unconfigured";
-      const error = apiKey ? "패치와 맵 목록을 준비하고 있습니다." : "Heroes Profile API 키가 아직 설정되지 않았습니다.";
-      return NextResponse.json({ status, error }, { status: 503, headers });
-    }
-    const options = optionSnapshot.options;
-    let filters;
-    try {
-      filters = parseHeroMetaFilters(request.nextUrl.searchParams, options);
-    } catch (error) {
-      return NextResponse.json({ status: "invalid", error: error instanceof Error ? error.message : "필터가 올바르지 않습니다." }, { status: 400, headers });
-    }
-    const result = await loadHeroMeta(filters, {
-      store: createHeroMetaSnapshotStore(prisma),
-      source: apiKey ? heroesProfileSource(apiKey) : {
-        fetchStats: async () => { throw new Error("Heroes Profile API 키가 아직 설정되지 않았습니다."); },
-        pollJob: async () => { throw new Error("Heroes Profile API 키가 아직 설정되지 않았습니다."); },
-      },
-      now: new Date(),
-    });
-    if (!apiKey && result.status === "error") {
-      return NextResponse.json({ status: "unconfigured", error: "Heroes Profile API 키가 아직 설정되지 않았습니다." }, { status: 503, headers });
-    }
-    if (result.status === "ready" && result.rows.length === 0) {
-      return NextResponse.json({ ...result, status: "empty" }, { headers });
-    }
-    return NextResponse.json(result, { status: result.status === "error" ? 502 : 200, headers });
+    return NextResponse.json({
+      status: "ready",
+      audience,
+      rows: gradeHeroStats(snapshot.stats),
+      updatedAt: snapshot.fetchedAt.toISOString(),
+      patch: snapshot.patch,
+      stale: Date.now() - snapshot.fetchedAt.getTime() >= 86_400_000,
+    }, { headers });
   } catch (error) {
-    console.error("Heroes Profile 티어 조회 오류:", error);
-    const message = error instanceof HeroesProfileRequestError ? error.message : "Heroes Profile 통계를 불러오지 못했습니다.";
-    return NextResponse.json({ status: "error", error: message }, { status: 502, headers });
+    console.error("영웅 메타 DB 조회 오류:", error);
+    return NextResponse.json({ status: "error", error: "저장된 티어 정보를 불러오지 못했습니다." }, { status: 500, headers });
   }
 }

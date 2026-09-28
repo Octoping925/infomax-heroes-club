@@ -17,11 +17,13 @@ export interface HeroMetaSnapshotStore {
   saveError(key: string, nextRetryAt: Date): Promise<void>;
 }
 
-export type HeroMetaSourceResult = { readonly kind: "ready"; readonly raw: unknown } | {
-  readonly kind: "pending";
-  readonly jobPath: string;
-  readonly retryAfterSeconds: number;
-};
+export type HeroMetaSourceResult =
+  | { readonly kind: "ready"; readonly raw: unknown }
+  | {
+      readonly kind: "pending";
+      readonly jobPath: string;
+      readonly retryAfterSeconds: number;
+    };
 
 export interface HeroMetaSource {
   fetchStats(filters: HeroMetaFilters): Promise<HeroMetaSourceResult>;
@@ -36,12 +38,15 @@ export interface HeroMetaResult {
   readonly error?: string;
 }
 
-export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
-  readonly store: HeroMetaSnapshotStore;
-  readonly source: HeroMetaSource;
-  readonly now: Date;
-  readonly nowAfterRequest?: () => Date;
-}): Promise<HeroMetaResult> {
+export async function loadHeroMeta(
+  filters: HeroMetaFilters,
+  deps: {
+    readonly store: HeroMetaSnapshotStore;
+    readonly source: HeroMetaSource;
+    readonly now: Date;
+    readonly nowAfterRequest?: () => Date;
+  },
+): Promise<HeroMetaResult> {
   const { store, source, now } = deps;
   const key = JSON.stringify([filters.mode, filters.region, filters.patch, filters.map, filters.leagueTier]);
   const snapshot = await store.getOrCreate(key);
@@ -50,10 +55,16 @@ export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
   const stale = snapshot.fetchedAt === null || now.getTime() - snapshot.fetchedAt.getTime() >= 86_400_000;
   if (!stale) return { status: "ready", rows, updatedAt, retryAfterSeconds: null };
 
-  const waitUntil = [snapshot.nextPollAt, snapshot.leaseUntil].filter((date): date is Date => date !== null)
+  const waitUntil = [snapshot.nextPollAt, snapshot.leaseUntil]
+    .filter((date): date is Date => date !== null)
     .sort((a, b) => b.getTime() - a.getTime())[0];
   if (waitUntil && waitUntil > now) {
-    return { status: snapshot.stats ? "stale" : "pending", rows, updatedAt, retryAfterSeconds: Math.ceil((waitUntil.getTime() - now.getTime()) / 1000) };
+    return {
+      status: snapshot.stats ? "stale" : "pending",
+      rows,
+      updatedAt,
+      retryAfterSeconds: Math.ceil((waitUntil.getTime() - now.getTime()) / 1000),
+    };
   }
 
   if (!(await store.claim(key, now, new Date(now.getTime() + 60_000), snapshot.fetchedAt))) {
@@ -78,8 +89,14 @@ export async function loadHeroMeta(filters: HeroMetaFilters, deps: {
       return { status: snapshot.stats ? "stale" : "pending", rows, updatedAt, retryAfterSeconds };
     }
     const stats = parseHeroStats(response.raw);
-    if (stats.length === 0 && typeof response.raw === "object" && response.raw !== null &&
-      "data" in response.raw && Array.isArray(response.raw.data) && response.raw.data.length > 0) {
+    if (
+      stats.length === 0 &&
+      typeof response.raw === "object" &&
+      response.raw !== null &&
+      "data" in response.raw &&
+      Array.isArray(response.raw.data) &&
+      response.raw.data.length > 0
+    ) {
       throw new Error("Heroes Profile 영웅 통계에 필요한 항목이 없습니다.");
     }
     await store.saveReady(key, stats, now);

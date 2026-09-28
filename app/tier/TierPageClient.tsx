@@ -5,14 +5,19 @@ import Link from "next/link";
 import { HeroTierTable } from "@/components/HeroTierTable";
 import { HERO_CATALOG } from "@/domain/hots/constants";
 import type { HeroRole } from "@/domain/hots/models";
-import type { FilterOptions, HeroMetaFilters } from "@/domain/hots/service/hero-meta-filters";
+import type { HeroMetaAudience } from "@/domain/hots/service/hero-meta-filters";
 import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
-import type { HeroMetaResult } from "@/domain/hots/service/hero-meta-loader";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 
-type PageResult = Omit<HeroMetaResult, "status"> & { readonly status: HeroMetaResult["status"] | "empty" };
+interface PageResult {
+  readonly status: "ready" | "pending" | "error";
+  readonly rows: HeroMetaRow[];
+  readonly updatedAt: string | null;
+  readonly patch: string | null;
+  readonly stale?: boolean;
+  readonly error?: string;
+}
 
-const DEFAULT_FILTERS: HeroMetaFilters = { mode: "sl", region: "ALL", patch: "", map: null, leagueTier: null };
 const ROLES: ReadonlyArray<{ value: "ALL" | HeroRole; label: string }> = [
   { value: "ALL", label: "전체 역할" },
   { value: "TANKER", label: "탱커" },
@@ -21,10 +26,9 @@ const ROLES: ReadonlyArray<{ value: "ALL" | HeroRole; label: string }> = [
   { value: "SUB_DEALER", label: "서브딜러" },
   { value: "HEALER", label: "힐러" },
 ];
-const LEAGUES = [
-  { value: "", label: "전체 등급" }, { value: "0", label: "우드" }, { value: "1", label: "브론즈" },
-  { value: "2", label: "실버" }, { value: "3", label: "골드" }, { value: "4", label: "플래티넘" },
-  { value: "5", label: "다이아몬드" }, { value: "6", label: "마스터" },
+const AUDIENCES: ReadonlyArray<{ value: HeroMetaAudience; label: string }> = [
+  { value: "all", label: "전체" },
+  { value: "platinum_plus", label: "상위 티어 (플래티넘 이상)" },
 ];
 
 function FilterSelect({ label, value, choices, onChange }: {
@@ -63,13 +67,6 @@ function formatRate(value: number | null): string {
   return value === null ? "-" : `${value.toFixed(1)}%`;
 }
 
-function toQuery(filters: HeroMetaFilters): string {
-  const params = new URLSearchParams({ mode: filters.mode, region: filters.region, patch: filters.patch });
-  if (filters.map) params.set("map", filters.map);
-  if (filters.leagueTier) params.set("leagueTier", filters.leagueTier);
-  return params.toString();
-}
-
 export function parsePageResult(status: number, body: unknown): PageResult {
   const value = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
   if (status >= 400) throw new Error(typeof value.error === "string" ? value.error : "티어 정보를 불러오지 못했습니다.");
@@ -78,71 +75,39 @@ export function parsePageResult(status: number, body: unknown): PageResult {
 }
 
 export function TierPageClient() {
-  const [options, setOptions] = useState<FilterOptions | null>(null);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<HeroMetaFilters>(DEFAULT_FILTERS);
+  const [audience, setAudience] = useState<HeroMetaAudience>("all");
   const [selection, setSelection] = useState<VisibleRowsSelection>({ role: "ALL", search: "", sort: "tier" });
   const [result, setResult] = useState<PageResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [resultAudience, setResultAudience] = useState<HeroMetaAudience | null>(null);
   const [selectedHero, setSelectedHero] = useState<HeroMetaRow["hero"] | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    async function loadOptions() {
-      try {
-        const response = await fetch("/api/tier/options", { signal: controller.signal });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error ?? "필터 목록을 불러오지 못했습니다.");
-        const next = body as FilterOptions;
-        setOptions(next);
-        setFilters((current) => ({ ...current, patch: next.patches[0] ?? "" }));
-      } catch (error) {
-        if (!controller.signal.aborted) setOptionsError(error instanceof Error ? error.message : "필터 목록을 불러오지 못했습니다.");
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-    void loadOptions();
-    return () => controller.abort();
-  }, []);
 
-  useEffect(() => {
-    if (!options || !filters.patch) return;
-    const controller = new AbortController();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    setResult(null);
-    setLoading(true);
-    setSelectedHero(null);
-
-    async function loadStats() {
+    async function loadSnapshot() {
       try {
-        const response = await fetch(`/api/tier/heroes?${toQuery(filters)}`, { signal: controller.signal });
+        const response = await fetch(`/api/tier/heroes?audience=${audience}`, { signal: controller.signal });
         const body = await response.json();
         const next = parsePageResult(response.status, body);
         if (!controller.signal.aborted) {
           setResult(next);
-          setLoading(false);
-          if ((next.status === "pending" || next.status === "stale") && next.retryAfterSeconds) {
-            timer = setTimeout(() => { void loadStats(); }, Math.max(1, next.retryAfterSeconds) * 1000);
-          }
+          setResultAudience(audience);
         }
       } catch (error) {
         if (!controller.signal.aborted) {
-          setResult({ status: "error", rows: [], updatedAt: null, retryAfterSeconds: null, error: error instanceof Error ? error.message : "티어 정보를 불러오지 못했습니다." });
-          setLoading(false);
+          setResult({ status: "error", rows: [], updatedAt: null, patch: null, error: error instanceof Error ? error.message : "티어 정보를 불러오지 못했습니다." });
+          setResultAudience(audience);
         }
       }
     }
-    void loadStats();
-    return () => { controller.abort(); if (timer) clearTimeout(timer); };
-  }, [options, filters]);
+    void loadSnapshot();
+    return () => controller.abort();
+  }, [audience]);
 
-  const rows = useMemo(() => selectVisibleRows(result?.rows ?? [], selection), [result, selection]);
+  const currentResult = resultAudience === audience ? result : null;
+  const loading = currentResult === null;
+  const rows = useMemo(() => selectVisibleRows(currentResult?.rows ?? [], selection), [currentResult, selection]);
   const detail = rows.find((row) => row.hero === selectedHero) ?? null;
-  const setFilter = <K extends keyof HeroMetaFilters>(key: K, value: HeroMetaFilters[K]) => {
-    setFilters((current) => ({ ...current, [key]: value }));
-  };
-
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-6 md:py-12">
       <section className="space-y-4 border-b border-white/10 pb-8">
@@ -157,27 +122,17 @@ export function TierPageClient() {
         </div>
       </section>
 
-      {options ? (
-        <section className="rounded-xl border border-white/15 bg-white/5 p-4 md:p-6" aria-label="통계 조건">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div><h3 className="text-lg font-bold">통계 조건</h3><p className="mt-1 text-sm text-slate-400">조건을 바꾸면 해당 경기의 티어를 다시 계산합니다.</p></div>
-            <span className="text-xs text-slate-400">기본값 · 폭풍 리그 / 전체 지역 / 최근 주요 패치</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-            <FilterSelect label="게임 모드" value={filters.mode} onChange={(value) => setFilter("mode", value as HeroMetaFilters["mode"])} choices={[{ value: "sl", label: "폭풍 리그" }, { value: "qm", label: "빠른 대전" }, { value: "ar", label: "ARAM" }]} />
-            <FilterSelect label="지역" value={filters.region} onChange={(value) => setFilter("region", value as HeroMetaFilters["region"])} choices={[{ value: "ALL", label: "전체 지역" }, { value: "KR", label: "한국" }, { value: "NA", label: "북미" }, { value: "EU", label: "유럽" }, { value: "CN", label: "중국" }]} />
-            <FilterSelect label="주요 패치" value={filters.patch} onChange={(value) => setFilter("patch", value)} choices={options.patches.map((patch) => ({ value: patch, label: patch }))} />
-            <FilterSelect label="맵" value={filters.map ?? ""} onChange={(value) => setFilter("map", value || null)} choices={[{ value: "", label: "전체 맵" }, ...options.maps.map((map) => ({ value: map, label: map }))]} />
-            <FilterSelect label="플레이어 리그" value={filters.leagueTier ?? ""} onChange={(value) => setFilter("leagueTier", value || null)} choices={LEAGUES} />
-          </div>
-        </section>
-      ) : (
-        <section className="rounded-xl border border-white/15 bg-white/5 p-8 text-center text-slate-300" role="status">
-          {optionsError ?? "필터와 패치 목록을 불러오는 중입니다."}
-        </section>
-      )}
+      <section className="rounded-xl border border-white/15 bg-white/5 p-4 md:p-6" aria-label="통계 조건">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div><h3 className="text-lg font-bold">통계 조건</h3><p className="mt-1 text-sm text-slate-400">하루 한 번 저장한 폭풍 리그 통계를 표시합니다.</p></div>
+          <span className="text-xs text-slate-400">전체 지역 · 전체 맵 · 최신 주요 패치</span>
+        </div>
+        <div className="grid max-w-sm grid-cols-1 gap-4">
+          <FilterSelect label="플레이어 리그" value={audience} onChange={(value) => { setSelectedHero(null); setAudience(value as HeroMetaAudience); }} choices={AUDIENCES} />
+        </div>
+      </section>
 
-      {options && <section className="space-y-4" aria-label="영웅 티어리스트">
+      <section className="space-y-4" aria-label="영웅 티어리스트">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div><h3 className="text-xl font-bold">영웅 티어리스트</h3><p className="mt-1 text-sm text-slate-400">승률 중심 점수로 역할 안에서 비교합니다.</p></div>
           <div className="flex flex-wrap items-end gap-3">
@@ -189,13 +144,11 @@ export function TierPageClient() {
           {ROLES.map((role) => <button key={role.value} type="button" onClick={() => setSelection((current) => ({ ...current, role: role.value }))} aria-pressed={selection.role === role.value} className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selection.role === role.value ? "border-cyan-300/80 bg-cyan-300/20 text-cyan-100" : "border-white/20 bg-white/5 text-gray-200 hover:bg-white/10"}`}>{role.label}</button>)}
         </div>
 
-        {result?.updatedAt && <p className="text-xs text-slate-400">마지막 갱신 · {new Date(result.updatedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} KST {result.status === "stale" && "· 저장된 결과 표시 중"}</p>}
-        {result?.status === "stale" && result.error && <p className="text-sm text-amber-200" role="status">새 통계를 불러오지 못했습니다. 저장된 결과를 표시하고 잠시 후 다시 시도합니다.</p>}
+        {currentResult?.updatedAt && <p className="text-xs text-slate-400">패치 {currentResult.patch} · 마지막 갱신 {new Date(currentResult.updatedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} KST {currentResult.stale && "· 이전 저장 결과"}</p>}
         {loading && <p className="rounded-lg border border-white/15 bg-white/5 p-6 text-center text-slate-300" role="status">티어 정보를 불러오는 중입니다.</p>}
-        {!loading && result?.status === "pending" && <p className="rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-6 text-center text-cyan-100" role="status">Heroes Profile이 이 조건의 통계를 준비 중입니다. 준비되면 자동으로 표시됩니다.</p>}
-        {!loading && result?.status === "error" && <p className="rounded-lg border border-rose-400/30 bg-rose-400/10 p-6 text-center text-rose-100" role="alert">{result.error ?? "티어 정보를 불러오지 못했습니다."}</p>}
-        {!loading && result?.status === "empty" && <p className="rounded-lg border border-white/15 bg-white/5 p-6 text-center text-slate-300">선택한 조건에 경기 데이터가 없습니다.</p>}
-        {!loading && result && result.rows.length > 0 && <>
+        {!loading && currentResult?.status === "pending" && <p className="rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-6 text-center text-cyan-100" role="status">데이터 준비 중입니다. 하루 한 번 통계를 수집합니다.</p>}
+        {!loading && currentResult?.status === "error" && <p className="rounded-lg border border-rose-400/30 bg-rose-400/10 p-6 text-center text-rose-100" role="alert">{currentResult.error ?? "티어 정보를 불러오지 못했습니다."}</p>}
+        {!loading && currentResult && currentResult.rows.length > 0 && <>
           {rows.length > 0 ? <HeroTierTable showRole={selection.role === "ALL"} showGames rows={rows.map((row, index) => ({
             hero: row.hero,
             rank: index + 1,
@@ -209,7 +162,7 @@ export function TierPageClient() {
             onSelect: () => setSelectedHero(row.hero),
           }))} /> : <p className="rounded-lg border border-white/15 bg-white/5 p-6 text-center text-slate-300">검색 조건에 맞는 영웅이 없습니다.</p>}
         </>}
-      </section>}
+      </section>
 
       {detail && <section className="rounded-xl border border-cyan-400/25 bg-cyan-400/5 p-5" aria-label={`${HERO_CATALOG[detail.hero].nameKo} 상세`}>
         <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-cyan-300">Hero detail</p><h3 className="mt-1 text-xl font-bold">{HERO_CATALOG[detail.hero].nameKo}</h3></div><button type="button" onClick={() => setSelectedHero(null)} className="text-sm text-slate-300 hover:text-white" aria-label="영웅 상세 닫기">닫기</button></div>

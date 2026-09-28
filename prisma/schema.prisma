@@ -335,15 +335,19 @@ model GameTeamMemberTalent {
   @@map("game_team_member_talents")
 }
 
-/// Heroes Profile 통계 조건별 마지막 성공 결과와 비동기 작업 상태
+/// Heroes Profile audience별 현재 스냅샷과 일일 수집 작업 상태
 model HeroMetaSnapshot {
-  key        String    @id
-  stats      Json?
-  fetchedAt  DateTime?
-  jobPath    String?
-  nextPollAt DateTime?
-  leaseUntil DateTime?
-  updatedAt  DateTime  @updatedAt
+  key          String    @id
+  stats        Json?
+  patch        String?
+  fetchedAt    DateTime?
+  jobPath      String?
+  pendingPatch String?
+  nextPollAt   DateTime?
+  leaseUntil   DateTime?
+  lastRunDate  String?
+  lastError    String?
+  updatedAt    DateTime  @updatedAt
 
   @@map("hero_meta_snapshots")
 }

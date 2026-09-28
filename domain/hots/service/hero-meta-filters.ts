@@ -3,6 +3,14 @@ export interface FilterOptions {
   readonly maps: ReadonlyArray<string>;
 }
 
+export type HeroMetaAudience = "all" | "platinum_plus";
+
+export function parseHeroMetaAudience(value: string | null): HeroMetaAudience | null {
+  if (value === null || value === "all") return "all";
+  if (value === "platinum_plus") return value;
+  return null;
+}
+
 export interface HeroMetaFilters {
   readonly mode: "sl" | "qm" | "ar";
   readonly region: "ALL" | "NA" | "EU" | "KR" | "CN";

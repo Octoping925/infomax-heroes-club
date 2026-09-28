@@ -51,6 +51,7 @@ DATABASE_URL=postgres://...
 MONGODB_URI=mongodb://...
 REPLAY_TOKEN_SECRET=base64url-secret...
 HEROES_PROFILE_API_KEY=your-server-only-api-key
+CRON_SECRET=random-cron-secret
 ```
 
 `REPLAY_TOKEN_SECRET`은 최소 32 random bytes를 padding 없는 base64url로
@@ -67,32 +68,28 @@ Vercel의 Development, Preview, Production 환경마다 서로 다른 값을 설
 
 ## Heroes Profile 메타 티어
 
-`/tier`는 Heroes Profile의 전역 영웅 통계를 역할별 S~D 등급으로 계산해 보여줍니다.
-기본 조건은 폭풍 리그, 전체 지역, 최근 주요 패치입니다. 모드·지역·패치·맵·리그
-등급을 바꾸면 해당 조건의 통계를 별도로 요청하고 저장합니다. 100경기 미만의
-영웅은 등급을 보류하며, 화면에 산식·원본 출처·마지막 갱신 시각을 표시합니다.
-기존 `/stats`의 동호회 내전 티어와는 별도 데이터입니다.
+`/tier`는 Heroes Profile의 폭풍 리그 통계로 영웅별 역할 상대 S~D 등급을 계산해
+보여줍니다. 플레이어 리그는 `전체`와 `상위 티어 (플래티넘 이상)` 두 분류를
+제공하고, 둘 다 전체 지역·전체 맵·최신 주요 패치 조건입니다. 100경기 미만의
+영웅은 등급을 보류합니다. 기존 `/stats`의 동호회 내전 티어와는 별도 데이터입니다.
 
-`HEROES_PROFILE_API_KEY`는 서버 환경 변수로만 설정합니다. 키가 없고 저장된 선택지나
-통계도 없으면 공개 페이지에 설정 대기 안내가 나오며 API는 503을 반환합니다. 이미
-저장된 선택지와 통계가 있으면 마지막 결과를 계속 조회할 수 있습니다. 배포 순서는 다음과 같습니다.
+Vercel Cron은 매일 06:00 KST (`0 21 * * *` UTC)에 `/api/cron/hero-meta`를 호출해
+두 통계 묶음을 Heroes Profile에서 가져와 Postgres의 현재 스냅샷에 덮어씁니다.
+사이트의 `/api/tier/heroes`는 DB만 조회합니다. 데이터가 없으면 `데이터 준비 중`을
+표시하고, 수집 실패 시 마지막 성공 데이터와 갱신 시각을 유지합니다. Heroes Profile이
+202를 반환하면 크론이 `Retry-After`를 지켜 작업을 확인하며, 함수 제한 시간까지
+완료되지 않은 작업은 DB에 저장해 다음 날 크론에서 이어받습니다.
 
-1. Heroes Profile 유료 플랜에서 공개 사이트 재표시와 통계 스냅샷 저장이 허용되는지,
-   현재 요청 한도와 실제 `/patches`, `/maps`, `/heroes/stats` 응답 형식을 확인합니다.
-2. `prisma/migrations/20260928000000_hero_meta_snapshots/migration.sql`을
-   `npx prisma migrate deploy`로 배포 데이터베이스에 적용합니다.
-3. 서버의 `HEROES_PROFILE_API_KEY`를 설정하고 재배포합니다. 브라우저 환경 변수로
-   노출하지 않습니다.
-4. `/tier`에서 기본 조건과 맵·리그 조건을 조회하고 202 작업의 자동 재조회,
-   실제 영웅 이름 대응, 승률·픽률·밴율·경기 수를 확인합니다. 통계가 빈 값이나
-   예상과 다른 형식이면 공개 전에 파서를 조정합니다.
+`HEROES_PROFILE_API_KEY`와 `CRON_SECRET`은 서버 환경 변수로 설정하고 브라우저에
+노출하지 않습니다. 배포 순서는 다음과 같습니다.
 
-같은 조건은 24시간 동안 저장된 통계를 사용합니다. 패치·맵 선택지도 Postgres에
-하루 저장하며, 이 목록을 갱신할 수 없는 동안 저장된 선택지를 사용합니다. 갱신 중이거나 외부 API에
-일시 오류가 생기면 마지막 성공 결과와 갱신 시각을 계속 보여줍니다. 새 조건의
-결과가 아직 없으면 데이터 준비 중 상태를 표시합니다. 로컬 검증에는 API 키와
-데이터베이스가 없었으므로 유료 API의 실응답과 DB 마이그레이션 적용은 배포 전
-확인이 필요합니다.
+1. Heroes Profile 플랜에서 공개 재표시와 DB 스냅샷 저장을 허용하는지 확인합니다.
+   실제 `/patches` 및 두 `/heroes/stats` 조건 응답은 200, 90영웅으로 확인했습니다.
+2. `prisma/migrations/20260928120000_hero_meta_daily_snapshots/migration.sql`을
+   `npx prisma migrate deploy`로 배포 DB에 적용합니다.
+3. Vercel Production에 두 서버 환경 변수를 설정하고 배포합니다. Cron은 Production에서만 실행됩니다.
+4. 첫 크론 실행 결과와 Vercel 함수 제한 시간을 확인하고 `/tier`에서 두 분류의
+   패치·갱신 시각·영웅 통계를 확인합니다.
 
 ## Replay import
 

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model HeroMetaSnapshot
- * Heroes Profile 통계 조건별 마지막 성공 결과와 비동기 작업 상태
+ * Heroes Profile audience별 현재 스냅샷과 일일 수집 작업 상태
  */
 export type HeroMetaSnapshotModel = runtime.Types.Result.DefaultSelection<Prisma.$HeroMetaSnapshotPayload>
 
@@ -26,29 +26,41 @@ export type AggregateHeroMetaSnapshot = {
 
 export type HeroMetaSnapshotMinAggregateOutputType = {
   key: string | null
+  patch: string | null
   fetchedAt: Date | null
   jobPath: string | null
+  pendingPatch: string | null
   nextPollAt: Date | null
   leaseUntil: Date | null
+  lastRunDate: string | null
+  lastError: string | null
   updatedAt: Date | null
 }
 
 export type HeroMetaSnapshotMaxAggregateOutputType = {
   key: string | null
+  patch: string | null
   fetchedAt: Date | null
   jobPath: string | null
+  pendingPatch: string | null
   nextPollAt: Date | null
   leaseUntil: Date | null
+  lastRunDate: string | null
+  lastError: string | null
   updatedAt: Date | null
 }
 
 export type HeroMetaSnapshotCountAggregateOutputType = {
   key: number
   stats: number
+  patch: number
   fetchedAt: number
   jobPath: number
+  pendingPatch: number
   nextPollAt: number
   leaseUntil: number
+  lastRunDate: number
+  lastError: number
   updatedAt: number
   _all: number
 }
@@ -56,29 +68,41 @@ export type HeroMetaSnapshotCountAggregateOutputType = {
 
 export type HeroMetaSnapshotMinAggregateInputType = {
   key?: true
+  patch?: true
   fetchedAt?: true
   jobPath?: true
+  pendingPatch?: true
   nextPollAt?: true
   leaseUntil?: true
+  lastRunDate?: true
+  lastError?: true
   updatedAt?: true
 }
 
 export type HeroMetaSnapshotMaxAggregateInputType = {
   key?: true
+  patch?: true
   fetchedAt?: true
   jobPath?: true
+  pendingPatch?: true
   nextPollAt?: true
   leaseUntil?: true
+  lastRunDate?: true
+  lastError?: true
   updatedAt?: true
 }
 
 export type HeroMetaSnapshotCountAggregateInputType = {
   key?: true
   stats?: true
+  patch?: true
   fetchedAt?: true
   jobPath?: true
+  pendingPatch?: true
   nextPollAt?: true
   leaseUntil?: true
+  lastRunDate?: true
+  lastError?: true
   updatedAt?: true
   _all?: true
 }
@@ -158,10 +182,14 @@ export type HeroMetaSnapshotGroupByArgs<ExtArgs extends runtime.Types.Extensions
 export type HeroMetaSnapshotGroupByOutputType = {
   key: string
   stats: runtime.JsonValue | null
+  patch: string | null
   fetchedAt: Date | null
   jobPath: string | null
+  pendingPatch: string | null
   nextPollAt: Date | null
   leaseUntil: Date | null
+  lastRunDate: string | null
+  lastError: string | null
   updatedAt: Date
   _count: HeroMetaSnapshotCountAggregateOutputType | null
   _min: HeroMetaSnapshotMinAggregateOutputType | null
@@ -189,20 +217,28 @@ export type HeroMetaSnapshotWhereInput = {
   NOT?: Prisma.HeroMetaSnapshotWhereInput | Prisma.HeroMetaSnapshotWhereInput[]
   key?: Prisma.StringFilter<"HeroMetaSnapshot"> | string
   stats?: Prisma.JsonNullableFilter<"HeroMetaSnapshot">
+  patch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   fetchedAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   jobPath?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  pendingPatch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   nextPollAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
+  lastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  lastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"HeroMetaSnapshot"> | Date | string
 }
 
 export type HeroMetaSnapshotOrderByWithRelationInput = {
   key?: Prisma.SortOrder
   stats?: Prisma.SortOrderInput | Prisma.SortOrder
+  patch?: Prisma.SortOrderInput | Prisma.SortOrder
   fetchedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   jobPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  pendingPatch?: Prisma.SortOrderInput | Prisma.SortOrder
   nextPollAt?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -212,20 +248,28 @@ export type HeroMetaSnapshotWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.HeroMetaSnapshotWhereInput[]
   NOT?: Prisma.HeroMetaSnapshotWhereInput | Prisma.HeroMetaSnapshotWhereInput[]
   stats?: Prisma.JsonNullableFilter<"HeroMetaSnapshot">
+  patch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   fetchedAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   jobPath?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  pendingPatch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   nextPollAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
+  lastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  lastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"HeroMetaSnapshot"> | Date | string
 }, "key">
 
 export type HeroMetaSnapshotOrderByWithAggregationInput = {
   key?: Prisma.SortOrder
   stats?: Prisma.SortOrderInput | Prisma.SortOrder
+  patch?: Prisma.SortOrderInput | Prisma.SortOrder
   fetchedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   jobPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  pendingPatch?: Prisma.SortOrderInput | Prisma.SortOrder
   nextPollAt?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.HeroMetaSnapshotCountOrderByAggregateInput
   _max?: Prisma.HeroMetaSnapshotMaxOrderByAggregateInput
@@ -238,108 +282,152 @@ export type HeroMetaSnapshotScalarWhereWithAggregatesInput = {
   NOT?: Prisma.HeroMetaSnapshotScalarWhereWithAggregatesInput | Prisma.HeroMetaSnapshotScalarWhereWithAggregatesInput[]
   key?: Prisma.StringWithAggregatesFilter<"HeroMetaSnapshot"> | string
   stats?: Prisma.JsonNullableWithAggregatesFilter<"HeroMetaSnapshot">
+  patch?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   fetchedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
   jobPath?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
+  pendingPatch?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   nextPollAt?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
   leaseUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
+  lastRunDate?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
+  lastError?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string
 }
 
 export type HeroMetaSnapshotCreateInput = {
   key: string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
   fetchedAt?: Date | string | null
   jobPath?: string | null
+  pendingPatch?: string | null
   nextPollAt?: Date | string | null
   leaseUntil?: Date | string | null
+  lastRunDate?: string | null
+  lastError?: string | null
   updatedAt?: Date | string
 }
 
 export type HeroMetaSnapshotUncheckedCreateInput = {
   key: string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
   fetchedAt?: Date | string | null
   jobPath?: string | null
+  pendingPatch?: string | null
   nextPollAt?: Date | string | null
   leaseUntil?: Date | string | null
+  lastRunDate?: string | null
+  lastError?: string | null
   updatedAt?: Date | string
 }
 
 export type HeroMetaSnapshotUpdateInput = {
   key?: Prisma.StringFieldUpdateOperationsInput | string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fetchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   jobPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HeroMetaSnapshotUncheckedUpdateInput = {
   key?: Prisma.StringFieldUpdateOperationsInput | string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fetchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   jobPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HeroMetaSnapshotCreateManyInput = {
   key: string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
   fetchedAt?: Date | string | null
   jobPath?: string | null
+  pendingPatch?: string | null
   nextPollAt?: Date | string | null
   leaseUntil?: Date | string | null
+  lastRunDate?: string | null
+  lastError?: string | null
   updatedAt?: Date | string
 }
 
 export type HeroMetaSnapshotUpdateManyMutationInput = {
   key?: Prisma.StringFieldUpdateOperationsInput | string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fetchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   jobPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HeroMetaSnapshotUncheckedUpdateManyInput = {
   key?: Prisma.StringFieldUpdateOperationsInput | string
   stats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fetchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   jobPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HeroMetaSnapshotCountOrderByAggregateInput = {
   key?: Prisma.SortOrder
   stats?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
   fetchedAt?: Prisma.SortOrder
   jobPath?: Prisma.SortOrder
+  pendingPatch?: Prisma.SortOrder
   nextPollAt?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
+  lastRunDate?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type HeroMetaSnapshotMaxOrderByAggregateInput = {
   key?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
   fetchedAt?: Prisma.SortOrder
   jobPath?: Prisma.SortOrder
+  pendingPatch?: Prisma.SortOrder
   nextPollAt?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
+  lastRunDate?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type HeroMetaSnapshotMinOrderByAggregateInput = {
   key?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
   fetchedAt?: Prisma.SortOrder
   jobPath?: Prisma.SortOrder
+  pendingPatch?: Prisma.SortOrder
   nextPollAt?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
+  lastRunDate?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -352,44 +440,60 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 export type HeroMetaSnapshotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   key?: boolean
   stats?: boolean
+  patch?: boolean
   fetchedAt?: boolean
   jobPath?: boolean
+  pendingPatch?: boolean
   nextPollAt?: boolean
   leaseUntil?: boolean
+  lastRunDate?: boolean
+  lastError?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["heroMetaSnapshot"]>
 
 export type HeroMetaSnapshotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   key?: boolean
   stats?: boolean
+  patch?: boolean
   fetchedAt?: boolean
   jobPath?: boolean
+  pendingPatch?: boolean
   nextPollAt?: boolean
   leaseUntil?: boolean
+  lastRunDate?: boolean
+  lastError?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["heroMetaSnapshot"]>
 
 export type HeroMetaSnapshotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   key?: boolean
   stats?: boolean
+  patch?: boolean
   fetchedAt?: boolean
   jobPath?: boolean
+  pendingPatch?: boolean
   nextPollAt?: boolean
   leaseUntil?: boolean
+  lastRunDate?: boolean
+  lastError?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["heroMetaSnapshot"]>
 
 export type HeroMetaSnapshotSelectScalar = {
   key?: boolean
   stats?: boolean
+  patch?: boolean
   fetchedAt?: boolean
   jobPath?: boolean
+  pendingPatch?: boolean
   nextPollAt?: boolean
   leaseUntil?: boolean
+  lastRunDate?: boolean
+  lastError?: boolean
   updatedAt?: boolean
 }
 
-export type HeroMetaSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"key" | "stats" | "fetchedAt" | "jobPath" | "nextPollAt" | "leaseUntil" | "updatedAt", ExtArgs["result"]["heroMetaSnapshot"]>
+export type HeroMetaSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"key" | "stats" | "patch" | "fetchedAt" | "jobPath" | "pendingPatch" | "nextPollAt" | "leaseUntil" | "lastRunDate" | "lastError" | "updatedAt", ExtArgs["result"]["heroMetaSnapshot"]>
 
 export type $HeroMetaSnapshotPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HeroMetaSnapshot"
@@ -397,10 +501,14 @@ export type $HeroMetaSnapshotPayload<ExtArgs extends runtime.Types.Extensions.In
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     key: string
     stats: runtime.JsonValue | null
+    patch: string | null
     fetchedAt: Date | null
     jobPath: string | null
+    pendingPatch: string | null
     nextPollAt: Date | null
     leaseUntil: Date | null
+    lastRunDate: string | null
+    lastError: string | null
     updatedAt: Date
   }, ExtArgs["result"]["heroMetaSnapshot"]>
   composites: {}
@@ -827,10 +935,14 @@ export interface Prisma__HeroMetaSnapshotClient<T, Null = never, ExtArgs extends
 export interface HeroMetaSnapshotFieldRefs {
   readonly key: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly stats: Prisma.FieldRef<"HeroMetaSnapshot", 'Json'>
+  readonly patch: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly fetchedAt: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
   readonly jobPath: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
+  readonly pendingPatch: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly nextPollAt: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
   readonly leaseUntil: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
+  readonly lastRunDate: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
+  readonly lastError: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly updatedAt: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
 }
     

@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/hero-meta",
+      "schedule": "0 21 * * *"
+    },
+    {
       "path": "/api/hots-tip",
       "schedule": "30 01 * * 1-5"
     }

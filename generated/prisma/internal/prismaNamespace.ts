@@ -1474,10 +1474,14 @@ export type GameTeamMemberTalentScalarFieldEnum = (typeof GameTeamMemberTalentSc
 export const HeroMetaSnapshotScalarFieldEnum = {
   key: 'key',
   stats: 'stats',
+  patch: 'patch',
   fetchedAt: 'fetchedAt',
   jobPath: 'jobPath',
+  pendingPatch: 'pendingPatch',
   nextPollAt: 'nextPollAt',
   leaseUntil: 'leaseUntil',
+  lastRunDate: 'lastRunDate',
+  lastError: 'lastError',
   updatedAt: 'updatedAt'
 } as const
 

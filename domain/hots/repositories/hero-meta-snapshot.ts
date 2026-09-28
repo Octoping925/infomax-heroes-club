@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { HeroMetaSnapshotStore } from "../service/hero-meta-loader";
+import type { HeroMetaDailySnapshot, HeroMetaDailyStore } from "../service/hero-meta-daily-refresh";
+import type { HeroMetaAudience } from "../service/hero-meta-filters";
 import type { HeroMetaStat } from "../service/hero-meta-tier";
 import { HERO_CATALOG } from "../constants";
 
@@ -52,6 +54,65 @@ export function createHeroMetaSnapshotStore(client: Pick<PrismaClient, "heroMeta
     },
     async saveError(key, nextRetryAt) {
       await model.update({ where: { key }, data: { jobPath: null, nextPollAt: nextRetryAt, leaseUntil: null } });
+    },
+  };
+}
+
+export function createHeroMetaDailyStore(client: Pick<PrismaClient, "heroMetaSnapshot">): HeroMetaDailyStore {
+  const model = client.heroMetaSnapshot;
+  return {
+    async get(audience): Promise<HeroMetaDailySnapshot | null> {
+      const row = await model.findUnique({ where: { key: audience } });
+      if (!row) return null;
+      return {
+        stats: readStats(row.stats),
+        patch: row.patch,
+        fetchedAt: row.fetchedAt,
+        jobPath: row.jobPath,
+        pendingPatch: row.pendingPatch,
+        nextPollAt: row.nextPollAt,
+      };
+    },
+    async claimDaily(audience: HeroMetaAudience, runDate: string, now: Date, leaseUntil: Date) {
+      await model.upsert({ where: { key: audience }, create: { key: audience }, update: {} });
+      const result = await model.updateMany({
+        where: {
+          key: audience,
+          AND: [
+            { OR: [{ lastRunDate: null }, { lastRunDate: { lt: runDate } }] },
+            { OR: [{ leaseUntil: null }, { leaseUntil: { lte: now } }] },
+          ],
+        },
+        data: { lastRunDate: runDate, leaseUntil },
+      });
+      return result.count === 1;
+    },
+    async saveReady(audience, patch, stats, fetchedAt) {
+      await model.update({
+        where: { key: audience },
+        data: {
+          stats: stats as unknown as Prisma.InputJsonValue,
+          patch,
+          fetchedAt,
+          jobPath: null,
+          pendingPatch: null,
+          nextPollAt: null,
+          leaseUntil: null,
+          lastError: null,
+        },
+      });
+    },
+    async savePending(audience, patch, jobPath, nextPollAt) {
+      await model.update({
+        where: { key: audience },
+        data: { pendingPatch: patch, jobPath, nextPollAt, leaseUntil: null },
+      });
+    },
+    async saveFailure(audience, message) {
+      await model.update({
+        where: { key: audience },
+        data: { lastError: message, leaseUntil: null },
+      });
     },
   };
 }
