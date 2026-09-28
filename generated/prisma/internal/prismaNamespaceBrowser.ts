@@ -225,6 +225,8 @@ export const HeroMetaSnapshotScalarFieldEnum = {
   mapPendingPatch: 'mapPendingPatch',
   mapNextPollAt: 'mapNextPollAt',
   mapLastError: 'mapLastError',
+  mapLeaseUntil: 'mapLeaseUntil',
+  mapLastRunDate: 'mapLastRunDate',
   leaseUntil: 'leaseUntil',
   lastRunDate: 'lastRunDate',
   lastError: 'lastError',

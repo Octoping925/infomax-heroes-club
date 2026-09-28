@@ -5,6 +5,10 @@
       "schedule": "0 21 * * *"
     },
     {
+      "path": "/api/cron/hero-meta/maps",
+      "schedule": "15 21 * * *"
+    },
+    {
       "path": "/api/hots-tip",
       "schedule": "30 01 * * 1-5"
     }

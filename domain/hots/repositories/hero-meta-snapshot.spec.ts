@@ -31,6 +31,24 @@ describe("createHeroMetaSnapshotStore", () => {
 });
 
 describe("createHeroMetaDailyStore map snapshots", () => {
+  it("claims map collection with map-specific run date and lease fields", async () => {
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const store = createHeroMetaDailyStore({ heroMetaSnapshot: {
+      findUnique: vi.fn(), upsert: vi.fn(), updateMany, update: vi.fn(),
+    } } as unknown as Pick<PrismaClient, "heroMetaSnapshot">);
+    const now = new Date("2026-09-28T00:00:00.000Z");
+    const leaseUntil = new Date(now.getTime() + 60_000);
+
+    expect(await store.claimMapDaily("all", "2026-09-28", now, leaseUntil)).toBe(true);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { key: "all", AND: [
+        { OR: [{ mapLastRunDate: null }, { mapLastRunDate: { lt: "2026-09-28" } }] },
+        { OR: [{ mapLeaseUntil: null }, { mapLeaseUntil: { lte: now } }] },
+      ] },
+      data: { mapLastRunDate: "2026-09-28", mapLeaseUntil: leaseUntil },
+    });
+  });
+
   it("stores map freshness independently from the overall patch fields", async () => {
     const update = vi.fn(async (args: unknown) => { void args; return {}; });
     const store = createHeroMetaDailyStore({ heroMetaSnapshot: {

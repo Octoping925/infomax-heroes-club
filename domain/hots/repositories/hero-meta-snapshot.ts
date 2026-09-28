@@ -108,6 +108,20 @@ export function createHeroMetaDailyStore(client: Pick<PrismaClient, "heroMetaSna
       });
       return result.count === 1;
     },
+    async claimMapDaily(audience: HeroMetaAudience, runDate: string, now: Date, leaseUntil: Date) {
+      await model.upsert({ where: { key: audience }, create: { key: audience }, update: {} });
+      const result = await model.updateMany({
+        where: {
+          key: audience,
+          AND: [
+            { OR: [{ mapLastRunDate: null }, { mapLastRunDate: { lt: runDate } }] },
+            { OR: [{ mapLeaseUntil: null }, { mapLeaseUntil: { lte: now } }] },
+          ],
+        },
+        data: { mapLastRunDate: runDate, mapLeaseUntil: leaseUntil },
+      });
+      return result.count === 1;
+    },
     async saveReady(audience, patch, stats, fetchedAt) {
       await model.update({
         where: { key: audience },
@@ -146,20 +160,20 @@ export function createHeroMetaDailyStore(client: Pick<PrismaClient, "heroMetaSna
           mapPendingPatch: null,
           mapNextPollAt: null,
           mapLastError: null,
-          leaseUntil: null,
+          mapLeaseUntil: null,
         },
       });
     },
     async saveMapPending(audience, patch, jobPath, nextPollAt) {
       await model.update({
         where: { key: audience },
-        data: { mapPendingPatch: patch, mapJobPath: jobPath, mapNextPollAt: nextPollAt, leaseUntil: null },
+        data: { mapPendingPatch: patch, mapJobPath: jobPath, mapNextPollAt: nextPollAt, mapLeaseUntil: null },
       });
     },
     async saveMapFailure(audience, message) {
       await model.update({
         where: { key: audience },
-        data: { mapLastError: message, leaseUntil: null },
+        data: { mapLastError: message, mapLeaseUntil: null },
       });
     },
   };

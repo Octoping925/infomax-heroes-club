@@ -74,9 +74,11 @@ Vercel의 Development, Preview, Production 환경마다 서로 다른 값을 설
 영웅은 등급을 보류합니다. 기존 `/stats`의 동호회 내전 티어와는 별도 데이터입니다.
 
 Vercel Cron은 매일 06:00 KST (`0 21 * * *` UTC)에 `/api/cron/hero-meta`를 호출해
-전체 맵 통계와 맵별 그룹 통계를 각각 가져와 Postgres의 현재 스냅샷에 덮어씁니다.
-맵별 데이터는 맵마다 따로 요청하지 않고 `group_by_map=true` 요청 한 번에 받습니다.
-두 플레이어 리그 분류를 합해 하루 최대 4회의 영웅 통계 요청을 사용합니다.
+전체 맵 통계만 수집하고, 06:15 KST (`15 21 * * *` UTC)에
+`/api/cron/hero-meta/maps`를 호출해 맵별 통계만 수집합니다. 두 작업은 독립 실행 잠금과
+갱신 날짜를 사용하므로 한쪽의 실패나 재실행이 다른 쪽에 영향을 주지 않습니다. 맵별 데이터는
+맵마다 따로 요청하지 않고 `group_by_map=true` 요청 한 번에 받습니다. 두 분류를 합해
+전체 통계 2회와 그룹 맵 통계 2회, 하루 최대 4회의 영웅 통계 요청을 사용합니다.
 사이트의 `/api/tier/heroes`는 DB만 조회합니다. 데이터가 없으면 `데이터 준비 중`을
 표시하고, 수집 실패 시 마지막 성공 데이터와 갱신 시각을 유지합니다. Heroes Profile이
 202를 반환하면 크론이 `Retry-After`를 지켜 작업을 확인하며, 함수 제한 시간까지
@@ -87,8 +89,8 @@ Vercel Cron은 매일 06:00 KST (`0 21 * * *` UTC)에 `/api/cron/hero-meta`를 �
 
 1. Heroes Profile 플랜에서 공개 재표시와 DB 스냅샷 저장을 허용하는지 확인합니다.
    실제 `/patches` 및 두 `/heroes/stats` 조건 응답은 200, 90영웅으로 확인했습니다.
-2. `prisma/migrations/20260928180000_hero_meta_map_snapshots/migration.sql`을
-   `npx prisma migrate deploy`로 배포 DB에 적용합니다.
+2. 새 마이그레이션을 `npx prisma migrate deploy`로 배포 DB에 적용합니다. 현재 분리 잠금
+   마이그레이션은 `20260928220000_hero_meta_separate_cron_locks`입니다.
 3. Vercel Production에 두 서버 환경 변수를 설정하고 배포합니다. Cron은 Production에서만 실행됩니다.
 4. 첫 크론 실행 결과와 Vercel 함수 제한 시간을 확인하고 `/tier`에서 두 분류와
    전체 맵·개별 맵의 패치·갱신 시각·영웅 통계를 확인합니다.

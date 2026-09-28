@@ -351,6 +351,8 @@ model HeroMetaSnapshot {
   mapPendingPatch String?
   mapNextPollAt DateTime?
   mapLastError String?
+  mapLeaseUntil DateTime?
+  mapLastRunDate String?
   leaseUntil   DateTime?
   lastRunDate  String?
   lastError    String?

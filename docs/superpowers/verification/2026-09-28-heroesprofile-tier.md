@@ -5,7 +5,7 @@
 - `npx prisma generate`: passed.
 - `npm run lint`: passed.
 - `npm run ts:check`: passed.
-- `npm run build`: passed. Next.js listed `/api/cron/hero-meta` and `/api/tier/heroes`, with no `/api/tier/options` route. The build retains an existing dynamic dependency warning in the replay parser.
+- `npm run build`: passed. Next.js listed the cron and tier routes, with no `/api/tier/options` route. The build retains an existing dynamic dependency warning in the replay parser.
 - Read-only Heroes Profile checks used the local `.env` key without printing it: `/patches` returned 200 and the newest valid major patch was `2.55`; Storm League all-player and `league_tier=4,5,6` statistics each returned 200 with 90 hero rows.
 - `git diff --check`: passed.
 
@@ -19,6 +19,8 @@
 - `npm test`: passed, 241 tests across 48 files after switching to major subpatches. `npm run lint`, `npm run ts:check`, `npx prisma validate`, and `git diff --check`: passed.
 - `npm run build`: passed after granting the build read access to the configured DB; `/stats` prerendered. Existing warnings remain for the replay parser's dynamic dependency and chart dimensions during static rendering.
 - A manual invocation of the cron handler selected subpatch `2.55.17`. Both all-map audiences stored 90 hero rows. Both grouped-map requests returned HTTP 429, so their previous snapshots were retained for the next daily run.
+- Collection is split into `/api/cron/hero-meta` for all-map data and `/api/cron/hero-meta/maps` for grouped maps, scheduled 15 minutes apart. The two jobs use independent daily run dates and leases. Migration `20260928220000_hero_meta_separate_cron_locks` is applied; `npx prisma migrate status` reports up to date.
+- Overall and grouped-map collection are now separate scheduled routes, each with independent run dates and leases. The grouped-map route runs 15 minutes after the overall route and its job handler calls only the grouped-map source.
 
 ## Database and browser checks
 

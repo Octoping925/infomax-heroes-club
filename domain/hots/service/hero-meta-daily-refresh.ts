@@ -20,6 +20,7 @@ export interface HeroMetaDailySnapshot {
 export interface HeroMetaDailyStore {
   get(audience: HeroMetaAudience): Promise<HeroMetaDailySnapshot | null>;
   claimDaily(audience: HeroMetaAudience, runDate: string, now: Date, leaseUntil: Date): Promise<boolean>;
+  claimMapDaily(audience: HeroMetaAudience, runDate: string, now: Date, leaseUntil: Date): Promise<boolean>;
   saveReady(audience: HeroMetaAudience, patch: string, stats: HeroMetaStat[], fetchedAt: Date): Promise<void>;
   savePending(audience: HeroMetaAudience, patch: string | null, jobPath: string | null, nextPollAt: Date | null): Promise<void>;
   saveFailure(audience: HeroMetaAudience, message: string): Promise<void>;
@@ -94,54 +95,63 @@ async function refreshAudience(
   if (snapshot?.jobPath && snapshot.pendingPatch !== patch) {
     await store.savePending(audience, null, null, null);
   }
+  const result = await refreshDataset({
+    patch,
+    deadline,
+    state: {
+      jobPath: snapshot?.pendingPatch === patch ? snapshot.jobPath : null,
+      pendingPatch: snapshot?.pendingPatch ?? null,
+      nextPollAt: snapshot?.nextPollAt ?? null,
+    },
+    fetch: () => source.fetchStats(patch, audience),
+    poll: (path) => source.pollJob(path),
+    parse: parseHeroStats,
+    count: (stats) => stats.length,
+    saveReady: (stats, fetchedAt) => store.saveReady(audience, patch, stats, fetchedAt),
+    savePending: (pendingPatch, jobPath, nextPollAt) => store.savePending(audience, pendingPatch, jobPath, nextPollAt),
+    saveFailure: (message) => store.saveFailure(audience, message),
+    emptyMessage: "Heroes Profile 응답에 저장할 수 있는 영웅 통계가 없습니다.",
+  });
+  return { audience, status: result.status, patch, rows: result.rows, error: result.error };
+}
+
+async function refreshMapAudience(
+  audience: HeroMetaAudience,
+  patch: string,
+  deps: {
+    readonly now: Date;
+    readonly deadline: number;
+    readonly store: HeroMetaDailyStore;
+    readonly source: HeroMetaDailySource;
+  },
+): Promise<HeroMetaRefreshResult> {
+  const { now, deadline, store, source } = deps;
+  const runDate = kstDate(now);
+  const claimed = await store.claimMapDaily(audience, runDate, now, new Date(Math.min(deadline, now.getTime() + 60_000)));
+  if (!claimed) return { audience, status: "already-ran", patch, rows: 0, mapRows: 0 };
+
+  const snapshot = await store.get(audience);
   if (snapshot?.mapJobPath && snapshot.mapPendingPatch !== patch) {
     await store.saveMapPending(audience, null, null, null);
   }
-
-  const [overall, maps] = await Promise.all([
-    refreshDataset({
-      patch,
-      deadline,
-      state: {
-        jobPath: snapshot?.pendingPatch === patch ? snapshot.jobPath : null,
-        pendingPatch: snapshot?.pendingPatch ?? null,
-        nextPollAt: snapshot?.nextPollAt ?? null,
-      },
-      fetch: () => source.fetchStats(patch, audience),
-      poll: (path) => source.pollJob(path),
-      parse: parseHeroStats,
-      count: (stats) => stats.length,
-      saveReady: (stats, fetchedAt) => store.saveReady(audience, patch, stats, fetchedAt),
-      savePending: (pendingPatch, jobPath, nextPollAt) => store.savePending(audience, pendingPatch, jobPath, nextPollAt),
-      saveFailure: (message) => store.saveFailure(audience, message),
-      emptyMessage: "Heroes Profile 응답에 저장할 수 있는 영웅 통계가 없습니다.",
-    }),
-    refreshDataset({
-      patch,
-      deadline,
-      state: {
-        jobPath: snapshot?.mapPendingPatch === patch ? snapshot.mapJobPath : null,
-        pendingPatch: snapshot?.mapPendingPatch ?? null,
-        nextPollAt: snapshot?.mapNextPollAt ?? null,
-      },
-      fetch: () => source.fetchMapStats(patch, audience),
-      poll: (path) => source.pollJob(path),
-      parse: parseGroupedHeroStats,
-      count: (stats) => Object.values(stats).reduce((total, rows) => total + rows.length, 0),
-      saveReady: (stats, fetchedAt) => store.saveMapReady(audience, patch, stats, fetchedAt),
-      savePending: (pendingPatch, jobPath, nextPollAt) => store.saveMapPending(audience, pendingPatch, jobPath, nextPollAt),
-      saveFailure: (message) => store.saveMapFailure(audience, message),
-      emptyMessage: "Heroes Profile 응답에 저장할 수 있는 맵별 영웅 통계가 없습니다.",
-    }),
-  ]);
-
-  const status = overall.status === "failed" || maps.status === "failed"
-    ? "failed"
-    : overall.status === "pending" || maps.status === "pending"
-      ? "pending"
-      : "ready";
-  const error = [overall.error, maps.error].filter(Boolean).join("; ") || undefined;
-  return { audience, status, patch, rows: overall.rows, mapRows: maps.rows, ...(error ? { error } : {}) };
+  const result = await refreshDataset({
+    patch,
+    deadline,
+    state: {
+      jobPath: snapshot?.mapPendingPatch === patch ? snapshot.mapJobPath : null,
+      pendingPatch: snapshot?.mapPendingPatch ?? null,
+      nextPollAt: snapshot?.mapNextPollAt ?? null,
+    },
+    fetch: () => source.fetchMapStats(patch, audience),
+    poll: (path) => source.pollJob(path),
+    parse: parseGroupedHeroStats,
+    count: (stats) => Object.values(stats).reduce((total, rows) => total + rows.length, 0),
+    saveReady: (stats, fetchedAt) => store.saveMapReady(audience, patch, stats, fetchedAt),
+    savePending: (pendingPatch, jobPath, nextPollAt) => store.saveMapPending(audience, pendingPatch, jobPath, nextPollAt),
+    saveFailure: (message) => store.saveMapFailure(audience, message),
+    emptyMessage: "Heroes Profile 응답에 저장할 수 있는 맵별 영웅 통계가 없습니다.",
+  });
+  return { audience, status: result.status, patch, rows: 0, mapRows: result.rows, error: result.error };
 }
 
 async function refreshDataset<T>(deps: {
@@ -213,4 +223,14 @@ export async function refreshHeroMetaDaily(deps: {
 }): Promise<HeroMetaRefreshResult[]> {
   const patch = await deps.source.getLatestMajorSubPatch();
   return Promise.all(AUDIENCES.map((audience) => refreshAudience(audience, patch, deps)));
+}
+
+export async function refreshHeroMetaMapsDaily(deps: {
+  readonly now: Date;
+  readonly deadline: number;
+  readonly store: HeroMetaDailyStore;
+  readonly source: HeroMetaDailySource;
+}): Promise<HeroMetaRefreshResult[]> {
+  const patch = await deps.source.getLatestMajorSubPatch();
+  return Promise.all(AUDIENCES.map((audience) => refreshMapAudience(audience, patch, deps)));
 }

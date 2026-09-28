@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { refreshHeroMetaDaily, type HeroMetaDailySource, type HeroMetaDailyStore } from "./hero-meta-daily-refresh";
+import { refreshHeroMetaDaily, refreshHeroMetaMapsDaily, type HeroMetaDailySource, type HeroMetaDailyStore } from "./hero-meta-daily-refresh";
 
 const overallRaw = { data: [{ name: "Ana", games_played: 120, wins: 60, losses: 60, win_rate: 50, pick_rate: 10 }] };
 const groupedRaw = { data: {
@@ -10,6 +10,7 @@ function setup(mapResult: Awaited<ReturnType<HeroMetaDailySource["fetchStats"]>>
   const store = {
     get: vi.fn(async () => null),
     claimDaily: vi.fn(async () => true),
+    claimMapDaily: vi.fn(async () => true),
     saveReady: vi.fn(async () => {}),
     savePending: vi.fn(async () => {}),
     saveFailure: vi.fn(async () => {}),
@@ -27,24 +28,39 @@ function setup(mapResult: Awaited<ReturnType<HeroMetaDailySource["fetchStats"]>>
 }
 
 describe("refreshHeroMetaDaily map datasets", () => {
-  it("collects and stores one grouped map query per audience alongside overall stats", async () => {
+  it("refreshes only overall stats without touching grouped map requests", async () => {
     const deps = setup();
     const results = await refreshHeroMetaDaily({ now: new Date("2026-09-28T00:00:00.000Z"), deadline: Date.now() + 10_000, ...deps });
 
     expect(deps.source.fetchStats).toHaveBeenCalledTimes(2);
-    expect(deps.source.fetchMapStats).toHaveBeenCalledTimes(2);
+    expect(deps.source.fetchMapStats).not.toHaveBeenCalled();
     expect(deps.store.saveReady).toHaveBeenCalledTimes(2);
-    expect(deps.store.saveMapReady).toHaveBeenCalledTimes(2);
-    expect(results.every((result) => result.status === "ready" && result.mapRows === 1)).toBe(true);
+    expect(deps.store.saveMapReady).not.toHaveBeenCalled();
+    expect(results.every((result) => result.status === "ready" && result.rows === 1)).toBe(true);
   });
 
-  it("persists a pending map job separately when the overall query is ready", async () => {
+  it("persists a pending grouped-map job in the map-only refresh", async () => {
     const deps = setup({ kind: "pending", jobPath: "/jobs/map-123", retryAfterSeconds: 60 });
-    const results = await refreshHeroMetaDaily({ now: new Date("2026-09-28T00:00:00.000Z"), deadline: Date.now() + 5_000, ...deps });
+    const results = await refreshHeroMetaMapsDaily({ now: new Date("2026-09-28T00:00:00.000Z"), deadline: Date.now() + 5_000, ...deps });
 
-    expect(deps.store.saveReady).toHaveBeenCalledTimes(2);
+    expect(deps.source.fetchStats).not.toHaveBeenCalled();
+    expect(deps.source.fetchMapStats).toHaveBeenCalledTimes(2);
+    expect(deps.store.saveReady).not.toHaveBeenCalled();
     expect(deps.store.saveMapPending).toHaveBeenCalledTimes(2);
     expect(deps.store.savePending).not.toHaveBeenCalled();
     expect(results.every((result) => result.status === "pending")).toBe(true);
+  });
+
+  it("uses map-specific daily claims and only saves map datasets", async () => {
+    const deps = setup();
+    const results = await refreshHeroMetaMapsDaily({ now: new Date("2026-09-28T00:00:00.000Z"), deadline: Date.now() + 10_000, ...deps });
+
+    expect(deps.store.claimMapDaily).toHaveBeenCalledTimes(2);
+    expect(deps.store.claimDaily).not.toHaveBeenCalled();
+    expect(deps.source.fetchStats).not.toHaveBeenCalled();
+    expect(deps.source.fetchMapStats).toHaveBeenCalledTimes(2);
+    expect(deps.store.saveMapReady).toHaveBeenCalledTimes(2);
+    expect(deps.store.saveReady).not.toHaveBeenCalled();
+    expect(results.every((result) => result.status === "ready" && result.rows === 0 && result.mapRows === 1)).toBe(true);
   });
 });

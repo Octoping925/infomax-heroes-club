@@ -37,6 +37,8 @@ export type HeroMetaSnapshotMinAggregateOutputType = {
   mapPendingPatch: string | null
   mapNextPollAt: Date | null
   mapLastError: string | null
+  mapLeaseUntil: Date | null
+  mapLastRunDate: string | null
   leaseUntil: Date | null
   lastRunDate: string | null
   lastError: string | null
@@ -56,6 +58,8 @@ export type HeroMetaSnapshotMaxAggregateOutputType = {
   mapPendingPatch: string | null
   mapNextPollAt: Date | null
   mapLastError: string | null
+  mapLeaseUntil: Date | null
+  mapLastRunDate: string | null
   leaseUntil: Date | null
   lastRunDate: string | null
   lastError: string | null
@@ -77,6 +81,8 @@ export type HeroMetaSnapshotCountAggregateOutputType = {
   mapPendingPatch: number
   mapNextPollAt: number
   mapLastError: number
+  mapLeaseUntil: number
+  mapLastRunDate: number
   leaseUntil: number
   lastRunDate: number
   lastError: number
@@ -98,6 +104,8 @@ export type HeroMetaSnapshotMinAggregateInputType = {
   mapPendingPatch?: true
   mapNextPollAt?: true
   mapLastError?: true
+  mapLeaseUntil?: true
+  mapLastRunDate?: true
   leaseUntil?: true
   lastRunDate?: true
   lastError?: true
@@ -117,6 +125,8 @@ export type HeroMetaSnapshotMaxAggregateInputType = {
   mapPendingPatch?: true
   mapNextPollAt?: true
   mapLastError?: true
+  mapLeaseUntil?: true
+  mapLastRunDate?: true
   leaseUntil?: true
   lastRunDate?: true
   lastError?: true
@@ -138,6 +148,8 @@ export type HeroMetaSnapshotCountAggregateInputType = {
   mapPendingPatch?: true
   mapNextPollAt?: true
   mapLastError?: true
+  mapLeaseUntil?: true
+  mapLastRunDate?: true
   leaseUntil?: true
   lastRunDate?: true
   lastError?: true
@@ -232,6 +244,8 @@ export type HeroMetaSnapshotGroupByOutputType = {
   mapPendingPatch: string | null
   mapNextPollAt: Date | null
   mapLastError: string | null
+  mapLeaseUntil: Date | null
+  mapLastRunDate: string | null
   leaseUntil: Date | null
   lastRunDate: string | null
   lastError: string | null
@@ -274,6 +288,8 @@ export type HeroMetaSnapshotWhereInput = {
   mapPendingPatch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   mapNextPollAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   mapLastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  mapLeaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
+  mapLastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   lastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   lastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
@@ -295,6 +311,8 @@ export type HeroMetaSnapshotOrderByWithRelationInput = {
   mapPendingPatch?: Prisma.SortOrderInput | Prisma.SortOrder
   mapNextPollAt?: Prisma.SortOrderInput | Prisma.SortOrder
   mapLastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  mapLeaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  mapLastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   lastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -319,6 +337,8 @@ export type HeroMetaSnapshotWhereUniqueInput = Prisma.AtLeast<{
   mapPendingPatch?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   mapNextPollAt?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   mapLastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
+  mapLeaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
+  mapLastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"HeroMetaSnapshot"> | Date | string | null
   lastRunDate?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
   lastError?: Prisma.StringNullableFilter<"HeroMetaSnapshot"> | string | null
@@ -340,6 +360,8 @@ export type HeroMetaSnapshotOrderByWithAggregationInput = {
   mapPendingPatch?: Prisma.SortOrderInput | Prisma.SortOrder
   mapNextPollAt?: Prisma.SortOrderInput | Prisma.SortOrder
   mapLastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  mapLeaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  mapLastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   lastRunDate?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -367,6 +389,8 @@ export type HeroMetaSnapshotScalarWhereWithAggregatesInput = {
   mapPendingPatch?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   mapNextPollAt?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
   mapLastError?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
+  mapLeaseUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
+  mapLastRunDate?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   leaseUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"HeroMetaSnapshot"> | Date | string | null
   lastRunDate?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
   lastError?: Prisma.StringNullableWithAggregatesFilter<"HeroMetaSnapshot"> | string | null
@@ -388,6 +412,8 @@ export type HeroMetaSnapshotCreateInput = {
   mapPendingPatch?: string | null
   mapNextPollAt?: Date | string | null
   mapLastError?: string | null
+  mapLeaseUntil?: Date | string | null
+  mapLastRunDate?: string | null
   leaseUntil?: Date | string | null
   lastRunDate?: string | null
   lastError?: string | null
@@ -409,6 +435,8 @@ export type HeroMetaSnapshotUncheckedCreateInput = {
   mapPendingPatch?: string | null
   mapNextPollAt?: Date | string | null
   mapLastError?: string | null
+  mapLeaseUntil?: Date | string | null
+  mapLastRunDate?: string | null
   leaseUntil?: Date | string | null
   lastRunDate?: string | null
   lastError?: string | null
@@ -430,6 +458,8 @@ export type HeroMetaSnapshotUpdateInput = {
   mapPendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mapNextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   mapLastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mapLeaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mapLastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -451,6 +481,8 @@ export type HeroMetaSnapshotUncheckedUpdateInput = {
   mapPendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mapNextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   mapLastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mapLeaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mapLastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -472,6 +504,8 @@ export type HeroMetaSnapshotCreateManyInput = {
   mapPendingPatch?: string | null
   mapNextPollAt?: Date | string | null
   mapLastError?: string | null
+  mapLeaseUntil?: Date | string | null
+  mapLastRunDate?: string | null
   leaseUntil?: Date | string | null
   lastRunDate?: string | null
   lastError?: string | null
@@ -493,6 +527,8 @@ export type HeroMetaSnapshotUpdateManyMutationInput = {
   mapPendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mapNextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   mapLastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mapLeaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mapLastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -514,6 +550,8 @@ export type HeroMetaSnapshotUncheckedUpdateManyInput = {
   mapPendingPatch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mapNextPollAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   mapLastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mapLeaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  mapLastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastRunDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -535,6 +573,8 @@ export type HeroMetaSnapshotCountOrderByAggregateInput = {
   mapPendingPatch?: Prisma.SortOrder
   mapNextPollAt?: Prisma.SortOrder
   mapLastError?: Prisma.SortOrder
+  mapLeaseUntil?: Prisma.SortOrder
+  mapLastRunDate?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
   lastRunDate?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
@@ -554,6 +594,8 @@ export type HeroMetaSnapshotMaxOrderByAggregateInput = {
   mapPendingPatch?: Prisma.SortOrder
   mapNextPollAt?: Prisma.SortOrder
   mapLastError?: Prisma.SortOrder
+  mapLeaseUntil?: Prisma.SortOrder
+  mapLastRunDate?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
   lastRunDate?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
@@ -573,6 +615,8 @@ export type HeroMetaSnapshotMinOrderByAggregateInput = {
   mapPendingPatch?: Prisma.SortOrder
   mapNextPollAt?: Prisma.SortOrder
   mapLastError?: Prisma.SortOrder
+  mapLeaseUntil?: Prisma.SortOrder
+  mapLastRunDate?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
   lastRunDate?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
@@ -600,6 +644,8 @@ export type HeroMetaSnapshotSelect<ExtArgs extends runtime.Types.Extensions.Inte
   mapPendingPatch?: boolean
   mapNextPollAt?: boolean
   mapLastError?: boolean
+  mapLeaseUntil?: boolean
+  mapLastRunDate?: boolean
   leaseUntil?: boolean
   lastRunDate?: boolean
   lastError?: boolean
@@ -621,6 +667,8 @@ export type HeroMetaSnapshotSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   mapPendingPatch?: boolean
   mapNextPollAt?: boolean
   mapLastError?: boolean
+  mapLeaseUntil?: boolean
+  mapLastRunDate?: boolean
   leaseUntil?: boolean
   lastRunDate?: boolean
   lastError?: boolean
@@ -642,6 +690,8 @@ export type HeroMetaSnapshotSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   mapPendingPatch?: boolean
   mapNextPollAt?: boolean
   mapLastError?: boolean
+  mapLeaseUntil?: boolean
+  mapLastRunDate?: boolean
   leaseUntil?: boolean
   lastRunDate?: boolean
   lastError?: boolean
@@ -663,13 +713,15 @@ export type HeroMetaSnapshotSelectScalar = {
   mapPendingPatch?: boolean
   mapNextPollAt?: boolean
   mapLastError?: boolean
+  mapLeaseUntil?: boolean
+  mapLastRunDate?: boolean
   leaseUntil?: boolean
   lastRunDate?: boolean
   lastError?: boolean
   updatedAt?: boolean
 }
 
-export type HeroMetaSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"key" | "stats" | "patch" | "fetchedAt" | "jobPath" | "pendingPatch" | "nextPollAt" | "mapStats" | "mapPatch" | "mapFetchedAt" | "mapJobPath" | "mapPendingPatch" | "mapNextPollAt" | "mapLastError" | "leaseUntil" | "lastRunDate" | "lastError" | "updatedAt", ExtArgs["result"]["heroMetaSnapshot"]>
+export type HeroMetaSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"key" | "stats" | "patch" | "fetchedAt" | "jobPath" | "pendingPatch" | "nextPollAt" | "mapStats" | "mapPatch" | "mapFetchedAt" | "mapJobPath" | "mapPendingPatch" | "mapNextPollAt" | "mapLastError" | "mapLeaseUntil" | "mapLastRunDate" | "leaseUntil" | "lastRunDate" | "lastError" | "updatedAt", ExtArgs["result"]["heroMetaSnapshot"]>
 
 export type $HeroMetaSnapshotPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HeroMetaSnapshot"
@@ -689,6 +741,8 @@ export type $HeroMetaSnapshotPayload<ExtArgs extends runtime.Types.Extensions.In
     mapPendingPatch: string | null
     mapNextPollAt: Date | null
     mapLastError: string | null
+    mapLeaseUntil: Date | null
+    mapLastRunDate: string | null
     leaseUntil: Date | null
     lastRunDate: string | null
     lastError: string | null
@@ -1130,6 +1184,8 @@ export interface HeroMetaSnapshotFieldRefs {
   readonly mapPendingPatch: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly mapNextPollAt: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
   readonly mapLastError: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
+  readonly mapLeaseUntil: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
+  readonly mapLastRunDate: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly leaseUntil: Prisma.FieldRef<"HeroMetaSnapshot", 'DateTime'>
   readonly lastRunDate: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
   readonly lastError: Prisma.FieldRef<"HeroMetaSnapshot", 'String'>
