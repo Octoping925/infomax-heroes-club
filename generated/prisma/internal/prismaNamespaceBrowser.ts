@@ -60,7 +60,8 @@ export const ModelName = {
   GameTeam: 'GameTeam',
   GameTeamBan: 'GameTeamBan',
   GameTeamMember: 'GameTeamMember',
-  GameTeamMemberTalent: 'GameTeamMemberTalent'
+  GameTeamMemberTalent: 'GameTeamMemberTalent',
+  HeroMetaSnapshot: 'HeroMetaSnapshot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -208,12 +209,33 @@ export const GameTeamMemberTalentScalarFieldEnum = {
 export type GameTeamMemberTalentScalarFieldEnum = (typeof GameTeamMemberTalentScalarFieldEnum)[keyof typeof GameTeamMemberTalentScalarFieldEnum]
 
 
+export const HeroMetaSnapshotScalarFieldEnum = {
+  key: 'key',
+  stats: 'stats',
+  fetchedAt: 'fetchedAt',
+  jobPath: 'jobPath',
+  nextPollAt: 'nextPollAt',
+  leaseUntil: 'leaseUntil',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HeroMetaSnapshotScalarFieldEnum = (typeof HeroMetaSnapshotScalarFieldEnum)[keyof typeof HeroMetaSnapshotScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull'
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -230,4 +252,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull',
+  AnyNull: 'AnyNull'
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

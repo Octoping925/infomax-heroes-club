@@ -393,7 +393,8 @@ export const ModelName = {
   GameTeam: 'GameTeam',
   GameTeamBan: 'GameTeamBan',
   GameTeamMember: 'GameTeamMember',
-  GameTeamMemberTalent: 'GameTeamMemberTalent'
+  GameTeamMemberTalent: 'GameTeamMemberTalent',
+  HeroMetaSnapshot: 'HeroMetaSnapshot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "player" | "match" | "matchHighlight" | "matchTeam" | "matchTeamMember" | "game" | "gameTeam" | "gameTeamBan" | "gameTeamMember" | "gameTeamMemberTalent"
+    modelProps: "player" | "match" | "matchHighlight" | "matchTeam" | "matchTeamMember" | "game" | "gameTeam" | "gameTeamBan" | "gameTeamMember" | "gameTeamMemberTalent" | "heroMetaSnapshot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1153,6 +1154,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HeroMetaSnapshot: {
+      payload: Prisma.$HeroMetaSnapshotPayload<ExtArgs>
+      fields: Prisma.HeroMetaSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HeroMetaSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HeroMetaSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.HeroMetaSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HeroMetaSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.HeroMetaSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.HeroMetaSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.HeroMetaSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HeroMetaSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.HeroMetaSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        update: {
+          args: Prisma.HeroMetaSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.HeroMetaSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HeroMetaSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HeroMetaSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.HeroMetaSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroMetaSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.HeroMetaSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHeroMetaSnapshot>
+        }
+        groupBy: {
+          args: Prisma.HeroMetaSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroMetaSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HeroMetaSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroMetaSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1321,12 +1396,33 @@ export const GameTeamMemberTalentScalarFieldEnum = {
 export type GameTeamMemberTalentScalarFieldEnum = (typeof GameTeamMemberTalentScalarFieldEnum)[keyof typeof GameTeamMemberTalentScalarFieldEnum]
 
 
+export const HeroMetaSnapshotScalarFieldEnum = {
+  key: 'key',
+  stats: 'stats',
+  fetchedAt: 'fetchedAt',
+  jobPath: 'jobPath',
+  nextPollAt: 'nextPollAt',
+  leaseUntil: 'leaseUntil',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HeroMetaSnapshotScalarFieldEnum = (typeof HeroMetaSnapshotScalarFieldEnum)[keyof typeof HeroMetaSnapshotScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1343,6 +1439,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1464,6 +1569,20 @@ export type ListEnumHeroRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1581,6 +1700,7 @@ export type GlobalOmitConfig = {
   gameTeamBan?: Prisma.GameTeamBanOmit
   gameTeamMember?: Prisma.GameTeamMemberOmit
   gameTeamMemberTalent?: Prisma.GameTeamMemberTalentOmit
+  heroMetaSnapshot?: Prisma.HeroMetaSnapshotOmit
 }
 
 /* Types for Logging */

@@ -89,3 +89,8 @@ export type GameTeamMember = Prisma.GameTeamMemberModel
  * 경기 팀 멤버의 특성 선택
  */
 export type GameTeamMemberTalent = Prisma.GameTeamMemberTalentModel
+/**
+ * Model HeroMetaSnapshot
+ * Heroes Profile 통계 조건별 마지막 성공 결과와 비동기 작업 상태
+ */
+export type HeroMetaSnapshot = Prisma.HeroMetaSnapshotModel
