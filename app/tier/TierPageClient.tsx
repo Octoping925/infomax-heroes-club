@@ -271,8 +271,8 @@ export function TierPageClient() {
         )}
         {!loading && currentResult?.status === "ready" && (
           <p className="text-xs text-slate-400">
-            🐝 꿀픽: 같은 역할에서 보정 승률 65백분위 이상이며 밴율이 높은 상위 25%에 속하지 않는 영웅입니다. 밴율 데이터가
-            없으면 픽률을 대신 비교합니다.
+            🐝 꿀픽: 200경기 이상인 영웅 중 같은 역할에서 보정 승률 상위 30%에 들고 밴율이 중간값 이하일 때 표시합니다.
+            밴율 데이터가 없으면 픽률을 대신 비교합니다.
           </p>
         )}
       </section>

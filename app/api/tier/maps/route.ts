@@ -132,7 +132,7 @@ function formatTierMessage(input: {
   if (ungraded.length > 0)
     lines.push(`표본 부족/등급 보류: ${ungraded.map((row) => HERO_CATALOG[row.hero].nameKo).join(", ")}`, "");
   lines.push(
-    "🐝 꿀픽: 역할별 보정 승률 상위권이며 밴율이 높지 않은 영웅",
+    "🐝 꿀픽: 200경기 이상, 역할별 보정 승률 상위 20% + 밴율 중간값 이하(없으면 픽률)",
     "출처: Heroes Profile 저장 통계",
     `자세히(사이트에서 맵 선택): ${input.pageUrl}`,
   );

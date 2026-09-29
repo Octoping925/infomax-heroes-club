@@ -1,15 +1,11 @@
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import type { HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
 import type { HeroRole } from "@/domain/hots/models";
-
-function percentile(values: ReadonlyArray<number>, ratio: number): number {
-  const sorted = values.toSorted((a, b) => a - b);
-  return sorted[Math.floor((sorted.length - 1) * ratio)];
-}
+import { median } from "es-toolkit";
 
 export function selectHoneyPicks(rows: ReadonlyArray<HeroMetaRow>): Set<HeroMetaRow["hero"]> {
   const byRole = rows
-    .filter((row) => row.games >= 100 && row.tier !== null)
+    .filter((row) => row.games >= 200 && row.tier !== null)
     .reduce((acc, row) => {
       acc.set(row.role, [...(acc.get(row.role) ?? []), row]);
       return acc;
@@ -17,27 +13,27 @@ export function selectHoneyPicks(rows: ReadonlyArray<HeroMetaRow>): Set<HeroMeta
 
   const picks = new Set<HeroMetaRow["hero"]>();
   for (const group of byRole.values()) {
-    const winScores = group.map((row) =>
-      calculateConservativeWinRateScore({
-        totalGames: row.games,
-        wins: row.wins,
-        losses: row.losses,
-        draws: 0,
-        winRate: row.winRate,
-      }),
-    );
-    const winCutoff = percentile(winScores, 0.65);
+    if (group.length < 5) continue;
+    const ranked = group
+      .map((row) => ({
+        row,
+        winScore: calculateConservativeWinRateScore({
+          totalGames: row.games,
+          wins: row.wins,
+          losses: row.losses,
+          draws: 0,
+          winRate: row.winRate,
+        }),
+      }))
+      .sort((a, b) => b.winScore - a.winScore || a.row.hero.localeCompare(b.row.hero));
     const banRates = group.flatMap((row) => (row.banRate === null ? [] : [row.banRate]));
-    const banCutoff = banRates.length > 0 ? percentile(banRates, 0.75) : null;
-    const pickCutoff = percentile(
-      group.map((row) => row.pickRate),
-      0.75,
-    );
+    const banCutoff = banRates.length > 0 ? median(banRates) : null;
+    const pickCutoff = median(group.map((row) => row.pickRate));
 
-    group.forEach((row, index) => {
+    ranked.slice(0, Math.floor(group.length * 0.3)).forEach(({ row }) => {
       const lowDemand =
         row.banRate === null ? row.pickRate <= pickCutoff : banCutoff !== null && row.banRate <= banCutoff;
-      if (winScores[index] >= winCutoff && lowDemand) picks.add(row.hero);
+      if (lowDemand) picks.add(row.hero);
     });
   }
   return picks;
