@@ -4,16 +4,10 @@ import { useMemo, useState } from "react";
 import { HeroTierLabel } from "@/app/api/stats/types";
 import { HeroRole } from "@/domain/hots/models";
 import { useHeroPopularity } from "../../hooks/useHeroPopularity";
-import { OpTier } from "./tier/OpTier";
-import { Tier1 } from "./tier/Tier1";
-import { Tier2 } from "./tier/Tier2";
-import { Tier3 } from "./tier/Tier3";
-import { Tier4 } from "./tier/Tier4";
 import { HeroTierTable } from "@/components/HeroTierTable";
 import { HERO_CATALOG } from "@/domain/hots/constants";
-import { HoneyIcon } from "./tier/HoneyIcon";
-import { Tier5 } from "./tier/Tier5";
 import { formatNumber } from "@/utils/format";
+import { Tier1, Tier2, Tier3, Tier4, Tier5, OpTier, HoneyIcon } from "@/components/tier";
 
 export function HeroTierList() {
   const { data } = useHeroPopularity();

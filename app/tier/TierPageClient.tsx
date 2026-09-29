@@ -6,15 +6,9 @@ import type { HeroRole } from "@/domain/hots/models";
 import type { HeroMetaAudience } from "@/domain/hots/service/hero-meta-filters";
 import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
 import type { GameMap } from "@/domain/hots/models/map";
-import { Tier1 } from "@/app/stats/components/scrim-stat/tier/Tier1";
-import { Tier2 } from "@/app/stats/components/scrim-stat/tier/Tier2";
-import { Tier3 } from "@/app/stats/components/scrim-stat/tier/Tier3";
-import { Tier4 } from "@/app/stats/components/scrim-stat/tier/Tier4";
-import { Tier5 } from "@/app/stats/components/scrim-stat/tier/Tier5";
-import { HoneyIcon } from "@/app/stats/components/scrim-stat/tier/HoneyIcon";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 import { selectHoneyPicks } from "./select-honey-picks";
-import { OpTier } from "../stats/components/scrim-stat/tier/OpTier";
+import { Tier1, Tier2, Tier3, Tier4, Tier5, OpTier, HoneyIcon } from "@/components/tier";
 
 interface PageResult {
   readonly status: "ready" | "pending" | "error";
