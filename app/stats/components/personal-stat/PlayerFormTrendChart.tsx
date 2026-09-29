@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { round } from "es-toolkit";
+import { meanBy, round } from "es-toolkit";
 import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 interface Props {
@@ -59,11 +59,10 @@ export function PlayerFormTrendChart({ nickname }: Props) {
       const windowPoints = sortedPoints.slice(from, index + 1);
       const wins = windowPoints.filter((item) => item.result === "WIN").length;
       const rollingKda = round(
-        windowPoints.reduce((sum, item) => sum + (item.kills + item.takedowns) / Math.max(item.deaths, 1), 0) /
-          windowPoints.length,
+        meanBy(windowPoints, (item) => (item.kills + item.takedowns) / Math.max(item.deaths, 1)),
         2,
       );
-      const rollingDpm = round(windowPoints.reduce((sum, item) => sum + item.dpm, 0) / windowPoints.length, 0);
+      const rollingDpm = round(meanBy(windowPoints, (item) => item.dpm), 0);
 
       return {
         point,

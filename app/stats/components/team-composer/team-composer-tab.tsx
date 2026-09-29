@@ -5,7 +5,7 @@ import { HeroRoles, type HeroRole } from "@/domain/hots/models";
 import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
-import { round } from "es-toolkit";
+import { meanBy, round, shuffle, uniq } from "es-toolkit";
 import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 const ROLE_ORDER = Object.values(HeroRoles);
@@ -359,7 +359,7 @@ function normalizeCandidateIds(candidateIds: string[] | null, playerById: Map<st
     return [];
   }
 
-  return Array.from(new Set(candidateIds.filter((playerId) => playerById.has(playerId))));
+  return uniq(candidateIds.filter((playerId) => playerById.has(playerId)));
 }
 
 function evaluateTeamSplit(
@@ -499,8 +499,7 @@ function getTeamTrendWinRate(team: string[], playerById: Map<string, TeamingPlay
     .filter((player): player is TeamingPlayerProfileResponse => Boolean(player));
 
   if (players.length === 0) return 0;
-  const total = players.reduce((sum, player) => sum + getPlayerTrendWinRate(player), 0);
-  return total / players.length;
+  return meanBy(players, getPlayerTrendWinRate);
 }
 
 function countPlayersByTrend(
@@ -557,7 +556,7 @@ function buildTeamSplits(playerIds: string[]): Array<{ teamA: string[]; teamB: s
   const maxSample = 4000;
 
   for (let attempt = 0; attempt < maxSample; attempt += 1) {
-    const shuffled = rest.toSorted(() => Math.random() - 0.5);
+    const shuffled = shuffle(rest);
     const teamA = [fixed, ...shuffled.slice(0, teamSize - 1)].toSorted();
     const teamAKey = teamA.join("|");
     if (seen.has(teamAKey)) continue;

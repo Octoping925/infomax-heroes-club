@@ -26,7 +26,7 @@ import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import { GameMap, Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { GameResult } from "@/generated/prisma/client";
-import { groupBy, round, uniq } from "es-toolkit";
+import { groupBy, meanBy, round, uniq } from "es-toolkit";
 
 const MAX_TEAM_SIZE = 5;
 const MAX_SELECTED_MAPS = 5;
@@ -486,19 +486,11 @@ function buildTeamAnalysis(
 ): TeamAnalysis {
   const averageOverallWinRate =
     playerAnalyses.length > 0
-      ? round(
-          playerAnalyses.reduce((sum, analysis) => sum + analysis.report.overallStats.winRate, 0) /
-            playerAnalyses.length,
-          1,
-        )
+      ? round(meanBy(playerAnalyses, (analysis) => analysis.report.overallStats.winRate), 1)
       : 0;
   const averageRecentWinRate =
     playerAnalyses.length > 0
-      ? round(
-          playerAnalyses.reduce((sum, analysis) => sum + analysis.report.recentStats.winRate, 0) /
-            playerAnalyses.length,
-          1,
-        )
+      ? round(meanBy(playerAnalyses, (analysis) => analysis.report.recentStats.winRate), 1)
       : 0;
 
   const roleCoverage = ROLE_ORDER.map((role) => {

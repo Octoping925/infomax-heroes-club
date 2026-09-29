@@ -4,6 +4,7 @@ import {
   REPLAY_FILE_MAX_BYTES,
   REPLAY_MAX_BATCH_FILES,
 } from "@/domain/hots/replay/limits";
+import { omit } from "es-toolkit";
 
 export type ReplayFileDescriptor = {
   readonly id: string;
@@ -240,7 +241,7 @@ export function replayImportReducer(
         ...state,
         playerMappings: action.playerId
           ? { ...state.playerMappings, [action.rawName]: action.playerId }
-          : omitKey(state.playerMappings, action.rawName),
+          : omit(state.playerMappings, [action.rawName]),
       }));
     case "ORIENTATION_SELECTED": {
       const first = readyItems(state.queue)[0];
@@ -552,13 +553,6 @@ function moveItem(
   const moved = [...queue];
   [moved[index], moved[target]] = [moved[target], moved[index]];
   return moved;
-}
-
-function omitKey(
-  record: Readonly<Record<string, string>>,
-  key: string,
-): Readonly<Record<string, string>> {
-  return Object.fromEntries(Object.entries(record).filter(([entry]) => entry !== key));
 }
 
 function resetConfirm(state: ReplayImportState): ReplayImportState {
