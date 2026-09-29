@@ -39,6 +39,17 @@ describe("parseHeroStats", () => {
 });
 
 describe("parseGroupedHeroStats", () => {
+  it("parses the live v1 response with maps at the top level and rows under data", () => {
+    const stats = parseGroupedHeroStats({
+      "Alterac Pass": {
+        average_win_rate: 50,
+        data: [{ name: "Ana", games_played: 120, wins: 60, losses: 60, win_rate: 50, pick_rate: 10 }],
+      },
+    });
+
+    expect(stats.AlteracPass?.map((row) => row.hero)).toEqual(["Ana"]);
+  });
+
   it("maps Heroes Profile grouped map names to local map keys", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const maps = parseGroupedHeroStats({ data: {

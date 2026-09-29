@@ -69,6 +69,37 @@ describe("heroesProfileSource", () => {
 });
 
 describe("heroesProfileDailySource", () => {
+  it("spaces patches, map stats, and job polls by at least one minute", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-29T00:00:00.000Z"));
+    try {
+      const fetcher = vi.fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response(JSON.stringify({ patches: [{ game_version: "2.57.0.1" }] })))
+        .mockResolvedValueOnce(new Response(null, {
+          status: 202,
+          headers: { Location: "/v1/jobs/map-123", "Retry-After": "10" },
+        }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ data: {} })));
+      const source = heroesProfileDailySource("test-key", fetcher);
+
+      expect(await source.getLatestMajorSubPatch()).toBe("2.57.0");
+      const stats = source.fetchMapStats("2.57.0", "all");
+      await vi.advanceTimersByTimeAsync(60_999);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await stats).toEqual({ kind: "pending", jobPath: "/jobs/map-123", retryAfterSeconds: 10 });
+
+      const poll = source.pollJob("/jobs/map-123");
+      await vi.advanceTimersByTimeAsync(60_999);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await poll).toEqual({ kind: "ready", raw: { data: {} } });
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("requests all playable map groups in one query for the selected audience", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: {} })));
     const source = heroesProfileDailySource("test-key", fetcher);

@@ -99,12 +99,14 @@ export function parseHeroStats(raw: unknown): HeroMetaStat[] {
 }
 
 export function parseGroupedHeroStats(raw: unknown): HeroMetaMapStats {
-  const grouped = asRecord(asRecord(raw)?.data);
+  const response = asRecord(raw);
+  const grouped = response && "data" in response ? asRecord(response.data) : response;
   if (!grouped) throw new Error("맵별 통계 응답 형식이 올바르지 않습니다.");
 
   const mapStats: HeroMetaMapStats = {};
 
-  for (const [mapName, rows] of Object.entries(grouped)) {
+  for (const [mapName, value] of Object.entries(grouped)) {
+    const rows = Array.isArray(value) ? value : asRecord(value)?.data;
     if (!Array.isArray(rows)) {
       throw new TypeError("맵별 통계 응답 형식이 올바르지 않습니다.");
     }

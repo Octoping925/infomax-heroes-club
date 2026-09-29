@@ -8,6 +8,7 @@ vi.mock("@/domain/hots/repositories/hero-meta-snapshot", () => ({ createHeroMeta
 vi.mock("@/domain/hots/service/hero-meta-daily-refresh", () => ({ refreshHeroMetaMapsDaily: refreshMaps }));
 
 import { GET } from "./route";
+import { GET as GET_PLATINUM_PLUS } from "./platinum-plus/route";
 
 describe("GET /api/cron/hero-meta/maps", () => {
   beforeEach(() => {
@@ -32,5 +33,16 @@ describe("GET /api/cron/hero-meta/maps", () => {
     expect(response.status).toBe(200);
     expect(body.results[0].mapRows).toBe(1200);
     expect(refreshMaps).toHaveBeenCalledOnce();
+    expect(refreshMaps).toHaveBeenCalledWith(expect.objectContaining({ audience: "all" }));
+  });
+
+  it("runs the platinum-plus map refresh in its separate cron", async () => {
+    const response = await GET_PLATINUM_PLUS(new NextRequest("http://localhost/api/cron/hero-meta/maps/platinum-plus", {
+      headers: { authorization: "Bearer test-cron-secret" },
+    }));
+
+    expect(response.status).toBe(200);
+    expect(refreshMaps).toHaveBeenCalledOnce();
+    expect(refreshMaps).toHaveBeenCalledWith(expect.objectContaining({ audience: "platinum_plus" }));
   });
 });

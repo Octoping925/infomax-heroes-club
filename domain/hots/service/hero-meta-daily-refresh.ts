@@ -56,8 +56,6 @@ export interface HeroMetaRefreshResult {
   readonly error?: string;
 }
 
-const AUDIENCES: ReadonlyArray<HeroMetaAudience> = ["all", "platinum_plus"];
-
 function kstDate(date: Date): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -237,21 +235,23 @@ async function refreshDataset<T>(deps: {
 }
 
 export async function refreshHeroMetaDaily(deps: {
+  readonly audience: HeroMetaAudience;
   readonly now: Date;
   readonly deadline: number;
   readonly store: HeroMetaDailyStore;
   readonly source: HeroMetaDailySource;
 }): Promise<HeroMetaRefreshResult[]> {
   const patch = await deps.source.getLatestMajorSubPatch();
-  return Promise.all(AUDIENCES.map((audience) => refreshAudience(audience, patch, deps)));
+  return [await refreshAudience(deps.audience, patch, deps)];
 }
 
 export async function refreshHeroMetaMapsDaily(deps: {
+  readonly audience: HeroMetaAudience;
   readonly now: Date;
   readonly deadline: number;
   readonly store: HeroMetaDailyStore;
   readonly source: HeroMetaDailySource;
 }): Promise<HeroMetaRefreshResult[]> {
   const patch = await deps.source.getLatestMajorSubPatch();
-  return Promise.all(AUDIENCES.map((audience) => refreshMapAudience(audience, patch, deps)));
+  return [await refreshMapAudience(deps.audience, patch, deps)];
 }

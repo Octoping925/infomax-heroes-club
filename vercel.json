@@ -5,8 +5,16 @@
       "schedule": "0 21 * * *"
     },
     {
+      "path": "/api/cron/hero-meta/platinum-plus",
+      "schedule": "10 21 * * *"
+    },
+    {
       "path": "/api/cron/hero-meta/maps",
-      "schedule": "15 21 * * *"
+      "schedule": "20 21 * * *"
+    },
+    {
+      "path": "/api/cron/hero-meta/maps/platinum-plus",
+      "schedule": "30 21 * * *"
     }
   ]
 }

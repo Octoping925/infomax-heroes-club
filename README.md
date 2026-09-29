@@ -73,12 +73,14 @@ Vercel의 Development, Preview, Production 환경마다 서로 다른 값을 설
 제공하고, 둘 다 전체 지역·전체 맵·최신 메이저 서브 패치 조건입니다. 100경기 미만의
 영웅은 등급을 보류합니다. 기존 `/stats`의 동호회 내전 티어와는 별도 데이터입니다.
 
-Vercel Cron은 매일 06:00 KST (`0 21 * * *` UTC)에 `/api/cron/hero-meta`를 호출해
-전체 맵 통계만 수집하고, 06:15 KST (`15 21 * * *` UTC)에
-`/api/cron/hero-meta/maps`를 호출해 맵별 통계만 수집합니다. 두 작업은 독립 실행 잠금과
-갱신 날짜를 사용하므로 한쪽의 실패나 재실행이 다른 쪽에 영향을 주지 않습니다. 맵별 데이터는
-맵마다 따로 요청하지 않고 `group_by_map=true` 요청 한 번에 받습니다. 두 분류를 합해
-전체 통계 2회와 그룹 맵 통계 2회, 하루 최대 4회의 영웅 통계 요청을 사용합니다.
+Vercel Cron은 매일 06:00 KST에 전체 맵 `all`, 06:10에 전체 맵 `platinum_plus`,
+06:20에 맵별 `all`, 06:30에 맵별 `platinum_plus`를 각각 별도 호출합니다.
+경로는 순서대로 `/api/cron/hero-meta`, `/api/cron/hero-meta/platinum-plus`,
+`/api/cron/hero-meta/maps`, `/api/cron/hero-meta/maps/platinum-plus`입니다.
+각 실행은 영웅 통계 요청을 한 분류에 대해서만 수행하며, 전체 맵과 맵별 작업은 독립
+실행 잠금과 갱신 날짜를 사용합니다. 맵별 데이터는 맵마다 따로 요청하지 않고
+`group_by_map=true` 요청 한 번에 받습니다. 하루 최대 4회의 영웅 통계 요청을 사용합니다.
+각 크론 안에서도 `/patches`, `/heroes/stats`, `/jobs` 요청 사이를 최소 61초 띄웁니다.
 사이트의 `/api/tier/heroes`는 DB만 조회합니다. 데이터가 없으면 `데이터 준비 중`을
 표시하고, 수집 실패 시 마지막 성공 데이터와 갱신 시각을 유지합니다. Heroes Profile이
 202를 반환하면 크론이 `Retry-After`를 지켜 작업을 확인하며, 함수 제한 시간까지

@@ -110,8 +110,13 @@ export function parseLatestMajorSubPatch(patches: unknown): string {
   return latest;
 }
 
-export function getLatestMajorSubPatch(apiKey: string, fetcher: typeof fetch = fetch): Promise<string> {
+export function getLatestMajorSubPatch(
+  apiKey: string,
+  fetcher: typeof fetch = fetch,
+  beforeRequest: () => Promise<void> = async () => {},
+): Promise<string> {
   return (async () => {
+    await beforeRequest();
     const response = await fetcher(`${BASE_URL}/patches`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       cache: "no-store",
@@ -126,10 +131,12 @@ export function getLatestMajorSubPatch(apiKey: string, fetcher: typeof fetch = f
 export function heroesProfileSource(
   apiKey: string,
   fetcher: typeof fetch = fetch,
+  beforeRequest: () => Promise<void> = async () => {},
 ): HeroMetaSource & {
   fetchGroupedMapStats(filters: HeroMetaFilters): Promise<HeroMetaSourceResult>;
 } {
   async function request(path: string): Promise<HeroMetaSourceResult> {
+    await beforeRequest();
     const response = await fetcher(`${BASE_URL}${path}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       cache: "no-store",
@@ -188,10 +195,19 @@ export function heroesProfileDailySource(
   fetchMapStats(patch: string, audience: HeroMetaAudience): Promise<HeroMetaSourceResult>;
   pollJob(path: string): Promise<HeroMetaSourceResult>;
 } {
-  const source = heroesProfileSource(apiKey, fetcher);
+  let nextRequestAt = 0;
+  async function beforeRequest(): Promise<void> {
+    const now = Date.now();
+    const requestAt = Math.max(now, nextRequestAt);
+    nextRequestAt = requestAt + 61_000;
+    if (requestAt > now) {
+      await new Promise<void>((resolve) => setTimeout(resolve, requestAt - now));
+    }
+  }
+  const source = heroesProfileSource(apiKey, fetcher, beforeRequest);
 
   return {
-    getLatestMajorSubPatch: () => getLatestMajorSubPatch(apiKey, fetcher),
+    getLatestMajorSubPatch: () => getLatestMajorSubPatch(apiKey, fetcher, beforeRequest),
     fetchStats: (patch, audience) =>
       source.fetchStats({
         mode: "sl",
