@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "guide": {
+      "source": "toss/es-toolkit",
+      "sourceType": "github",
+      "skillPath": "es-toolkit-plugin/skills/guide/SKILL.md",
+      "computedHash": "5b686532fd5f3dbe7a7d1bd796fad96aacca9a57ee300cf9560369f52d1d980b"
+    },
+    "recommend": {
+      "source": "toss/es-toolkit",
+      "sourceType": "github",
+      "skillPath": "es-toolkit-plugin/skills/recommend/SKILL.md",
+      "computedHash": "d48ef72e28efdad6421ae4370b9d52c49aa32c4171da8248ba02720844edb170"
+    }
+  }
+}
