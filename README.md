@@ -84,6 +84,10 @@ Vercel Cron은 매일 06:00 KST (`0 21 * * *` UTC)에 `/api/cron/hero-meta`를 �
 202를 반환하면 크론이 `Retry-After`를 지켜 작업을 확인하며, 함수 제한 시간까지
 완료되지 않은 작업은 DB에 저장해 다음 날 크론에서 이어받습니다.
 
+두레이 `/api/tier/maps` 명령도 같은 DB 스냅샷의 전체 리그 메타 티어를 사용합니다.
+맵 이름이 없거나 인식되지 않으면 전체 맵 티어를 보여줍니다. 이전 Icy Veins 조회 구현은
+`docs/archive/icy-veins-map-tier-route.ts.txt`에 보관했습니다.
+
 `HEROES_PROFILE_API_KEY`와 `CRON_SECRET`은 서버 환경 변수로 설정하고 브라우저에
 노출하지 않습니다. 배포 순서는 다음과 같습니다.
 
