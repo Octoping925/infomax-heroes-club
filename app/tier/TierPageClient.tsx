@@ -11,7 +11,9 @@ import { Tier2 } from "@/app/stats/components/scrim-stat/tier/Tier2";
 import { Tier3 } from "@/app/stats/components/scrim-stat/tier/Tier3";
 import { Tier4 } from "@/app/stats/components/scrim-stat/tier/Tier4";
 import { Tier5 } from "@/app/stats/components/scrim-stat/tier/Tier5";
+import { HoneyIcon } from "@/app/stats/components/scrim-stat/tier/HoneyIcon";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
+import { selectHoneyPicks } from "./select-honey-picks";
 import { OpTier } from "../stats/components/scrim-stat/tier/OpTier";
 
 interface PageResult {
@@ -139,6 +141,7 @@ export function TierPageClient() {
   const currentResult = resultKey === `${audience}:${selectedMap}` ? result : null;
   const loading = currentResult === null;
   const rows = useMemo(() => selectVisibleRows(currentResult?.rows ?? [], selection), [currentResult, selection]);
+  const honeyPicks = useMemo(() => selectHoneyPicks(currentResult?.rows ?? []), [currentResult]);
 
   return (
     <>
@@ -249,6 +252,7 @@ export function TierPageClient() {
                   hero: row.hero,
                   rank: index + 1,
                   tier: <TierBadge tier={row.tier} games={row.games} />,
+                  accessory: honeyPicks.has(row.hero) ? <HoneyIcon /> : undefined,
                   winRate: row.winRate,
                   win: formatRate(row.winRate),
                   pick: formatRate(row.pickRate),
@@ -264,6 +268,12 @@ export function TierPageClient() {
               </p>
             )}
           </>
+        )}
+        {!loading && currentResult?.status === "ready" && (
+          <p className="text-xs text-slate-400">
+            🐝 꿀픽: 같은 역할에서 보정 승률 65백분위 이상이며 밴율이 높은 상위 25%에 속하지 않는 영웅입니다. 밴율 데이터가
+            없으면 픽률을 대신 비교합니다.
+          </p>
         )}
       </section>
     </>

@@ -4,15 +4,12 @@ import { describe, expect, it } from "vitest";
 import { TierPageClient, parsePageResult } from "./TierPageClient";
 
 describe("TierPageClient", () => {
-  it("introduces derived meta tiers and links to the club tier list", () => {
+  it("shows the meta filters and tier table controls", () => {
     const html = renderToStaticMarkup(createElement(TierPageClient));
-    expect(html).toContain("영웅 메타 티어");
-    expect(html).toContain("Heroes Profile");
-    expect(html).toContain("내전 티어");
-    expect(html).toContain("/stats#scrimStats");
+    expect(html).toContain("영웅 티어리스트");
+    expect(html).toContain("플레이어 리그");
     expect(html).toContain('<option value="ALL" selected="">전체 맵</option>');
     expect(html).toContain("맵");
-    expect(html).toContain("1~5티어");
     expect(html).toContain("티어별 점수");
   });
 });

@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { HeroTierTable } from "./HeroTierTable";
+import { HoneyIcon } from "@/app/stats/components/scrim-stat/tier/HoneyIcon";
 
 describe("HeroTierTable", () => {
   it("renders the existing tier columns and Korean hero catalog entry", () => {
@@ -43,5 +44,27 @@ describe("HeroTierTable", () => {
     expect(html).toContain("경기 수");
     expect(html).toContain("표본 부족");
     expect(html).not.toContain("포지션");
+  });
+
+  it("places the existing honey icon on a hero portrait", () => {
+    const html = renderToStaticMarkup(
+      createElement(HeroTierTable, {
+        rows: [
+          {
+            hero: "Ana",
+            rank: 1,
+            tier: "1티어",
+            accessory: createElement(HoneyIcon),
+            win: "55%",
+            pick: "5%",
+            ban: "2%",
+            score: "80",
+          },
+        ],
+        showRole: false,
+      }),
+    );
+
+    expect(html).toContain("🐝");
   });
 });

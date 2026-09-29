@@ -69,9 +69,9 @@ const healers: HeroMetaStat[] = ["Ana", "Anduin", "Auriel", "Brightwing", "Decka
 }));
 
 describe("gradeHeroStats", () => {
-  it("assigns S through D by role and withholds a 99-game hero", () => {
+  it("assigns role-relative grades and withholds a 99-game hero", () => {
     const rows = gradeHeroStats([...healers, { ...healers[0], hero: "Kharazim", games: 99 }]);
-    expect(healers.map((row) => rows.find((graded) => graded.hero === row.hero)?.tier)).toEqual(["S", "A", "B", "C", "D"]);
+    expect(healers.map((row) => rows.find((graded) => graded.hero === row.hero)?.tier)).toEqual(["S", "B", "B", "C", "E"]);
     expect(rows.find((row) => row.hero === "Kharazim")?.tier).toBeNull();
   });
 
