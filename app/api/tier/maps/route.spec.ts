@@ -50,6 +50,7 @@ describe("/api/tier/maps", () => {
     expect(body.text).toContain("2.55.6");
     expect(body.text).toContain("아나");
     expect(body.text).toContain("Heroes Profile");
+    expect(body.text).toContain("보정 승률 상위 30%");
     expect(body.responseType).toBe("ephemeral");
     expect(getSnapshot).toHaveBeenCalledWith("all");
     expect(fetcher).not.toHaveBeenCalled();

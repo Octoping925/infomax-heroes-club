@@ -6,6 +6,7 @@ import { HeroCounterPickResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
+import { round } from "es-toolkit";
 
 type ResultCounts = {
   total: number;
@@ -104,14 +105,14 @@ export async function GET(request: Request): Promise<NextResponse<HeroCounterPic
             .slice(0, MAX_COUNTERS_PER_HERO)
             .map((item) => ({
               ...item,
-              winRate: roundToOneDecimal(item.winRate),
-              dropPercentPoint: roundToOneDecimal(item.dropPercentPoint),
+              winRate: round(item.winRate, 1),
+              dropPercentPoint: round(item.dropPercentPoint, 1),
             }));
 
     return {
       hero,
       totalGames: overall.total,
-      baseWinRate: roundToOneDecimal(baseWinRate),
+      baseWinRate: round(baseWinRate, 1),
       counters,
     };
   }).toSorted((a, b) => b.totalGames - a.totalGames || b.baseWinRate - a.baseWinRate);
@@ -142,8 +143,4 @@ function updateMatchupCounts(
 
 function createEmptyCounts(): ResultCounts {
   return { total: 0, wins: 0, losses: 0, draws: 0 };
-}
-
-function roundToOneDecimal(value: number): number {
-  return Math.round(value * 10) / 10;
 }

@@ -1,18 +1,12 @@
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import type { HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
-import type { HeroRole } from "@/domain/hots/models";
-import { median } from "es-toolkit";
+import { groupBy, median } from "es-toolkit";
 
 export function selectHoneyPicks(rows: ReadonlyArray<HeroMetaRow>): Set<HeroMetaRow["hero"]> {
-  const byRole = rows
-    .filter((row) => row.games >= 200 && row.tier !== null)
-    .reduce((acc, row) => {
-      acc.set(row.role, [...(acc.get(row.role) ?? []), row]);
-      return acc;
-    }, new Map<HeroRole, HeroMetaRow[]>());
+  const byRole = groupBy(rows.filter((row) => row.games >= 200 && row.tier !== null), (row) => row.role);
 
   const picks = new Set<HeroMetaRow["hero"]>();
-  for (const group of byRole.values()) {
+  for (const group of Object.values(byRole)) {
     if (group.length < 5) continue;
     const ranked = group
       .map((row) => ({

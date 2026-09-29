@@ -1,6 +1,7 @@
 import type { HeroMetaAudience } from "./hero-meta-filters";
 import { parseGroupedHeroStats, parseHeroStats, type HeroMetaMapStats, type HeroMetaStat } from "./hero-meta-tier";
 import type { HeroMetaSourceResult } from "./hero-meta-loader";
+import { sumBy } from "es-toolkit";
 
 export interface HeroMetaDailySnapshot {
   readonly stats: HeroMetaStat[] | null;
@@ -145,7 +146,7 @@ async function refreshMapAudience(
     fetch: () => source.fetchMapStats(patch, audience),
     poll: (path) => source.pollJob(path),
     parse: parseGroupedHeroStats,
-    count: (stats) => Object.values(stats).reduce((total, rows) => total + rows.length, 0),
+    count: (stats) => sumBy(Object.values(stats), (rows) => rows.length),
     saveReady: (stats, fetchedAt) => store.saveMapReady(audience, patch, stats, fetchedAt),
     savePending: (pendingPatch, jobPath, nextPollAt) => store.saveMapPending(audience, pendingPatch, jobPath, nextPollAt),
     saveFailure: (message) => store.saveMapFailure(audience, message),

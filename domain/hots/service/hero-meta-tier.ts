@@ -2,6 +2,7 @@ import type { GameMap, Hero } from "../models";
 import type { HeroRole } from "../models/hero-role";
 import { HERO_CATALOG, MAP_CATALOG } from "../constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
+import { groupBy, round } from "es-toolkit";
 
 export interface HeroMetaStat {
   readonly hero: Hero;
@@ -142,14 +143,10 @@ function band(index: number, count: number): HeroMetaGrade {
 }
 
 export function gradeHeroStats(stats: HeroMetaStat[]): HeroMetaRow[] {
-  const byRole = new Map<HeroRole, HeroMetaStat[]>();
-  for (const stat of stats.filter((row) => row.games >= 100)) {
-    const role = HERO_CATALOG[stat.hero].role;
-    byRole.set(role, [...(byRole.get(role) ?? []), stat]);
-  }
+  const byRole = groupBy(stats.filter((row) => row.games >= 100), (stat) => HERO_CATALOG[stat.hero].role);
 
   const graded = new Map<Hero, Pick<HeroMetaRow, "tier" | "tierScore">>();
-  for (const group of byRole.values()) {
+  for (const group of Object.values(byRole)) {
     if (group.length < 5) continue;
     const winScores = group.map((row) =>
       calculateConservativeWinRateScore({
@@ -177,7 +174,7 @@ export function gradeHeroStats(stats: HeroMetaStat[]): HeroMetaRow[] {
     scores.forEach((row, index) =>
       graded.set(row.hero, {
         tier: band(index, scores.length),
-        tierScore: Math.round(row.score * 10) / 10,
+        tierScore: round(row.score, 1),
       }),
     );
   }
