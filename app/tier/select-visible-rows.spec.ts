@@ -3,9 +3,42 @@ import { selectVisibleRows } from "./select-visible-rows";
 import type { HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
 
 const rows: HeroMetaRow[] = [
-  { hero: "Ana", role: "HEALER", games: 120, wins: 60, losses: 60, winRate: 50, pickRate: 5, banRate: null, tier: "B", tierScore: 50 },
-  { hero: "Anduin", role: "HEALER", games: 120, wins: 72, losses: 48, winRate: 60, pickRate: 10, banRate: null, tier: "A", tierScore: 70 },
-  { hero: "Diablo", role: "TANKER", games: 120, wins: 66, losses: 54, winRate: 55, pickRate: 20, banRate: 4, tier: "S", tierScore: 80 },
+  {
+    hero: "Ana",
+    role: "HEALER",
+    games: 120,
+    wins: 60,
+    losses: 60,
+    winRate: 50,
+    pickRate: 5,
+    banRate: null,
+    tier: "1티어",
+    tierScore: 50,
+  },
+  {
+    hero: "Anduin",
+    role: "HEALER",
+    games: 120,
+    wins: 72,
+    losses: 48,
+    winRate: 60,
+    pickRate: 10,
+    banRate: null,
+    tier: "1티어",
+    tierScore: 70,
+  },
+  {
+    hero: "Diablo",
+    role: "TANKER",
+    games: 120,
+    wins: 66,
+    losses: 54,
+    winRate: 55,
+    pickRate: 20,
+    banRate: 4,
+    tier: "1티어",
+    tierScore: 80,
+  },
 ];
 
 describe("selectVisibleRows", () => {
@@ -21,13 +54,17 @@ describe("selectVisibleRows", () => {
 
   it("keeps role-relative tiers together before sorting by score", () => {
     const mixedRoles: HeroMetaRow[] = [
-      { ...rows[0], tier: "S", tierScore: 60 },
-      { ...rows[1], tier: "A", tierScore: 70 },
-      { ...rows[2], tier: "S", tierScore: 80 },
+      { ...rows[0], tier: "1티어", tierScore: 60 },
+      { ...rows[1], tier: "1티어", tierScore: 70 },
+      { ...rows[2], tier: "1티어", tierScore: 80 },
       { ...rows[0], hero: "Brightwing", tier: null, tierScore: null },
     ];
 
-    expect(selectVisibleRows(mixedRoles, { role: "ALL", search: "", sort: "tier" }).map((row) => row.hero))
-      .toEqual(["Diablo", "Ana", "Anduin", "Brightwing"]);
+    expect(selectVisibleRows(mixedRoles, { role: "ALL", search: "", sort: "tier" }).map((row) => row.hero)).toEqual([
+      "Diablo",
+      "Ana",
+      "Anduin",
+      "Brightwing",
+    ]);
   });
 });

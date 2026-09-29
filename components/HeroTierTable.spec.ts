@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { HeroTierTable } from "./HeroTierTable";
-import { HoneyIcon } from "@/app/stats/components/scrim-stat/tier/HoneyIcon";
+import { HoneyIcon } from "./tier";
 
 describe("HeroTierTable", () => {
   it("renders the existing tier columns and Korean hero catalog entry", () => {

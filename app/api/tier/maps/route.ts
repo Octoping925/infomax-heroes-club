@@ -34,14 +34,7 @@ const ROLE_LABELS: Record<HeroRole, string> = {
   HEALER: "힐러",
 };
 
-const TIER_LABELS: ReadonlyArray<{ grade: HeroMetaGrade; label: string }> = [
-  { grade: "S", label: "OP" },
-  { grade: "A", label: "1티어" },
-  { grade: "B", label: "2티어" },
-  { grade: "C", label: "3티어" },
-  { grade: "D", label: "4티어" },
-  { grade: "E", label: "5티어" },
-];
+const TIER_LABELS: ReadonlyArray<HeroMetaGrade> = ["OP", "1티어", "2티어", "3티어", "4티어", "5티어"];
 
 function normalizeMapName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9가-힣]/g, "");
@@ -114,10 +107,12 @@ function formatTierMessage(input: {
     "",
   ];
 
-  for (const { grade, label } of TIER_LABELS) {
+  for (const grade of TIER_LABELS) {
     const tierRows = input.rows.filter((row) => row.tier === grade);
     if (tierRows.length === 0) continue;
-    lines.push(`${label} (${tierRows.length}명)`);
+
+    lines.push(`${grade} (${tierRows.length}명)`);
+
     for (const [role, roleLabel] of Object.entries(ROLE_LABELS) as [HeroRole, string][]) {
       const heroes = tierRows.filter((row) => row.role === role);
       if (heroes.length === 0) continue;

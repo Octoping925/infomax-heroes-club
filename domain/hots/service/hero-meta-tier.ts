@@ -16,7 +16,7 @@ export interface HeroMetaStat {
 
 export type HeroMetaMapStats = Partial<Record<GameMap, HeroMetaStat[]>>;
 
-export type HeroMetaGrade = "S" | "A" | "B" | "C" | "D" | "E";
+export type HeroMetaGrade = "OP" | "1티어" | "2티어" | "3티어" | "4티어" | "5티어";
 
 export interface HeroMetaRow extends HeroMetaStat {
   readonly role: HeroRole;
@@ -134,16 +134,19 @@ function percentileRank(value: number, values: ReadonlyArray<number>): number {
 
 function band(index: number, count: number): HeroMetaGrade {
   const ratio = index / (count - 1);
-  if (ratio <= 0.05) return "S";
-  if (ratio <= 0.2) return "A";
-  if (ratio <= 0.6) return "B";
-  if (ratio <= 0.8) return "C";
-  if (ratio <= 0.9) return "D";
-  return "E";
+  if (ratio <= 0.05) return "OP";
+  if (ratio <= 0.2) return "1티어";
+  if (ratio <= 0.6) return "2티어";
+  if (ratio <= 0.8) return "3티어";
+  if (ratio <= 0.9) return "4티어";
+  return "5티어";
 }
 
 export function gradeHeroStats(stats: HeroMetaStat[]): HeroMetaRow[] {
-  const byRole = groupBy(stats.filter((row) => row.games >= 100), (stat) => HERO_CATALOG[stat.hero].role);
+  const byRole = groupBy(
+    stats.filter((row) => row.games >= 100),
+    (stat) => HERO_CATALOG[stat.hero].role,
+  );
 
   const graded = new Map<Hero, Pick<HeroMetaRow, "tier" | "tierScore">>();
   for (const group of Object.values(byRole)) {

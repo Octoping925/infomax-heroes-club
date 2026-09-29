@@ -12,7 +12,7 @@ const healers: HeroMetaRow[] = [
     winRate: 60,
     pickRate: 4,
     banRate: 5,
-    tier: "A",
+    tier: "1티어",
     tierScore: 80,
   },
   {
@@ -24,7 +24,7 @@ const healers: HeroMetaRow[] = [
     winRate: 58,
     pickRate: 5,
     banRate: 10,
-    tier: "A",
+    tier: "1티어",
     tierScore: 75,
   },
   {
@@ -36,7 +36,7 @@ const healers: HeroMetaRow[] = [
     winRate: 55,
     pickRate: 6,
     banRate: 20,
-    tier: "B",
+    tier: "2티어",
     tierScore: 70,
   },
   {
@@ -48,7 +48,7 @@ const healers: HeroMetaRow[] = [
     winRate: 50,
     pickRate: 7,
     banRate: 30,
-    tier: "C",
+    tier: "3티어",
     tierScore: 60,
   },
   {
@@ -60,7 +60,7 @@ const healers: HeroMetaRow[] = [
     winRate: 45,
     pickRate: 8,
     banRate: 0,
-    tier: "D",
+    tier: "4티어",
     tierScore: 50,
   },
 ];

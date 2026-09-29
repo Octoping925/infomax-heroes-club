@@ -9,6 +9,7 @@ import type { GameMap } from "@/domain/hots/models/map";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 import { selectHoneyPicks } from "./select-honey-picks";
 import { Tier1, Tier2, Tier3, Tier4, Tier5, OpTier, HoneyIcon } from "@/components/tier";
+import { Loading } from "@/components/Loading";
 
 interface PageResult {
   readonly status: "ready" | "pending" | "error";
@@ -67,11 +68,11 @@ function FilterSelect({
 function TierBadge({ tier, games }: { readonly tier: HeroMetaGrade | null; readonly games: number }) {
   if (!tier) return <span className="text-xs text-slate-400">{games < 100 ? "표본 부족" : "등급 보류"}</span>;
 
-  if (tier === "S") return <OpTier />;
-  if (tier === "A") return <Tier1 />;
-  if (tier === "B") return <Tier2 />;
-  if (tier === "C") return <Tier3 />;
-  if (tier === "D") return <Tier4 />;
+  if (tier === "OP") return <OpTier />;
+  if (tier === "1티어") return <Tier1 />;
+  if (tier === "2티어") return <Tier2 />;
+  if (tier === "3티어") return <Tier3 />;
+  if (tier === "4티어") return <Tier4 />;
   return <Tier5 />;
 }
 
@@ -221,11 +222,7 @@ export function TierPageClient() {
             {currentResult.stale && "· 이전 저장 결과"}
           </p>
         )}
-        {loading && (
-          <output className="rounded-lg border border-white/15 bg-white/5 p-6 text-center text-slate-300">
-            티어 정보를 불러오는 중입니다.
-          </output>
-        )}
+        {loading && <Loading />}
         {!loading && currentResult?.status === "pending" && (
           <output className="rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-6 text-center text-cyan-100">
             데이터 준비 중입니다. 하루 한 번 통계를 수집합니다.
