@@ -13,6 +13,7 @@ import styles from "./guide.module.css";
 interface GuidePageClientProps {
   readonly markdown: string;
   readonly headings: GuideHeading[];
+  readonly variant?: "beginner" | "combination";
 }
 
 const navigationItems = [
@@ -48,14 +49,11 @@ function getText(children: ReactNode): string {
   return "";
 }
 
-export default function GuidePageClient({
-  markdown,
-  headings,
-}: GuidePageClientProps) {
+export default function GuidePageClient({ markdown, headings, variant = "beginner" }: GuidePageClientProps) {
+  const isCombination = variant === "combination";
   const [activeId, setActiveId] = useState(headings[0]?.id ?? "");
   const [progress, setProgress] = useState(0);
-  const quickStartId =
-    headings.find(({ label }) => label.includes("빠른 시작"))?.id ?? headings[0]?.id;
+  const quickStartId = headings.find(({ label }) => label.includes("빠른 시작"))?.id ?? headings[0]?.id;
 
   useEffect(() => {
     const updateProgress = () => {
@@ -105,9 +103,7 @@ export default function GuidePageClient({
           </h2>
         );
       },
-      h3: ({ children }) => (
-        <h3 id={slugifyGuideHeading(getText(children))}>{children}</h3>
-      ),
+      h3: ({ children }) => <h3 id={slugifyGuideHeading(getText(children))}>{children}</h3>,
       a: ({ href = "", children }) => {
         const isInternal = href.startsWith("/") || href.startsWith("#");
 
@@ -143,14 +139,7 @@ export default function GuidePageClient({
       </div>
 
       <section className={styles.hero}>
-        <Image
-          src="/maps/CursedHollow.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className={styles.heroImage}
-        />
+        <Image src="/maps/CursedHollow.jpg" alt="" fill priority sizes="100vw" className={styles.heroImage} />
         <div className={styles.heroShade} />
 
         <header className={styles.siteHeader}>
@@ -163,11 +152,7 @@ export default function GuidePageClient({
           </Link>
           <nav aria-label="주요 메뉴">
             {navigationItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={item.href === "/guide" ? "page" : undefined}
-              >
+              <Link key={item.href} href={item.href} aria-current={item.href === "/guide" ? "page" : undefined}>
                 {item.label}
               </Link>
             ))}
@@ -175,34 +160,52 @@ export default function GuidePageClient({
         </header>
 
         <div className={styles.heroContent}>
-          <p className={styles.kicker}>FIELD MANUAL · NEW RECRUIT 01</p>
+          <p className={styles.kicker}>
+            {isCombination ? "FIELD MANUAL · TEAM COMPOSITION 02" : "FIELD MANUAL · NEW RECRUIT 01"}
+          </p>
           <h1>
-            롤은 해봤고,
+            {isCombination ? "다섯 명의 역할," : "롤은 해봤고,"}
             <br />
-            히오스는 처음이라면
+            {isCombination ? "하나의 조합으로" : "히오스는 처음이라면"}
           </h1>
           <p className={styles.heroLead}>
-            개인 캐리의 감각을 잠시 내려놓고, 다섯 명이 같은 타이밍에 강해지는 법부터
-            익혀봅시다. 첫 내전에서 필요한 내용은 이 한 페이지에 모두 담았습니다.
+            {isCombination
+              ? "메인탱부터 서브딜러까지, 조합을 구성하는 기준과 각 포지션의 역할을 알아봅니다. 라인 경험치와 캠프를 챙기며 함께 운영하는 법을 익혀보세요."
+              : "개인 캐리의 감각을 잠시 내려놓고, 다섯 명이 같은 타이밍에 강해지는 법부터 익혀봅시다. 첫 내전에서 필요한 내용은 이 한 페이지에 모두 담았습니다."}
           </p>
           <div className={styles.heroActions}>
             <a href={`#${quickStartId}`} className={styles.primaryAction}>
-              첫 내전 체크리스트
+              {isCombination ? "조합 구성법 읽기" : "첫 내전 체크리스트"}
               <span aria-hidden="true">↓</span>
             </a>
-            <a href={`#${headings[0]?.id}`} className={styles.secondaryAction}>
-              처음부터 읽기
-            </a>
+            {isCombination ? (
+              <Link href="/guide" className={styles.secondaryAction}>
+                입문 가이드 읽기
+              </Link>
+            ) : (
+              <a href={`#${headings[0]?.id}`} className={styles.secondaryAction}>
+                처음부터 읽기
+              </a>
+            )}
           </div>
         </div>
 
         <div className={styles.heroMeta}>
           <span>5 VS 5</span>
           <span>TEAM LEVEL</span>
-          <span>13 CHAPTERS</span>
-          <span>2026.08 EDITION</span>
+          <span>{headings.length} CHAPTERS</span>
+          <span>{isCombination ? "2026.09 EDITION" : "2026.08 EDITION"}</span>
         </div>
       </section>
+
+      <nav className={styles.guideLinks} aria-label="가이드 선택">
+        <Link href="/guide" aria-current={!isCombination ? "page" : undefined}>
+          롤 유저를 위한 입문 가이드
+        </Link>
+        <Link href="/guide/combination" aria-current={isCombination ? "page" : undefined}>
+          히오스 조합 구성 가이드
+        </Link>
+      </nav>
 
       <section className={styles.roster} aria-label="초보 추천 영웅">
         <div className={styles.rosterIntro}>
@@ -247,7 +250,7 @@ export default function GuidePageClient({
         <article className={styles.article}>
           <div className={styles.articleHeader}>
             <p>WELCOME TO THE NEXUS</p>
-            <span>읽는 시간 약 25분</span>
+            <span>읽는 시간 약 {isCombination ? "7" : "25"}분</span>
           </div>
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
             {markdown}

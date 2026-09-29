@@ -246,6 +246,29 @@
   letter-spacing: 0.16em;
 }
 
+.guideLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: min(1440px, calc(100% - 40px));
+  margin: 28px auto;
+}
+
+.guideLinks a {
+  padding: 12px 18px;
+  border: 1px solid var(--guide-line);
+  color: #edf7f8;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.guideLinks a:hover,
+.guideLinks a[aria-current="page"] {
+  border-color: var(--guide-cyan);
+  color: var(--guide-cyan);
+  background: rgba(125, 227, 242, 0.08);
+}
+
 .roster {
   width: min(1440px, calc(100% - 64px));
   margin: 0 auto;
@@ -433,6 +456,13 @@
   letter-spacing: -0.025em;
 }
 
+.article h4 {
+  margin: 28px 0 12px;
+  color: #f4f8f8;
+  font-size: 18px;
+  font-weight: 700;
+}
+
 .sectionHeading {
   scroll-margin-top: 32px;
   margin: 96px 0 28px;
@@ -468,6 +498,18 @@
 .article li {
   margin: 8px 0;
   padding-left: 5px;
+}
+
+.article ul {
+  list-style-type: disc;
+}
+
+.article ol {
+  list-style-type: decimal;
+}
+
+.article ul:global(.contains-task-list) {
+  list-style-type: none;
 }
 
 .article li::marker {
