@@ -4,6 +4,7 @@ import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { useScrimWinRateTier } from "../../hooks/useScrimWinRateTier";
 import { useMemo } from "react";
 import { round } from "es-toolkit";
+import { Chip } from "@/components/Chip";
 
 interface ScrimWinRateProps {
   readonly onPlayerRowClick: (playerId: string) => void;
@@ -86,11 +87,11 @@ function WinRatePill({
   const borderColor = accent === "purple" ? "border-purple-500/30" : "border-cyan-500/30";
 
   return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${color} ${bgColor} ${borderColor} border`}
+    <Chip
+      className={`inline-flex items-center px-3 py-1 rounded-full font-semibold ${color} ${bgColor} ${borderColor} border`}
     >
       {stats.winRate ?? 0}%
-    </span>
+    </Chip>
   );
 }
 

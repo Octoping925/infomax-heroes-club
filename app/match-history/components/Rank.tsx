@@ -1,3 +1,5 @@
+import { Chip } from "@/components/Chip";
+
 interface Props {
   readonly rank: number;
   readonly isWinnerTeam: boolean;
@@ -7,23 +9,19 @@ interface Props {
 export function Rank({ rank, isWinnerTeam, isBestOnTeam }: Props) {
   if (isBestOnTeam) {
     if (isWinnerTeam) {
-      return <Mvp />;
+      return (
+        <Chip className="bg-[#EB9C00] text-white" bold>
+          MVP
+        </Chip>
+      );
     }
 
-    return <Ace />;
+    return (
+      <Chip className="bg-[#7D59E8] text-white" bold>
+        ACE
+      </Chip>
+    );
   }
 
-  return <Chip rank={rank} />;
-}
-
-function Chip({ rank }: { readonly rank: number }) {
-  return <span className="text-sm px-2 py-0.5 rounded bg-[#4c4c53] text-white">{rank}등</span>;
-}
-
-function Mvp() {
-  return <span className="text-sm font-bold px-2 py-0.5 rounded bg-[#EB9C00] text-white">MVP</span>;
-}
-
-function Ace() {
-  return <span className="text-sm font-bold px-2 py-0.5 rounded bg-[#7D59E8] text-white">ACE</span>;
+  return <Chip className="bg-[#4c4c53] text-white">{rank}등</Chip>;
 }

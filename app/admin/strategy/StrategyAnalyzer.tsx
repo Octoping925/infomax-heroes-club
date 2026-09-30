@@ -21,6 +21,7 @@ import type {
 import { HERO_CATALOG, HeroImage, MAP_CATALOG } from "@/domain/hots/constants";
 import type { HeroRole, GameMap, Hero } from "@/domain/hots/models";
 import Image from "next/image";
+import { Chip } from "@/components/Chip";
 
 const MAX_TEAM_SIZE = 5;
 const MAX_SELECTED_MAPS = 5;
@@ -354,9 +355,9 @@ export default function StrategyAnalyzer({ players }: Props) {
 
 function HeaderPill({ text }: { text: string }) {
   return (
-    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs font-medium text-slate-200">
+    <Chip textSize="xs" className="rounded-full border border-white/10 bg-white/5 px-4 py-1 font-medium text-slate-200">
       {text}
-    </span>
+    </Chip>
   );
 }
 
@@ -624,9 +625,12 @@ function SelectedMapPlanBoard({ plans }: { plans: ReadonlyArray<StrategySelected
                     우리 팀 {plan.allyAverageWinRate}% / 상대 {plan.enemyAverageWinRate}%
                   </p>
                 </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100">
+                <Chip
+                  textSize="xs"
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-slate-100"
+                >
                   {plan.edge > 0 ? `+${plan.edge}` : plan.edge}%p
-                </span>
+                </Chip>
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">

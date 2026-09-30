@@ -1,4 +1,5 @@
 import { HeroRole, HeroRoleLabelMap } from "@/domain/hots/models";
+import { Chip } from "./Chip";
 
 interface Props {
   readonly position: HeroRole;
@@ -7,15 +8,13 @@ interface Props {
 
 export function Position({ position, large = false }: Props) {
   return (
-    <span
-      className={`${large ? "text-sm" : "text-xs"} font-medium px-2 py-0.5 rounded ${getPositionColorClass(position)}`}
-    >
+    <Chip textSize={large ? "sm" : "xs"} className={`font-medium ${getPositionStyle(position)}`}>
       {HeroRoleLabelMap[position]}
-    </span>
+    </Chip>
   );
 }
 
-function getPositionColorClass(position: HeroRole) {
+function getPositionStyle(position: HeroRole) {
   switch (position) {
     case "TANKER":
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";

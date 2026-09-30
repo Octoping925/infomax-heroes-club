@@ -4,7 +4,7 @@ import { Suspense, useContext } from "react";
 import { SelectedPlayerContext } from "../StatsPage";
 import { Loading } from "@/components/Loading";
 import { ScrimWinRate } from "./ScrimWinRate";
-import { Title } from "../Title";
+import { Title } from "@/components/Title";
 import { HeroTierList } from "./HeroTierList";
 
 interface ScrimStatTabProps {

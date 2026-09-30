@@ -1,6 +1,7 @@
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
 import { GameTeamTable } from "./GameTeamTable";
+import { Chip } from "@/components/Chip";
 
 interface GameCardProps {
   readonly game: MatchHistoryItem["games"][number];
@@ -30,19 +31,16 @@ export function GameCard({ game, team1Name, team2Name }: GameCardProps) {
         </div>
         <div className="flex items-center gap-2">
           {game.winnerTeamNumber === null ? (
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 border border-white/5">
+            <Chip textSize="3xs" bold className="bg-white/5 text-gray-500 uppercase tracking-widest border border-white/5">
               Draw
-            </span>
+            </Chip>
           ) : (
-            <span
-              className={`text-sm font-bold tracking-widest px-2 py-0.5 rounded border ${
-                isTeam1Winner
-                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
-                  : "bg-purple-500/10 text-purple-400 border-purple-500/30"
-              }`}
+            <Chip
+              bold
+              className={`tracking-widest border ${isTeam1Winner ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" : "bg-purple-500/10 text-purple-400 border-purple-500/30"}`}
             >
               {game.winnerTeamNumber === 1 ? team1Name : team2Name} 승
-            </span>
+            </Chip>
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { ScorePill } from "./ScorePill";
+import { ScorePill } from "@/components/ScorePill";
+import { Chip } from "@/components/Chip";
 import { HeroImage } from "@/domain/hots/constants";
 import { RivalryCardResponse } from "@/app/api/stats/types";
 import dayjs from "dayjs";
@@ -30,16 +31,17 @@ export function RivalryCard({ card, variant }: RivalryCardProps) {
             <h3 className="text-lg font-bold text-white truncate">
               {a.playerNickname} <span className="text-gray-400">vs</span> {b.playerNickname}
             </h3>
-            <span className="px-2 py-1 rounded-full text-xs border border-white/10 bg-white/5 text-gray-200">
+            <Chip textSize="xs" className="py-1 rounded-full border border-white/10 bg-white/5 text-gray-200">
               점수 {card.score}
-            </span>
+            </Chip>
             {card.labels.map((l, idx) => (
-              <span
+              <Chip
                 key={`${l.type}-${idx}`}
-                className="px-2 py-1 rounded-full text-xs border border-white/10 bg-white/5 text-gray-300"
+                textSize="xs"
+                className="py-1 rounded-full border border-white/10 bg-white/5 text-gray-300"
               >
                 {l.text}
-              </span>
+              </Chip>
             ))}
           </div>
           <p className="text-sm text-gray-300">{card.comment}</p>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { type RivalryParams } from "@/config/query-keys";
 import { useRivalries } from "../hooks/useRivalries";
-import { Title } from "../components/Title";
+import { Title } from "@/components/Title";
 import { RivalryCard } from "./RivalryCard";
 import { RivalryControls } from "./RivalryControl";
 

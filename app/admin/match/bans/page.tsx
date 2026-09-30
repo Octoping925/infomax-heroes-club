@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { HERO_CATALOG } from "@/domain/hots/constants";
 import { TopBar } from "@/components/TopBar";
+import { Chip } from "@/components/Chip";
 import { Hero } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import dayjs from "dayjs";
@@ -284,9 +285,9 @@ export default function MatchBansPage() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-bold">{game.gameNumber}번째 경기</h2>
-                  <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-sm">
+                  <Chip textSize="sm" className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full">
                     {game.map}
-                  </span>
+                  </Chip>
                 </div>
                 <div className="text-sm text-gray-400">
                   승리:{" "}

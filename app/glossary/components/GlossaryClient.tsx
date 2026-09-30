@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent, type ReactElement } from "react";
 import { GLOSSARY_ENTRIES, GLOSSARY_TAGS, type GlossaryEntry, type GlossaryTag } from "../glossary-data";
+import { Chip } from "@/components/Chip";
 
 const ALL_TAG = "전체";
 type TagFilter = GlossaryTag | typeof ALL_TAG;
@@ -134,12 +135,13 @@ export default function GlossaryClient(): ReactElement {
 
               <div className="flex flex-wrap gap-2">
                 {entry.tags.map((t) => (
-                  <span
+                  <Chip
                     key={t}
-                    className={`px-2 py-1 rounded-full text-[11px] font-medium border ${getTagBadgeStyle(t)}`}
+                    textSize="2xs"
+                    className={`py-1 rounded-full font-medium border ${getTagBadgeStyle(t)}`}
                   >
                     {t}
-                  </span>
+                  </Chip>
                 ))}
               </div>
             </header>
