@@ -49,18 +49,17 @@ describe("parseReplayBuffer", () => {
     },
   );
 
-  it("rejects a missing build without falling back to the latest protocol", () => {
+  it.each([1, 99999])("falls back to the latest bundled protocol for missing build %i", (build) => {
     const result = parseReplayBuffer(
-      createReplayBuffer(99999, "missing"),
+      createReplayBuffer(build, "missing"),
       createArchiveFactory(),
     );
 
-    expect(result).toEqual({
-      ok: false,
-      error: {
-        code: "UNSUPPORTED_BUILD",
-        build: 99999,
-      },
+    expect(result).toMatchObject({
+      ok: true,
+      build,
+      protocolVersion: CURRENT_BUILD,
+      header: { m_version: { m_baseBuild: build } },
     });
   });
 

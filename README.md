@@ -136,9 +136,9 @@ npm run verify:replays
   `scripts/replay-accepted-corrections.json`에 SHA-256과 기대 오류 코드를 함께 기록합니다.
   전체 코퍼스에서 동일한 해시와 코드가 재현되어야만 의도된 교정으로 인정되므로,
   새로운 거절을 오류 코드만으로 포괄 승인하지 않습니다.
-- 새 게임 빌드는 자동으로 최신 protocol에 폴백하지 않습니다. 대표 리플레이를 corpus에
-  추가해 전체 parity를 통과시킨 뒤 `VERIFIED_PROTOCOL_COMPATIBILITY`에 실제 빌드와
-  고정 protocol을 명시적으로 추가합니다.
+- 정확한 protocol이나 `VERIFIED_PROTOCOL_COMPATIBILITY` 매핑이 없는 빌드는 보유한
+  최신 protocol로 파싱을 시도합니다. 디코딩과 정규화 검증에 실패하면 거절하며,
+  대표 리플레이를 corpus에 추가해 전체 parity를 확인합니다.
 - `.next/server/app/api/matches/replays/parse/route.js.nft.json`이 있으면 검증 스크립트가
   traced function의 비압축 파일 크기도 집계합니다.
 

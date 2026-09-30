@@ -17,11 +17,11 @@ const BUNDLED_PROTOCOL_BUILD_SET = new Set(
     return match ? [Number(match[1])] : [];
   }),
 );
+const LATEST_PROTOCOL_BUILD = Math.max(...BUNDLED_PROTOCOL_BUILD_SET);
 
 /**
  * Builds proven against the local replay corpus to use the pinned 94786 wire
- * schema. This is deliberately an allowlist, not a "latest protocol" fallback:
- * every new build remains unsupported until corpus verification adds it here.
+ * schema. These mappings take precedence over the latest-protocol fallback.
  */
 export const VERIFIED_PROTOCOL_COMPATIBILITY: Readonly<Record<number, number>> = {
   95301: 94786,
@@ -104,7 +104,7 @@ export function parseReplayBuffer(
     }
 
     const protocolBuild = VERIFIED_PROTOCOL_COMPATIBILITY[build] ?? build;
-    const protocol = loadExactProtocol(protocolBuild);
+    const protocol = loadExactProtocol(protocolBuild) ?? loadExactProtocol(LATEST_PROTOCOL_BUILD);
     if (!protocol) {
       return {
         ok: false,

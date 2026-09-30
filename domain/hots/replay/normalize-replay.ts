@@ -1,7 +1,4 @@
-import {
-  HERO_BY_KOREAN_NAME,
-  MAP_BY_KOREAN_NAME,
-} from "@/domain/hots/constants/korean-name-lookups";
+import { HERO_BY_KOREAN_NAME, MAP_BY_KOREAN_NAME } from "@/domain/hots/constants/korean-name-lookups";
 import { HERO_CATALOG } from "@/domain/hots/constants/hero-catalog";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";
 import type { Hero } from "@/domain/hots/models/hero";
@@ -43,6 +40,7 @@ const HERO_ATTRIBUTE_TO_HERO: Readonly<Record<string, Hero>> = {
   Guld: "Guldan",
   Hanz: "Hanzo",
   HOGG: "Hogger",
+  HXAL: "Xalatath",
   Illi: "Illidan",
   IMPE: "Imperius",
   Jain: "Jaina",
