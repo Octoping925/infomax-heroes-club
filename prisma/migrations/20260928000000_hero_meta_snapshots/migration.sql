@@ -9,11 +9,3 @@ CREATE TABLE "hero_meta_snapshots" (
 
   CONSTRAINT "hero_meta_snapshots_pkey" PRIMARY KEY ("key")
 );
-
-CREATE TABLE "hero_meta_references" (
-  "key" TEXT NOT NULL,
-  "options" JSONB NOT NULL,
-  "fetchedAt" TIMESTAMP(3) NOT NULL,
-
-  CONSTRAINT "hero_meta_references_pkey" PRIMARY KEY ("key")
-);

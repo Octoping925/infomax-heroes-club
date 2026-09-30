@@ -133,6 +133,7 @@ export const Hero = {
   Valeera: 'Valeera',
   Valla: 'Valla',
   Varian: 'Varian',
+  Xalatath: 'Xalatath',
   Xul: 'Xul',
   Whitemane: 'Whitemane',
   Yrel: 'Yrel',

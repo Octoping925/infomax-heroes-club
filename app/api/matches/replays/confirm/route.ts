@@ -62,6 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: error.status },
       );
     }
+    console.error("[replays/confirm] unexpected error", error);
     return errorResponse("MATCH_CONFIRM_FAILED", 500);
   }
 }

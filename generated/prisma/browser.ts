@@ -72,8 +72,3 @@ export type GameTeamMemberTalent = Prisma.GameTeamMemberTalentModel
  * Heroes Profile audience별 현재 스냅샷과 일일 수집 작업 상태
  */
 export type HeroMetaSnapshot = Prisma.HeroMetaSnapshotModel
-/**
- * Model HeroMetaReference
- * Heroes Profile 패치·맵 선택지를 하루 캐시하고 장애 중에도 보존
- */
-export type HeroMetaReference = Prisma.HeroMetaReferenceModel

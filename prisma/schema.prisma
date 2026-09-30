@@ -361,12 +361,3 @@ model HeroMetaSnapshot {
 
   @@map("hero_meta_snapshots")
 }
-
-/// Heroes Profile 패치·맵 선택지를 하루 캐시하고 장애 중에도 보존
-model HeroMetaReference {
-  key       String   @id
-  options   Json
-  fetchedAt DateTime
-
-  @@map("hero_meta_references")
-}
