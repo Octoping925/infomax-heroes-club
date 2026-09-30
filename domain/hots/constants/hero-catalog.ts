@@ -507,6 +507,12 @@ export const HERO_CATALOG: Record<Hero, HeroCatalogEntry> = {
     icyVeinKey: "varian",
     role: HeroRoles.TANKER,
   },
+  Xalatath: {
+    nameKo: "잘아타스",
+    image: "/heroes/Xalatath.png",
+    icyVeinKey: "xalatath",
+    role: HeroRoles.SUB_DEALER,
+  },
   Xul: {
     nameKo: "줄",
     image: "/heroes/Xul.png",

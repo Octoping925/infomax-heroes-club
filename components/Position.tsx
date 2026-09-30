@@ -1,4 +1,4 @@
-import { HeroRole } from "@/domain/hots/models";
+import { HeroRole, HeroRoleLabelMap } from "@/domain/hots/models";
 
 interface Props {
   readonly position: HeroRole;
@@ -10,7 +10,7 @@ export function Position({ position, large = false }: Props) {
     <span
       className={`${large ? "text-sm" : "text-xs"} font-medium px-2 py-0.5 rounded ${getPositionColorClass(position)}`}
     >
-      {positionMap[position]}
+      {HeroRoleLabelMap[position]}
     </span>
   );
 }
@@ -31,11 +31,3 @@ function getPositionColorClass(position: HeroRole) {
       return "bg-gray-500/20 text-gray-300 border-gray-500/40";
   }
 }
-
-const positionMap: Record<HeroRole, string> = {
-  TANKER: "탱커",
-  OFFLANER: "투사",
-  MAIN_DEALER: "메인딜러",
-  SUB_DEALER: "서브딜러",
-  HEALER: "힐러",
-};

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { HERO_CATALOG } from "@/domain/hots/constants";
-import { Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
+import { Hero, HeroRole, HeroRoleLabelMap, HeroRoles } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
 import type { PlayerListItem } from "@/app/api/players/route";
@@ -99,13 +99,6 @@ export default function MatchStatsPage() {
   );
 
   const positionOptions: HeroRole[] = Object.values(HeroRoles);
-  const positionLabelMap: Record<HeroRole, string> = {
-    TANKER: "탱커",
-    OFFLANER: "오프레이너",
-    MAIN_DEALER: "메인딜러",
-    SUB_DEALER: "서브딜러",
-    HEALER: "힐러",
-  };
 
   const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
@@ -406,7 +399,7 @@ export default function MatchStatsPage() {
                                   >
                                     {positionOptions.map((position) => (
                                       <option key={position} value={position} className="bg-[#1a1a2e]">
-                                        {positionLabelMap[position]}
+                                        {HeroRoleLabelMap[position]}
                                       </option>
                                     ))}
                                   </select>

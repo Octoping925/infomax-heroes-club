@@ -1,7 +1,7 @@
 "use client";
 
 import type { TeamingPairStatResponse, TeamingPlayerProfileResponse, TeamingWindowStats } from "@/app/api/stats/types";
-import { HeroRoles, type HeroRole } from "@/domain/hots/models";
+import { HeroRoleLabelMap, HeroRoles, type HeroRole } from "@/domain/hots/models";
 import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
@@ -9,13 +9,6 @@ import { meanBy, round, shuffle, uniq } from "es-toolkit";
 import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
 const ROLE_ORDER = Object.values(HeroRoles);
-const ROLE_LABEL: Record<HeroRole, string> = {
-  TANKER: "탱커",
-  OFFLANER: "투사",
-  MAIN_DEALER: "메인딜러",
-  SUB_DEALER: "서브딜러",
-  HEALER: "힐러",
-};
 
 type TeamSuggestion = {
   readonly teamA: string[];
@@ -188,7 +181,8 @@ export function TeamComposerTab() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-bold text-white">{player.playerNickname}</p>
                   <span className="text-xs text-cyan-200 text-right">
-                    주포지션 {player.primaryRole ? ROLE_LABEL[player.primaryRole] : "-"} / 유연성 {player.flexibility}
+                    주포지션 {player.primaryRole ? HeroRoleLabelMap[player.primaryRole] : "-"} / 유연성{" "}
+                    {player.flexibility}
                     <br />
                     최근승률 {player.recentWinRate.toFixed(1)}% ({player.recentGames}경기)
                   </span>
@@ -197,7 +191,7 @@ export function TeamComposerTab() {
                   {player.roleStats.map((roleStat) => (
                     <div key={`${player.playerId}-${roleStat.role}`} className="text-xs text-gray-200">
                       <div className="flex items-center justify-between">
-                        <span>{ROLE_LABEL[roleStat.role]}</span>
+                        <span>{HeroRoleLabelMap[roleStat.role]}</span>
                         <span>
                           {roleStat.games}회 ({roleStat.rate.toFixed(1)}%)
                         </span>
@@ -256,7 +250,7 @@ export function TeamComposerTab() {
                   </td>
                   <td className="px-3 py-2 text-right text-amber-200">{row.recent6.sameTeamRate.toFixed(1)}%</td>
                   <td className="px-3 py-2 text-gray-200">
-                    {row.other.primaryRole ? ROLE_LABEL[row.other.primaryRole] : "-"}
+                    {row.other.primaryRole ? HeroRoleLabelMap[row.other.primaryRole] : "-"}
                   </td>
                 </tr>
               ))}
@@ -592,7 +586,7 @@ function toSplitKey(teamA: string[], teamB: string[]): string {
 
 function renderPlayerBadge(player: TeamingPlayerProfileResponse | undefined): string {
   if (!player) return "알 수 없음";
-  const roleText = player.primaryRole ? ROLE_LABEL[player.primaryRole] : "-";
+  const roleText = player.primaryRole ? HeroRoleLabelMap[player.primaryRole] : "-";
   const trendWinRate = getPlayerTrendWinRate(player);
   return `${player.playerName.slice(1)} (${roleText}, 승률 ${round(trendWinRate, 0)}%)`;
 }

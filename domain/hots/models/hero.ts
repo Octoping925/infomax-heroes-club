@@ -82,6 +82,7 @@ export type Hero =
   | "Valeera"
   | "Valla"
   | "Varian"
+  | "Xalatath"
   | "Xul"
   | "Whitemane"
   | "Yrel"

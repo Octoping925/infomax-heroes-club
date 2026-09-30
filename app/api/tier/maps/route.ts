@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/config/prisma";
 import type { DooraySlashCommandRequest, DooraySlashCommandResponse } from "@/domain/dooray/types";
 import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
-import type { GameMap, HeroRole } from "@/domain/hots/models";
+import { HeroRoleLabelMap, type GameMap, type HeroRole } from "@/domain/hots/models";
 import { createHeroMetaDailyStore } from "@/domain/hots/repositories/hero-meta-snapshot";
 import { gradeHeroStats, type HeroMetaGrade, type HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
 import { selectHoneyPicks } from "@/app/tier/select-honey-picks";
@@ -24,14 +24,6 @@ const MAP_ALIASES: Record<GameMap, readonly string[]> = {
   VolskayaFoundry: ["Volskaya Foundry", "볼스", "볼스카야"],
   WarheadJunction: ["Warhead Junction", "핵", "핵탄두"],
   HauntedMines: ["Haunted Mines", "죽광", "광산"],
-};
-
-const ROLE_LABELS: Record<HeroRole, string> = {
-  TANKER: "탱커",
-  OFFLANER: "투사",
-  MAIN_DEALER: "메인딜러",
-  SUB_DEALER: "서브딜러",
-  HEALER: "힐러",
 };
 
 const TIER_LABELS: ReadonlyArray<HeroMetaGrade> = ["OP", "1티어", "2티어", "3티어", "4티어", "5티어"];
@@ -113,7 +105,7 @@ function formatTierMessage(input: {
 
     lines.push(`${grade} (${tierRows.length}명)`);
 
-    for (const [role, roleLabel] of Object.entries(ROLE_LABELS) as [HeroRole, string][]) {
+    for (const [role, roleLabel] of Object.entries(HeroRoleLabelMap) as [HeroRole, string][]) {
       const heroes = tierRows.filter((row) => row.role === role);
       if (heroes.length === 0) continue;
       lines.push(

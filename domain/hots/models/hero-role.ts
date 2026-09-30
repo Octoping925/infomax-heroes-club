@@ -7,3 +7,11 @@ export const HeroRoles = {
   SUB_DEALER: "SUB_DEALER",
   HEALER: "HEALER",
 } as const satisfies Record<HeroRole, HeroRole>;
+
+export const HeroRoleLabelMap: Record<HeroRole, string> = {
+  TANKER: "탱커",
+  OFFLANER: "투사",
+  MAIN_DEALER: "메인딜러",
+  SUB_DEALER: "서브딜러",
+  HEALER: "힐러",
+};
