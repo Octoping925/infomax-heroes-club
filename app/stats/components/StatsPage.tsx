@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, Suspense, useEffect, useRef, useState } from "react";
+import { createContext, Suspense, useState } from "react";
 import { TeamSwitchChart } from "./team-switch-chart";
 import { AvgStatsRankingChart } from "./avg-kills-deaths-ranking-chart";
 import { FantasyDuoRankingChart } from "./fantasy-duo-ranking-chart";
@@ -8,7 +8,6 @@ import { HeroDuoRankingChart } from "./hero-duo-ranking-chart";
 import type { PlayerListItem } from "../../api/players/route";
 import { useHashSyncedTab } from "../hooks/use-tab-hash";
 import { PersonalStatTab } from "./personal-stat/personal-stat-tab";
-import { PlayerSidebar } from "./PlayerSidebar";
 import { Loading } from "@/components/Loading";
 import { ScrimStatTab } from "./scrim-stat/scrim-stat-tab";
 import { RivalryTab } from "../rivalry/rivalry-tab";
@@ -31,21 +30,31 @@ type TabType =
   | "counterPicks"
   | "teamComposer";
 
-const TABS: { id: TabType; label: string; mobileLabel: string; icon: string }[] = [
-  { id: "personalStats", label: "개인 통계", mobileLabel: "개인", icon: "👤" },
-  { id: "scrimStats", label: "내전 통계", mobileLabel: "내전", icon: "🥇" },
-  { id: "mapStats", label: "맵 통계", mobileLabel: "맵", icon: "🗺️" },
-  { id: "rivalry", label: "라이벌리", mobileLabel: "라이벌", icon: "🔥" },
-  { id: "teamSwitch", label: "팀 변경 효과", mobileLabel: "팀 변경", icon: "🔄" },
-  { id: "avgKillsDeathsRanking", label: "평균 킬/데스", mobileLabel: "킬/데스", icon: "💥" },
-  { id: "fantasyDuo", label: "환상의 듀오", mobileLabel: "환상 듀오", icon: "🤝" },
-  { id: "teammateFrequency", label: "팀 동료", mobileLabel: "팀 동료", icon: "👥" },
-  { id: "heroDuo", label: "영웅 듀오", mobileLabel: "영웅 듀오", icon: "🧩" },
-  { id: "counterPicks", label: "카운터픽", mobileLabel: "카운터", icon: "⚔️" },
-  { id: "teamComposer", label: "팀 편성 도우미", mobileLabel: "팀 편성", icon: "🧠" },
+const GROUPS = [
+  { id: "player", label: "플레이어" },
+  { id: "scrim", label: "내전" },
+  { id: "ranking", label: "랭킹" },
+  { id: "tools", label: "도구" },
+] as const;
+
+type GroupType = (typeof GROUPS)[number]["id"];
+
+// 그룹 버튼은 해당 그룹의 첫 번째 탭으로 이동한다.
+const TABS: { id: TabType; group: GroupType; label: string; icon: string }[] = [
+  { id: "personalStats", group: "player", label: "개인 통계", icon: "👤" },
+  { id: "teammateFrequency", group: "player", label: "팀 동료", icon: "👥" },
+  { id: "scrimStats", group: "scrim", label: "내전 통계", icon: "🥇" },
+  { id: "mapStats", group: "scrim", label: "맵 통계", icon: "🗺️" },
+  { id: "teamSwitch", group: "scrim", label: "팀 변경 효과", icon: "🔄" },
+  { id: "avgKillsDeathsRanking", group: "ranking", label: "평균 킬/데스", icon: "💥" },
+  { id: "fantasyDuo", group: "ranking", label: "환상의 듀오", icon: "🤝" },
+  { id: "heroDuo", group: "ranking", label: "영웅 듀오", icon: "🧩" },
+  { id: "rivalry", group: "ranking", label: "라이벌리", icon: "🔥" },
+  { id: "counterPicks", group: "tools", label: "카운터픽", icon: "⚔️" },
+  { id: "teamComposer", group: "tools", label: "팀 편성 도우미", icon: "🧠" },
 ];
 
-const SHOW_PLAYER_SIDEBAR_TABS: Set<TabType> = new Set(["personalStats", "teammateFrequency"]);
+const SHOW_PLAYER_SELECT_TABS: Set<TabType> = new Set(["personalStats", "teammateFrequency"]);
 
 export const SelectedPlayerContext = createContext<PlayerListItem | null>(null);
 
@@ -58,7 +67,6 @@ interface Props {
  * 통계 대시보드 페이지
  */
 export function StatsPageLayout({ players, availableYears }: Props) {
-  const tabRefs = useRef<Partial<Record<TabType, HTMLButtonElement | null>>>({});
   const statsYear = useStatsYearFilter(availableYears);
 
   const [activeTab, handleTabSelect] = useHashSyncedTab(
@@ -77,53 +85,49 @@ export function StatsPageLayout({ players, availableYears }: Props) {
     }
   };
 
-  useEffect(() => {
-    const activeButton = tabRefs.current[activeTab];
-    if (!activeButton) {
-      return;
-    }
-
-    activeButton.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
-  }, [activeTab]);
-
   return (
     <StatsYearContext.Provider value={statsYear}>
       <div className="w-full px-2">
-        <nav className="w-full px-3 md:px-6 py-3 border-b border-white/10 overflow-x-auto scrollbar-hide">
-          <div className="max-w-7xl mx-auto flex w-max gap-2">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                ref={(element) => {
-                  tabRefs.current[tab.id] = element;
-                }}
-                onClick={() => handleTabSelect(tab.id)}
-                className={`shrink-0 whitespace-nowrap px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                    : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
-                }`}
-                aria-pressed={activeTab === tab.id}
-              >
-                <span>{tab.icon}</span> <span className="sm:hidden">{tab.mobileLabel}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
+        <nav className="w-full px-3 md:px-6 pt-3 border-b border-white/10">
+          <div className="max-w-7xl mx-auto flex flex-col gap-2">
+            <div className="flex w-max max-w-full gap-1 rounded-xl bg-white/5 p-1">
+              {GROUPS.map((group) => (
+                <button
+                  key={group.id}
+                  onClick={() => handleTabSelect(TABS.find((tab) => tab.group === group.id)!.id)}
+                  className={`whitespace-nowrap px-4 md:px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedTab.group === group.id
+                      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`}
+                  aria-pressed={selectedTab.group === group.id}
+                >
+                  {group.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-5 overflow-x-auto scrollbar-hide">
+              {TABS.filter((tab) => tab.group === selectedTab.group).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabSelect(tab.id)}
+                  className={`shrink-0 whitespace-nowrap border-b-2 px-0.5 py-2.5 text-sm transition-all ${
+                    activeTab === tab.id
+                      ? "border-cyan-400 font-semibold text-white"
+                      : "border-transparent text-gray-400 hover:text-white"
+                  }`}
+                  aria-pressed={activeTab === tab.id}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </nav>
 
         {/* 메인 컨텐츠 */}
         <main className="max-w-7xl mx-auto mt-5">
           <div className="flex max-lg:flex-col gap-6">
-            {/* 플레이어 사이드바 */}
-            {SHOW_PLAYER_SIDEBAR_TABS.has(activeTab) && (
-              <PlayerSidebar players={players} setSelectedPlayerId={handleSelectPlayer} selectedPlayer={selectedPlayer} />
-            )}
-
             {/* 차트 영역 */}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -131,6 +135,20 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                   {selectedTab.icon}
                 </span>
                 <h2 className="text-xl font-bold text-white">{selectedTab.label}</h2>
+                {SHOW_PLAYER_SELECT_TABS.has(activeTab) && (
+                  <select
+                    value={selectedPlayer?.id ?? ""}
+                    onChange={(event) => handleSelectPlayer(event.target.value)}
+                    aria-label="플레이어 선택"
+                    className="ml-auto rounded-lg border border-white/10 bg-[#0b0f1c] px-3 py-2 text-sm text-white"
+                  >
+                    {players.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {player.name} ({player.nickname})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {availableYears.length > 0 && (
