@@ -41,11 +41,6 @@ export type OrientationChoice = {
   readonly source: "inferred" | "manual";
 };
 
-export type PlayerDirectoryState =
-  | { readonly status: "idle" | "loading" }
-  | { readonly status: "error"; readonly message: string }
-  | { readonly status: "ready"; readonly players: ReadonlyArray<PlayerListItem> };
-
 export type ConfirmState =
   | { readonly status: "idle" }
   | { readonly status: "saving" }
@@ -59,7 +54,7 @@ export type ConfirmState =
 
 export type ReplayImportState = {
   readonly queue: ReadonlyArray<ReplayQueueItem>;
-  readonly playerDirectory: PlayerDirectoryState;
+  readonly players: ReadonlyArray<PlayerListItem>;
   readonly playerMappings: Readonly<Record<string, string>>;
   readonly orientations: Readonly<Record<string, OrientationChoice>>;
   readonly team1LeaderId: string;
@@ -86,9 +81,6 @@ export type ReplayImportAction =
   | { readonly type: "FILE_RETRY_REQUESTED"; readonly id: string }
   | { readonly type: "FILE_REMOVED"; readonly id: string }
   | { readonly type: "FILE_MOVED"; readonly id: string; readonly direction: "up" | "down" }
-  | { readonly type: "PLAYER_DIRECTORY_LOADING" }
-  | { readonly type: "PLAYER_DIRECTORY_FAILED"; readonly message: string }
-  | { readonly type: "PLAYER_DIRECTORY_LOADED"; readonly players: ReadonlyArray<PlayerListItem> }
   | { readonly type: "PLAYER_MAPPED"; readonly rawName: string; readonly playerId: string }
   | {
       readonly type: "ORIENTATION_SELECTED";
@@ -109,8 +101,6 @@ export type ReplayImportAction =
 export type BlockingReasonCode =
   | "NO_VALID_GAMES"
   | "UPLOAD_IN_PROGRESS"
-  | "PLAYER_DIRECTORY_LOADING"
-  | "PLAYER_DIRECTORY_FAILED"
   | "PLAYER_DIRECTORY_EMPTY"
   | "MISSING_PLAYER_MAPPING"
   | "PLAYER_COLLISION"
@@ -141,10 +131,10 @@ export type FileValidationResult = {
   }>;
 };
 
-export function createInitialReplayImportState(): ReplayImportState {
+export function createInitialReplayImportState(players: ReadonlyArray<PlayerListItem>): ReplayImportState {
   return {
     queue: [],
-    playerDirectory: { status: "idle" },
+    players,
     playerMappings: {},
     orientations: {},
     team1LeaderId: "",
@@ -197,13 +187,7 @@ export function replayImportReducer(
           ? { id: item.id, file: item.file, status: "ready", parsed: action.parsed }
           : item),
       });
-      if (uploaded.playerDirectory.status !== "ready") {
-        return reconcileReadyChoices(uploaded);
-      }
-      return reconcileReadyChoices({
-        ...uploaded,
-        playerMappings: applySuggestedMappings(uploaded, uploaded.playerDirectory.players),
-      });
+      return reconcileReadyChoices({ ...uploaded, playerMappings: applySuggestedMappings(uploaded) });
     }
     case "UPLOAD_FAILED":
       return reconcileReadyChoices({
@@ -226,16 +210,6 @@ export function replayImportReducer(
       }));
     case "FILE_MOVED":
       return reconcileReadyChoices(resetConfirm({ ...state, queue: moveItem(state.queue, action.id, action.direction) }));
-    case "PLAYER_DIRECTORY_LOADING":
-      return { ...state, playerDirectory: { status: "loading" } };
-    case "PLAYER_DIRECTORY_FAILED":
-      return { ...state, playerDirectory: { status: "error", message: action.message } };
-    case "PLAYER_DIRECTORY_LOADED":
-      return reconcileReadyChoices({
-        ...state,
-        playerDirectory: { status: "ready", players: action.players },
-        playerMappings: applySuggestedMappings(state, action.players),
-      });
     case "PLAYER_MAPPED":
       return reconcileReadyChoices(resetConfirm({
         ...state,
@@ -314,11 +288,7 @@ export function getBlockingReasons(state: ReplayImportState): ReadonlyArray<Bloc
   if (state.queue.some((item) => item.status === "queued" || item.status === "uploading")) {
     reasons.push({ code: "UPLOAD_IN_PROGRESS", message: "모든 리플레이 처리가 끝날 때까지 기다려 주세요.", targetId: "replay-queue" });
   }
-  if (state.playerDirectory.status === "idle" || state.playerDirectory.status === "loading") {
-    reasons.push({ code: "PLAYER_DIRECTORY_LOADING", message: "등록 선수 목록을 불러오는 중입니다.", targetId: "player-directory-status" });
-  } else if (state.playerDirectory.status === "error") {
-    reasons.push({ code: "PLAYER_DIRECTORY_FAILED", message: "등록 선수 목록을 불러오지 못했습니다.", targetId: "player-directory-status" });
-  } else if (state.playerDirectory.status === "ready" && state.playerDirectory.players.length === 0) {
+  if (state.players.length === 0) {
     reasons.push({ code: "PLAYER_DIRECTORY_EMPTY", message: "등록된 선수가 없어 매핑할 수 없습니다.", targetId: "player-directory-status" });
   }
 
@@ -515,11 +485,8 @@ function hasPlayerCollision(
   });
 }
 
-function applySuggestedMappings(
-  state: ReplayImportState,
-  players: ReadonlyArray<PlayerListItem>,
-): Readonly<Record<string, string>> {
-  const byNickname = new Map(players.map((player) => [player.nickname.toLocaleLowerCase("ko"), player.id]));
+function applySuggestedMappings(state: ReplayImportState): Readonly<Record<string, string>> {
+  const byNickname = new Map(state.players.map((player) => [player.nickname.toLocaleLowerCase("ko"), player.id]));
   const suggested = { ...state.playerMappings };
   for (const item of readyItems(state.queue)) {
     for (const replayPlayer of [

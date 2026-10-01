@@ -18,14 +18,14 @@ const players = Array.from({ length: 10 }, (_, index) => ({
 
 describe("replay import state", () => {
   it("defaults new imports to dinner", () => {
-    const state = createInitialReplayImportState();
+    const state = createInitialReplayImportState([]);
 
     expect(state.matchType).toBe("DINNER");
     expect(buildConfirmRequest(state).type).toBe("DINNER");
   });
 
   it("uploads three accepted files strictly one at a time", () => {
-    let state = createInitialReplayImportState();
+    let state = createInitialReplayImportState([]);
     state = replayImportReducer(state, {
       type: "FILES_ADDED",
       files: [file("one.StormReplay"), file("two.StormReplay"), file("three.StormReplay")],
@@ -46,12 +46,8 @@ describe("replay import state", () => {
     expect(state.queue.map((item) => item.status)).toEqual(["ready", "uploading", "queued"]);
   });
 
-  it("applies a known nickname suggestion when parsing finishes after the directory loaded", () => {
-    let state = createInitialReplayImportState();
-    state = replayImportReducer(state, {
-      type: "PLAYER_DIRECTORY_LOADED",
-      players: [{ id: "known-id", name: "선수", nickname: "known" }],
-    });
+  it("applies a known nickname suggestion when parsing finishes", () => {
+    let state = createInitialReplayImportState([{ id: "known-id", name: "선수", nickname: "known" }]);
     state = replayImportReducer(state, { type: "FILES_ADDED", files: [file("known.StormReplay", 100, "known")] });
     state = replayImportReducer(state, { type: "NEXT_UPLOAD_STARTED" });
     const preview = replay();
@@ -188,7 +184,7 @@ describe("replay import state", () => {
   });
 
   it("removes mappings that are no longer referenced after a parsed game is removed", () => {
-    let state = createInitialReplayImportState();
+    let state = createInitialReplayImportState([]);
     state = replayImportReducer(state, { type: "FILES_ADDED", files: [file("only.StormReplay", 100, "only")] });
     state = replayImportReducer(state, { type: "NEXT_UPLOAD_STARTED" });
     state = replayImportReducer(state, {
@@ -204,8 +200,7 @@ describe("replay import state", () => {
   });
 
   it("reports each blocking review reason while parse errors remain removable and non-blocking", () => {
-    let state = readyState();
-    state = replayImportReducer(state, { type: "PLAYER_DIRECTORY_LOADED", players });
+    let state = readyState({ players });
 
     expect(getBlockingReasons(state)).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: "MISSING_PLAYER_MAPPING" }),
@@ -228,25 +223,15 @@ describe("replay import state", () => {
     expect(getBlockingReasons(state).map((reason) => String(reason.code))).not.toContain("PARSE_FAILURE");
   });
 
-  it.each([
-    ["loading", "PLAYER_DIRECTORY_LOADING"],
-    ["error", "PLAYER_DIRECTORY_FAILED"],
-    ["empty", "PLAYER_DIRECTORY_EMPTY"],
-  ] as const)("keeps parsed results but blocks confirmation while the directory is %s", (status, code) => {
-    let state = readyState();
-    state = replayImportReducer(state, status === "loading"
-      ? { type: "PLAYER_DIRECTORY_LOADING" }
-      : status === "error"
-        ? { type: "PLAYER_DIRECTORY_FAILED", message: "목록 실패" }
-        : { type: "PLAYER_DIRECTORY_LOADED", players: [] });
+  it("keeps parsed results but blocks confirmation while no players are registered", () => {
+    const state = readyState({ players: [] });
 
     expect(state.queue.filter((item) => item.status === "ready")).toHaveLength(2);
-    expect(getBlockingReasons(state)).toContainEqual(expect.objectContaining({ code }));
+    expect(getBlockingReasons(state)).toContainEqual(expect.objectContaining({ code: "PLAYER_DIRECTORY_EMPTY" }));
   });
 
   it("blocks mixed replay dates and duplicate player assignments with explicit reasons", () => {
-    let state = readyState({ secondDateKey: "20250806" });
-    state = replayImportReducer(state, { type: "PLAYER_DIRECTORY_LOADED", players });
+    let state = readyState({ secondDateKey: "20250806", players });
     for (let index = 1; index <= 10; index += 1) {
       state = replayImportReducer(state, {
         type: "PLAYER_MAPPED",
@@ -279,8 +264,8 @@ describe("replay import state", () => {
   });
 });
 
-function readyState(options: { readonly secondDateKey?: string } = {}) {
-  let state = createInitialReplayImportState();
+function readyState(options: { readonly secondDateKey?: string; readonly players?: typeof players } = {}) {
+  let state = createInitialReplayImportState(options.players ?? []);
   state = replayImportReducer(state, {
     type: "FILES_ADDED",
     files: [file("first.StormReplay", 100, "first"), file("second.StormReplay", 100, "second")],
