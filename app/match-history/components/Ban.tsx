@@ -10,7 +10,7 @@ interface Props {
 
 export function Ban({ bans = [] }: Props) {
   return (
-    <div className="flex items-center gap-2 mb-6 text-sm font-bold text-gray-400">
+    <div className="flex items-center gap-2 mb-3 text-sm font-bold text-gray-400">
       밴
       {bans
         .toSorted((a, b) => a.banOrder - b.banOrder)

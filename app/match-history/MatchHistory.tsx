@@ -36,7 +36,7 @@ export function MatchHistory() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="rounded-2xl border border-white/10 bg-white/3 divide-y divide-white/10 overflow-hidden">
       {matches.map((match) => (
         <MatchCard
           key={match.id}

@@ -1,6 +1,6 @@
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { HeroImage } from "@/domain/hots/constants";
-import { HOTS_TALENT_TIERS } from "@/domain/hots/models";
+import { HeroRoleLabelMap, HOTS_TALENT_TIERS } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
 import { round, sumBy } from "es-toolkit";
 import Image from "next/image";
@@ -8,7 +8,6 @@ import { Kda } from "./Kda";
 import { Ban } from "./Ban";
 import { DamageBar } from "@/components/DamageBar";
 import { Rank } from "./Rank";
-import { Position } from "@/components/Position";
 
 type GameTeamBan = MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
 
@@ -22,36 +21,49 @@ interface GameTeamTableProps {
   readonly result: string | null;
   readonly bans: GameTeamBan[];
   readonly members: MemberWithRank[];
-  readonly accent: string;
+  readonly side: 1 | 2;
 }
 
-export function GameTeamTable({ title, level, result, bans, members, accent }: GameTeamTableProps) {
+const SIDE_STYLE = {
+  1: { name: "text-cyan-300", won: "bg-cyan-400/10 text-cyan-300 border-transparent", bar: "bg-cyan-400/60" },
+  2: { name: "text-fuchsia-300", won: "bg-fuchsia-400/10 text-fuchsia-300 border-transparent", bar: "bg-fuchsia-400/60" },
+} as const;
+
+const RESULT_LABEL: Record<string, string> = { WIN: "승", LOSE: "패" };
+
+export function GameTeamTable({ title, level, result, bans, members, side }: GameTeamTableProps) {
+  const style = SIDE_STYLE[side];
   const totalKill = sumBy(members, (m) => m.kills);
   const maxHeroDamage = Math.max(...members.map((m) => m.heroDamage));
   const maxDamageTaken = Math.max(...members.map((m) => m.damageTaken));
 
   return (
-    <div
-      className={`p-4 pb-1 border-t shrink-0 lg:border-t-0 lg:border-l border-white/10 ${accent} ${getTeamBackgroundClass(result)}`}
-    >
-      <div className="flex items-center justify-between text-sm mb-3 gap-3 text-gray-300 font-bold">
-        <span>
-          {title} {level ? `- 레벨 ${level}` : ""}
+    <div className={`p-4 pb-1 min-w-0 rounded-xl border border-white/10 ${getTeamBackgroundClass(result)}`}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <span className={`text-sm font-black ${style.name}`}>{title}</span>
+        <span
+          className={`px-1.5 py-0.5 rounded text-[11px] font-black border ${
+            result === "WIN" ? style.won : "text-gray-400 border-white/10"
+          }`}
+        >
+          {(result && RESULT_LABEL[result]) ?? "무"}
         </span>
-        <span>팀 킬: {totalKill}</span>
+        <span className="text-xs text-gray-400 font-medium tabular-nums">
+          {level ? `Lv ${level} · ` : ""}
+          {totalKill}킬
+        </span>
       </div>
 
       <Ban bans={bans} />
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-md min-w-[500px]">
+      <div className="overflow-x-auto scrollbar-hide">
+        <table className="w-full text-md min-w-[540px] whitespace-nowrap">
           <thead>
             <tr className="text-sm text-gray-300 tracking-tighter border-b border-white/5">
               <th className="pb-2 text-left font-bold w-8"></th>
-              <th className="pb-2 text-left font-bold w-auto min-w-26"></th>
-              <th className="pb-2 text-center font-bold w-22">포지션</th>
+              <th className="pb-2 text-left font-bold w-auto min-w-40"></th>
               <th className="pb-2 text-center font-bold w-26">OP Score</th>
-              <th className="pb-2 text-center font-bold w-38">K/D/T</th>
+              <th className="pb-2 text-center font-bold w-36">K/D/T</th>
               <th className="pb-2 text-center font-bold w-20">피해량</th>
               <th className="pb-2 text-center font-bold w-20">받은 피해량</th>
             </tr>
@@ -75,12 +87,10 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                   </td>
                   <td className="py-2.5 px-2">
                     <div className="font-bold text-gray-200 text-sm whitespace-nowrap">{member.player.nickname}</div>
-                    <div className="text-xs text-gray-500 font-medium">{member.player.name}</div>
+                    <div className="text-xs text-gray-500 font-medium">
+                      {member.player.name} · {HeroRoleLabelMap[member.position]}
+                    </div>
                     {member.talents.length > 0 && <TalentStrip talents={member.talents} />}
-                  </td>
-
-                  <td className="py-2.5 text-center">
-                    <Position position={member.position} />
                   </td>
 
                   <td className="py-2.5 text-center">
@@ -109,7 +119,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
                         {member.heroDamage ? commarize(member.heroDamage) : "-"}
                       </span>
                       {typeof member.heroDamage === "number" && maxHeroDamage > 0 ? (
-                        <DamageBar damage={member.heroDamage} maxDamage={maxHeroDamage} color="bg-red-500/50" />
+                        <DamageBar damage={member.heroDamage} maxDamage={maxHeroDamage} color={style.bar} />
                       ) : (
                         <div className="w-16 h-1 bg-white/5 rounded" />
                       )}
@@ -140,7 +150,7 @@ export function GameTeamTable({ title, level, result, bans, members, accent }: G
 function getTeamBackgroundClass(result: string | null) {
   if (result === "WIN") return "bg-blue-500/10";
   if (result === "LOSE") return "bg-red-500/10";
-  return "bg-white/0";
+  return "bg-white/3";
 }
 
 function TalentStrip({
@@ -151,7 +161,7 @@ function TalentStrip({
   const talentByTier = new Map(talents.map((talent) => [talent.tier, talent] as const));
 
   return (
-    <div className="mt-1.5 flex flex-wrap gap-0.5">
+    <div className="mt-1.5 flex gap-0.5">
       {HOTS_TALENT_TIERS.map((tier) => {
         const talent = talentByTier.get(tier);
         const label = talent?.talentKey ?? talent?.rawCode ?? `${tier} 특성`;
@@ -159,7 +169,7 @@ function TalentStrip({
         return (
           <div
             key={tier}
-            className="relative h-5 w-5 overflow-hidden rounded border border-white/10 bg-white/5"
+            className="relative h-5 w-5 shrink-0 overflow-hidden rounded border border-white/10 bg-white/5"
             title={`${tier}레벨: ${label}`}
           >
             {talent?.imagePath ? (
