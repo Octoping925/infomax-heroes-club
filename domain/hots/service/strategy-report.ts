@@ -23,9 +23,8 @@ import {
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
-import { GameMap, Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
+import { GameMap, GameResult, Hero, HeroRole } from "@/domain/hots/models";
 import type { PrismaClient } from "@/generated/prisma/client";
-import { GameResult } from "@/generated/prisma/client";
 import { groupBy, meanBy, round, uniq } from "es-toolkit";
 
 const MAX_TEAM_SIZE = 5;
@@ -34,7 +33,7 @@ const RECENT_FORM_GAMES = 8;
 const RECENT_ACTIVITY_GAMES = 5;
 const TEAM_LIST_LIMIT = 4;
 const MIN_STRATEGY_HERO_GAMES = 3;
-const ROLE_ORDER: readonly HeroRole[] = Object.values(HeroRoles);
+const ROLE_ORDER: readonly HeroRole[] = Object.values(HeroRole);
 
 const ROLE_LABELS: Record<HeroRole, string> = {
   TANKER: "탱커",
@@ -486,11 +485,17 @@ function buildTeamAnalysis(
 ): TeamAnalysis {
   const averageOverallWinRate =
     playerAnalyses.length > 0
-      ? round(meanBy(playerAnalyses, (analysis) => analysis.report.overallStats.winRate), 1)
+      ? round(
+          meanBy(playerAnalyses, (analysis) => analysis.report.overallStats.winRate),
+          1,
+        )
       : 0;
   const averageRecentWinRate =
     playerAnalyses.length > 0
-      ? round(meanBy(playerAnalyses, (analysis) => analysis.report.recentStats.winRate), 1)
+      ? round(
+          meanBy(playerAnalyses, (analysis) => analysis.report.recentStats.winRate),
+          1,
+        )
       : 0;
 
   const roleCoverage = ROLE_ORDER.map((role) => {

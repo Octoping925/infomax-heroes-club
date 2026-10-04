@@ -1,6 +1,5 @@
-import { HERO_CATALOG } from "@domain/hots/constants";
+import { HERO_CATALOG, MAP_CATALOG } from "@domain/hots/constants";
 import { Hero, GameMap } from "@domain/hots/models";
-import { MAP_CATALOG } from "../constants/maps";
 
 /** 파싱된 플레이어 스탯 */
 export type ParsedPlayerStat = {

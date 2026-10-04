@@ -7,7 +7,7 @@ import {
   ResultCounts,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
-import { GameResult } from "@/generated/prisma/enums";
+import { GameResult } from "@/domain/hots/models";
 import { fetchPlayerMap } from "../utils/player";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 

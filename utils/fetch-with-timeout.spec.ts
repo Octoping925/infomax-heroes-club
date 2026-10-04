@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchWithTimeout } from "./fetch-with-timeout";
+import { fetchWithTimeout } from "@/utils/fetch-with-timeout";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -9,9 +9,17 @@ afterEach(() => {
 describe("fetchWithTimeout", () => {
   it("aborts a request after the configured timeout", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("fetch", vi.fn((_input: RequestInfo | URL, init?: RequestInit) => new Promise((_resolve, reject) => {
-      init?.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_input: RequestInfo | URL, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+            );
+          }),
+      ),
+    );
 
     const request = fetchWithTimeout("/slow", {}, 100);
     const rejection = expect(request).rejects.toMatchObject({ name: "AbortError" });

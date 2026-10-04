@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult } from "@/generated/prisma/client";
 import { HeroTierResponse, HeroTierLabel } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
-import { Hero } from "@/domain/hots/models";
+import { GameResult, Hero } from "@/domain/hots/models";
 import { groupBy } from "@/utils/groupBy";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";

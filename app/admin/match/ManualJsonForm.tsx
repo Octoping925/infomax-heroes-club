@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { PlayerListItem } from "@/app/api/players/route";
-import { fetchWithTimeout } from "./fetch-with-timeout";
+import { fetchWithTimeout } from "@/utils/fetch-with-timeout";
 import { SelectField, isRecord, readApiMessage, toSelectOption } from "./form-shared";
 
 type ManualSaveState =

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult } from "@/generated/prisma/client";
 import { PlayerHeroMapWinRateResponse, PlayerHeroWinRateResponse, HeroWinRateResponse } from "@/app/api/stats/types";
 import {
   buildWinRateStatsFromCounts,
@@ -8,7 +7,7 @@ import {
   ResultCounts,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
-import { GameMap, Hero } from "@/domain/hots/models";
+import { GameMap, Hero, GameResult } from "@/domain/hots/models";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 type RouteParams = {

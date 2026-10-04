@@ -1,8 +1,7 @@
 import { prisma } from "@/config/prisma";
 import { HERO_BY_KOREAN_NAME, MAP_BY_KOREAN_NAME } from "@/domain/hots/constants/korean-name-lookups";
-import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
+import { Hero, HeroRole, HOTS_TALENT_TIERS, isTalentTier, MatchType, TalentTier } from "@/domain/hots/models";
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
-import { MatchType } from "@/generated/prisma/enums";
 import { MatchServiceError } from "./errors";
 import { persistNormalizedMatch, type PersistPlayer, type PersistTeam } from "./persist-normalized-match";
 import type {
@@ -29,7 +28,7 @@ export type CreateMatchesFromJsonResponse = {
   readonly matchIds: ReadonlyArray<string>;
 };
 
-const ROLE_SET = new Set<string>(Object.values(HeroRoles));
+const ROLE_SET = new Set<string>(Object.values(HeroRole));
 const DATE_PATTERN = /^\d{8}$/;
 
 export async function createMatchesFromJson(input: unknown): Promise<CreateMatchesFromJsonResponse> {
@@ -378,7 +377,7 @@ function normalizeTalents(input: RawPlayerStat["talents"], hero: Hero, label: st
 
 function parsePosition(position: string | undefined, label: string): HeroRole {
   if (!position || position.length === 0) {
-    return HeroRoles.TANKER;
+    return HeroRole.TANKER;
   }
   if (!ROLE_SET.has(position)) {
     throw new MatchServiceError(`${label}: 잘못된 포지션(${position})`);

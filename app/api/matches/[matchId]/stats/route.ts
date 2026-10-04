@@ -1,8 +1,8 @@
 import { prisma } from "@/config/prisma";
-import { Hero, HeroRole, HeroRoles } from "@/domain/hots/models";
-import { HERO_CATALOG } from "@/domain/hots/constants";
+import { Hero, HeroRole } from "@/domain/hots/models";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { NextRequest, NextResponse } from "next/server";
+import { isValidHero, isValidHeroRole } from "@/domain/hots/service/hero-service";
 
 type UpdateGameTeamMemberStatsInput = {
   readonly gameTeamMemberId: string;
@@ -319,23 +319,15 @@ function validateUpdate(update: UpdateGameTeamMemberStatsInput): string | null {
     }
   }
 
-  if (!isValidHeroKey(update.hero)) {
+  if (!isValidHero(update.hero)) {
     return "영웅 정보가 올바르지 않습니다.";
   }
 
-  if (!isValidHeroRoleKey(update.position)) {
+  if (!isValidHeroRole(update.position)) {
     return "포지션 정보가 올바르지 않습니다.";
   }
 
   return null;
-}
-
-function isValidHeroKey(input: string): input is Hero {
-  return Object.hasOwn(HERO_CATALOG, input);
-}
-
-function isValidHeroRoleKey(input: string): input is HeroRole {
-  return Object.hasOwn(HeroRoles, input);
 }
 
 async function applyPlayerAssignments({

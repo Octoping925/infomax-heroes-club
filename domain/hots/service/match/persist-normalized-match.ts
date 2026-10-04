@@ -1,5 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
-import type { MatchType } from "@/generated/prisma/enums";
+import { GameMap, Hero, MatchType } from "@domain/hots/models";
 import type { NormalizedPlayer } from "@/domain/hots/types/replay-import-contract";
 import { calculateGameResult } from "./common";
 import { MatchServiceError } from "./errors";
@@ -14,13 +14,13 @@ export type PersistTeam = {
   readonly sourceTeamNumber: 1 | 2;
   readonly teamLevel: number;
   readonly players: ReadonlyArray<PersistPlayer>;
-  readonly bans: NormalizedPlayer["hero"][];
+  readonly bans: Hero[];
 };
 
 export type PersistGame = {
   readonly gameNumber: number;
   readonly gameLength: number;
-  readonly map: import("@/generated/prisma/enums").GameMap;
+  readonly map: GameMap;
   readonly winnerTeamNumber: number | null;
   readonly sourceReplayHash: string | null;
   readonly teams: readonly [PersistTeam, PersistTeam];

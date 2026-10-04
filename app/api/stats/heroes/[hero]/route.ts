@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { Hero } from "@/generated/prisma/client";
+import { isValidHero } from "@/domain/hots/service/hero-service";
 import { HeroWinRateResponse } from "@/app/api/stats/types";
 import { buildWinRateStatsFromResults } from "@/app/api/stats/utils/stats";
 
@@ -36,8 +36,4 @@ export async function GET(
   const stats = buildWinRateStatsFromResults(gameResults.map((r) => r.gameTeam.result));
 
   return NextResponse.json({ hero, ...stats });
-}
-
-function isValidHero(hero: string): hero is Hero {
-  return Object.values(Hero).includes(hero as Hero);
 }

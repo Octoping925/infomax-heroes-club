@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GameResult } from "@/generated/prisma/client";
 
 const { mockPrisma, mockParseGameStats } = vi.hoisted(() => ({
   mockPrisma: {
@@ -21,6 +20,7 @@ vi.mock("@/domain/hots/utils/game-stats-parser", () => ({
 
 import { createMatch } from "./create";
 import { MatchServiceError } from "./errors";
+import { GameResult } from "../../models";
 
 function createRequest() {
   return {
@@ -149,10 +149,7 @@ describe("createMatch", () => {
         create: vi.fn().mockResolvedValue({ id: "g1" }),
       },
       gameTeam: {
-        create: vi
-          .fn()
-          .mockResolvedValueOnce({ id: "gt1" })
-          .mockResolvedValueOnce({ id: "gt2" }),
+        create: vi.fn().mockResolvedValueOnce({ id: "gt1" }).mockResolvedValueOnce({ id: "gt2" }),
       },
       gameTeamMember: {
         createMany: vi.fn().mockResolvedValue(undefined),

@@ -1,6 +1,6 @@
 export type HeroRole = "TANKER" | "OFFLANER" | "MAIN_DEALER" | "SUB_DEALER" | "HEALER";
 
-export const HeroRoles = {
+export const HeroRole = {
   TANKER: "TANKER",
   OFFLANER: "OFFLANER",
   MAIN_DEALER: "MAIN_DEALER",

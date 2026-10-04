@@ -10,7 +10,7 @@ import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { buildPlayedAtYearFilter } from "@/app/api/stats/utils/query";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { clamp, round, sum, sumBy } from "es-toolkit";
-import { Hero } from "@domain/hots/models";
+import { GameResult, Hero } from "@domain/hots/models";
 
 type PlayerInfo = {
   readonly playerId: string;
@@ -21,7 +21,7 @@ type PlayerInfo = {
 type H2HMatch = {
   readonly matchId: string;
   readonly playedAt: Date;
-  readonly resultForA: "WIN" | "LOSE" | "DRAW";
+  readonly resultForA: GameResult;
 };
 
 type PairAccumulator = {
@@ -89,11 +89,7 @@ export async function fetchRivalries(prisma: PrismaClient, params: FetchRivalrie
 
   const [matches, overallWinRateByPlayerId] = await Promise.all([
     prisma.match.findMany({
-      where: playedAt
-        ? {
-            playedAt,
-          }
-        : undefined,
+      where: playedAt ? { playedAt } : undefined,
       orderBy: { playedAt: "desc" },
       take: normalizedParams.takeMatches,
       select: {

@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { HERO_CATALOG } from "@/domain/hots/constants";
-import { isTalentTier, type Hero } from "@/domain/hots/models";
-import { Talent } from "../models/talent";
+import { isTalentTier, type Hero, Talent } from "@/domain/hots/models";
 
 export type TalentPickInput = {
   readonly tier: number;

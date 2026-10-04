@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Hero, MatchType } from "@/generated/prisma/client";
+import { Hero, MatchType } from "../models";
+import { HERO_CATALOG } from "../constants";
 
 const { mockFetchPlayerMap } = vi.hoisted(() => ({
   mockFetchPlayerMap: vi.fn(),
@@ -34,7 +35,7 @@ function makeMatch(input: {
   const type = input.type ?? MatchType.LUNCH;
   const a = {
     playerId: "a",
-    hero: Hero.Ana,
+    hero: HERO_CATALOG.Ana,
     kills: 10,
     deaths: 2,
     takedowns: 12,
@@ -43,7 +44,7 @@ function makeMatch(input: {
   };
   const b = {
     playerId: "b",
-    hero: Hero.Jaina,
+    hero: HERO_CATALOG.Jaina,
     kills: 5,
     deaths: 4,
     takedowns: 8,
@@ -193,7 +194,7 @@ describe("fetchRivalries", () => {
                     members: [
                       {
                         playerId: "a",
-                        hero: Hero.Ana,
+                        hero: HERO_CATALOG.Ana,
                         kills: 10,
                         deaths: 2,
                         takedowns: 12,
@@ -206,7 +207,7 @@ describe("fetchRivalries", () => {
                     members: [
                       {
                         playerId: "b",
-                        hero: Hero.Jaina,
+                        hero: HERO_CATALOG.Jaina,
                         kills: 5,
                         deaths: 4,
                         takedowns: 8,
@@ -280,9 +281,7 @@ describe("fetchRivalries", () => {
             return matches;
           }
 
-          return matches.filter(
-            (match) => match.playedAt >= playedAt.gte && match.playedAt < playedAt.lt,
-          );
+          return matches.filter((match) => match.playedAt >= playedAt.gte && match.playedAt < playedAt.lt);
         }),
       },
       matchTeamMember: {

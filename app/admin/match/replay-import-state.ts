@@ -1,10 +1,8 @@
 import type { PlayerListItem } from "@/app/api/players/route";
 import type { NormalizedReplay } from "@/domain/hots/replay/contracts";
-import {
-  REPLAY_FILE_MAX_BYTES,
-  REPLAY_MAX_BATCH_FILES,
-} from "@/domain/hots/replay/limits";
-import { omit } from "es-toolkit";
+import { REPLAY_FILE_MAX_BYTES, REPLAY_MAX_BATCH_FILES } from "@/domain/hots/replay/limits";
+import { omit, uniq } from "es-toolkit";
+import { MatchType } from "@domain/hots/models/match";
 
 export type ReplayFileDescriptor = {
   readonly id: string;
@@ -59,7 +57,7 @@ export type ReplayImportState = {
   readonly orientations: Readonly<Record<string, OrientationChoice>>;
   readonly team1LeaderId: string;
   readonly team2LeaderId: string;
-  readonly matchType: "LUNCH" | "DINNER";
+  readonly matchType: MatchType;
   readonly confirm: ConfirmState;
 };
 
@@ -88,7 +86,7 @@ export type ReplayImportAction =
       readonly orientation: Orientation;
     }
   | { readonly type: "LEADER_SELECTED"; readonly team: 1 | 2; readonly playerId: string }
-  | { readonly type: "MATCH_TYPE_SELECTED"; readonly matchType: "LUNCH" | "DINNER" }
+  | { readonly type: "MATCH_TYPE_SELECTED"; readonly matchType: MatchType }
   | { readonly type: "CONFIRM_STARTED" }
   | {
       readonly type: "CONFIRM_SUCCEEDED";
@@ -116,11 +114,7 @@ export type BlockingReason = {
   readonly targetId: string;
 };
 
-export type FileValidationErrorCode =
-  | "INVALID_EXTENSION"
-  | "EMPTY_FILE"
-  | "FILE_TOO_LARGE"
-  | "BATCH_LIMIT_EXCEEDED";
+export type FileValidationErrorCode = "INVALID_EXTENSION" | "EMPTY_FILE" | "FILE_TOO_LARGE" | "BATCH_LIMIT_EXCEEDED";
 
 export type FileValidationResult = {
   readonly accepted: ReadonlyArray<ReplayFileDescriptor>;
@@ -144,10 +138,7 @@ export function createInitialReplayImportState(players: ReadonlyArray<PlayerList
   };
 }
 
-export function replayImportReducer(
-  state: ReplayImportState,
-  action: ReplayImportAction,
-): ReplayImportState {
+export function replayImportReducer(state: ReplayImportState, action: ReplayImportAction): ReplayImportState {
   switch (action.type) {
     case "FILES_ADDED":
       return resetConfirm({
@@ -177,46 +168,56 @@ export function replayImportReducer(
       if (!next) return state;
       return {
         ...state,
-        queue: state.queue.map((item) => item.id === next.id ? { ...item, status: "uploading" } : item),
+        queue: state.queue.map((item) => (item.id === next.id ? { ...item, status: "uploading" } : item)),
       };
     }
     case "UPLOAD_SUCCEEDED": {
       const uploaded = resetConfirm({
         ...state,
-        queue: state.queue.map((item) => item.id === action.id
-          ? { id: item.id, file: item.file, status: "ready", parsed: action.parsed }
-          : item),
+        queue: state.queue.map((item) =>
+          item.id === action.id ? { id: item.id, file: item.file, status: "ready", parsed: action.parsed } : item,
+        ),
       });
       return reconcileReadyChoices({ ...uploaded, playerMappings: applySuggestedMappings(uploaded) });
     }
     case "UPLOAD_FAILED":
       return reconcileReadyChoices({
         ...state,
-        queue: state.queue.map((item) => item.id === action.id
-          ? { id: item.id, file: item.file, status: "error", failure: action.failure, message: action.message }
-          : item),
+        queue: state.queue.map((item) =>
+          item.id === action.id
+            ? { id: item.id, file: item.file, status: "error", failure: action.failure, message: action.message }
+            : item,
+        ),
       });
     case "FILE_RETRY_REQUESTED":
-      return reconcileReadyChoices(resetConfirm({
-        ...state,
-        queue: state.queue.map((item) => item.id === action.id
-          ? { id: item.id, file: item.file, status: "queued" }
-          : item),
-      }));
+      return reconcileReadyChoices(
+        resetConfirm({
+          ...state,
+          queue: state.queue.map((item) =>
+            item.id === action.id ? { id: item.id, file: item.file, status: "queued" } : item,
+          ),
+        }),
+      );
     case "FILE_REMOVED":
-      return reconcileReadyChoices(resetConfirm({
-        ...state,
-        queue: state.queue.filter((item) => item.id !== action.id),
-      }));
+      return reconcileReadyChoices(
+        resetConfirm({
+          ...state,
+          queue: state.queue.filter((item) => item.id !== action.id),
+        }),
+      );
     case "FILE_MOVED":
-      return reconcileReadyChoices(resetConfirm({ ...state, queue: moveItem(state.queue, action.id, action.direction) }));
+      return reconcileReadyChoices(
+        resetConfirm({ ...state, queue: moveItem(state.queue, action.id, action.direction) }),
+      );
     case "PLAYER_MAPPED":
-      return reconcileReadyChoices(resetConfirm({
-        ...state,
-        playerMappings: action.playerId
-          ? { ...state.playerMappings, [action.rawName]: action.playerId }
-          : omit(state.playerMappings, [action.rawName]),
-      }));
+      return reconcileReadyChoices(
+        resetConfirm({
+          ...state,
+          playerMappings: action.playerId
+            ? { ...state.playerMappings, [action.rawName]: action.playerId }
+            : omit(state.playerMappings, [action.rawName]),
+        }),
+      );
     case "ORIENTATION_SELECTED": {
       const first = readyItems(state.queue)[0];
       if (first?.parsed.sourceReplayHash === action.sourceReplayHash) return state;
@@ -229,9 +230,9 @@ export function replayImportReducer(
       });
     }
     case "LEADER_SELECTED":
-      return resetConfirm(action.team === 1
-        ? { ...state, team1LeaderId: action.playerId }
-        : { ...state, team2LeaderId: action.playerId });
+      return resetConfirm(
+        action.team === 1 ? { ...state, team1LeaderId: action.playerId } : { ...state, team2LeaderId: action.playerId },
+      );
     case "MATCH_TYPE_SELECTED":
       return resetConfirm({ ...state, matchType: action.matchType });
     case "CONFIRM_STARTED":
@@ -286,10 +287,18 @@ export function getBlockingReasons(state: ReplayImportState): ReadonlyArray<Bloc
     reasons.push({ code: "NO_VALID_GAMES", message: "저장할 수 있는 리플레이가 없습니다.", targetId: "replay-files" });
   }
   if (state.queue.some((item) => item.status === "queued" || item.status === "uploading")) {
-    reasons.push({ code: "UPLOAD_IN_PROGRESS", message: "모든 리플레이 처리가 끝날 때까지 기다려 주세요.", targetId: "replay-queue" });
+    reasons.push({
+      code: "UPLOAD_IN_PROGRESS",
+      message: "모든 리플레이 처리가 끝날 때까지 기다려 주세요.",
+      targetId: "replay-queue",
+    });
   }
   if (state.players.length === 0) {
-    reasons.push({ code: "PLAYER_DIRECTORY_EMPTY", message: "등록된 선수가 없어 매핑할 수 없습니다.", targetId: "player-directory-status" });
+    reasons.push({
+      code: "PLAYER_DIRECTORY_EMPTY",
+      message: "등록된 선수가 없어 매핑할 수 없습니다.",
+      targetId: "player-directory-status",
+    });
   }
 
   const rawNames = allRawNames(ready);
@@ -439,14 +448,18 @@ function inferOrientation(
 }
 
 function readyItems(queue: ReadonlyArray<ReplayQueueItem>) {
-  return queue.filter((item): item is Extract<ReplayQueueItem, { readonly status: "ready" }> => item.status === "ready");
+  return queue.filter(
+    (item): item is Extract<ReplayQueueItem, { readonly status: "ready" }> => item.status === "ready",
+  );
 }
 
 function allRawNames(ready: ReturnType<typeof readyItems>): string[] {
-  return Array.from(new Set(ready.flatMap((item) => [
-    ...item.parsed.preview.game.team1.players.map((player) => player.rawName),
-    ...item.parsed.preview.game.team2.players.map((player) => player.rawName),
-  ])));
+  return uniq(
+    ready.flatMap((item) => [
+      ...item.parsed.preview.game.team1.players.map((player) => player.rawName),
+      ...item.parsed.preview.game.team2.players.map((player) => player.rawName),
+    ]),
+  );
 }
 
 function originalTeamPlayerIds(
@@ -464,7 +477,7 @@ function mappedTeam(
   players: NormalizedReplay["game"]["team1"]["players"],
   mappings: Readonly<Record<string, string>>,
 ): string[] {
-  return players.flatMap((player) => mappings[player.rawName] ? [mappings[player.rawName]] : []);
+  return players.flatMap((player) => (mappings[player.rawName] ? [mappings[player.rawName]] : []));
 }
 
 function overlap(left: ReadonlyArray<string>, right: ReadonlyArray<string>): number {
@@ -472,10 +485,7 @@ function overlap(left: ReadonlyArray<string>, right: ReadonlyArray<string>): num
   return left.filter((value) => rightSet.has(value)).length;
 }
 
-function hasPlayerCollision(
-  ready: ReturnType<typeof readyItems>,
-  mappings: Readonly<Record<string, string>>,
-): boolean {
+function hasPlayerCollision(ready: ReturnType<typeof readyItems>, mappings: Readonly<Record<string, string>>): boolean {
   return ready.some((item) => {
     const mapped = [
       ...mappedTeam(item.parsed.preview.game.team1.players, mappings),
@@ -489,10 +499,7 @@ function applySuggestedMappings(state: ReplayImportState): Readonly<Record<strin
   const byNickname = new Map(state.players.map((player) => [player.nickname.toLocaleLowerCase("ko"), player.id]));
   const suggested = { ...state.playerMappings };
   for (const item of readyItems(state.queue)) {
-    for (const replayPlayer of [
-      ...item.parsed.preview.game.team1.players,
-      ...item.parsed.preview.game.team2.players,
-    ]) {
+    for (const replayPlayer of [...item.parsed.preview.game.team1.players, ...item.parsed.preview.game.team2.players]) {
       if (suggested[replayPlayer.rawName]) continue;
       const nickname = replayPlayer.suggestedNickname ?? replayPlayer.rawName;
       const playerId = byNickname.get(nickname.toLocaleLowerCase("ko"));

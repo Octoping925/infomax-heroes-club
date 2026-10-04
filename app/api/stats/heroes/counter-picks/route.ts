@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
-import { GameResult } from "@/generated/prisma/client";
-import { Hero } from "@/domain/hots/models";
+import { GameResult, Hero } from "@/domain/hots/models";
 import { HeroCounterPickResponse } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";

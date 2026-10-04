@@ -1,4 +1,4 @@
-import { GameResult } from "@/generated/prisma/client";
+import { GameResult } from "@/domain/hots/models";
 import { WinRateStats } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 

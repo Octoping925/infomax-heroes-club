@@ -1,4 +1,4 @@
-import { GameResult } from "@/generated/prisma/client";
+import { GameResult } from "../../models";
 import { PlayerStats, PlayerStatsSource } from "./types";
 
 const DEFAULT_TAKE = 50;

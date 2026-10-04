@@ -1,5 +1,4 @@
-import type { Hero } from "../models/hero";
-import type { GameMap } from "../models/map";
+import type { Hero, GameMap } from "@domain/hots/models";
 import { HERO_CATALOG } from "./hero-catalog";
 import { MAP_CATALOG } from "./maps";
 

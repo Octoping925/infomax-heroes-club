@@ -1,6 +1,4 @@
-import type { GameMap, Hero, HeroRole } from "@/domain/hots/models";
-import type { GameResult, MatchType } from "@/generated/prisma/client";
-import { Talent } from "../models/talent";
+import type { GameMap, Hero, HeroRole, GameResult, MatchType, Talent } from "@/domain/hots/models";
 
 export type MatchHistoryPlayer = {
   readonly id: string;

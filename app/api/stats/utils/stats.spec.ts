@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GameResult } from "@/generated/prisma/client";
+import { GameResult } from "@/domain/hots/models";
 import {
   buildWinRateStatsFromCounts,
   buildWinRateStatsFromResults,

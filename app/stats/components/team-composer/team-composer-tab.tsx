@@ -1,14 +1,14 @@
 "use client";
 
 import type { TeamingPairStatResponse, TeamingPlayerProfileResponse, TeamingWindowStats } from "@/app/api/stats/types";
-import { HeroRoleLabelMap, HeroRoles, type HeroRole } from "@/domain/hots/models";
+import { HeroRoleLabelMap, HeroRole } from "@/domain/hots/models";
 import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
 import { meanBy, round, shuffle, uniq } from "es-toolkit";
 import { formatStatsYear, useStatsYear } from "../../hooks/useStatsYearFilter";
 
-const ROLE_ORDER = Object.values(HeroRoles);
+const ROLE_ORDER = Object.values(HeroRole);
 
 type TeamSuggestion = {
   readonly teamA: string[];

@@ -5,7 +5,7 @@ import { REPLAY_MAX_BATCH_FILES } from "@/domain/hots/replay/limits";
 import { ReplayDraftError, verifyReplayDraft } from "@/domain/hots/replay/replay-draft";
 import type { NormalizedGame, RawGame, RawPlayerStat, RawTeam } from "@/domain/hots/types/replay-import-contract";
 import { Prisma } from "@/generated/prisma/client";
-import { MatchType } from "@/generated/prisma/enums";
+import { MatchType } from "@domain/hots/models";
 import { normalizeGame } from "./create-from-json";
 import { MatchServiceError } from "./errors";
 import {
@@ -55,7 +55,7 @@ export type CreateMatchFromReplaysRequest = {
   readonly playerMappings: Readonly<Record<string, string>>;
   readonly team1LeaderId: string;
   readonly team2LeaderId: string;
-  readonly type: "LUNCH" | "DINNER";
+  readonly type: MatchType;
 };
 
 export type CreateMatchFromReplaysResponse = {
@@ -112,7 +112,10 @@ function parseRequest(input: unknown): CreateMatchFromReplaysRequest {
     throw new MatchServiceError("playerMappings가 너무 큽니다.");
   }
   const playerMappings = Object.fromEntries(
-    Object.entries(mappingsObject).map(([rawName, playerId]) => [rawName, readString(playerId, `playerMappings.${rawName}`)]),
+    Object.entries(mappingsObject).map(([rawName, playerId]) => [
+      rawName,
+      readString(playerId, `playerMappings.${rawName}`),
+    ]),
   );
   const type = readString(body.type, "type");
   if (type !== MatchType.LUNCH && type !== MatchType.DINNER) {
@@ -197,7 +200,10 @@ function buildPersistenceInput(
     }
     validateOrientationPlausibility(game, new Set(originalTeam1PlayerIds), new Set(originalTeam2PlayerIds));
   }
-  if (!originalTeam1PlayerIds.includes(request.team1LeaderId) || !originalTeam2PlayerIds.includes(request.team2LeaderId)) {
+  if (
+    !originalTeam1PlayerIds.includes(request.team1LeaderId) ||
+    !originalTeam2PlayerIds.includes(request.team2LeaderId)
+  ) {
     throw new MatchServiceError("리더는 첫 게임에서 정의된 각 원래 팀의 멤버여야 합니다.");
   }
   return {
@@ -222,17 +228,11 @@ function toPersistGame(draft: VerifiedDraft, mappings: Readonly<Record<string, s
     map: normalized.map,
     winnerTeamNumber: normalized.winnerTeamNumber,
     sourceReplayHash: draft.sourceReplayHash,
-    teams: [
-      toPersistTeam(normalized, 1, sourceNumbers[0]),
-      toPersistTeam(normalized, 2, sourceNumbers[1]),
-    ],
+    teams: [toPersistTeam(normalized, 1, sourceNumbers[0]), toPersistTeam(normalized, 2, sourceNumbers[1])],
   };
 }
 
-function createImportFingerprint(
-  request: CreateMatchFromReplaysRequest,
-  drafts: ReadonlyArray<VerifiedDraft>,
-): string {
+function createImportFingerprint(request: CreateMatchFromReplaysRequest, drafts: ReadonlyArray<VerifiedDraft>): string {
   const usedRawNames = new Set(
     drafts.flatMap((draft) => [
       ...draft.replay.game.team1.players.map((player) => player.rawName),
@@ -287,11 +287,17 @@ function playersForSourceTeam(game: PersistGame, sourceTeamNumber: 1 | 2): Reado
     .players.map((player) => player.playerId);
 }
 
-function validateOrientationPlausibility(game: PersistGame, originalTeam1: Set<string>, originalTeam2: Set<string>): void {
+function validateOrientationPlausibility(
+  game: PersistGame,
+  originalTeam1: Set<string>,
+  originalTeam2: Set<string>,
+): void {
   const side1 = game.teams[0].players.map((player) => player.playerId);
   const side2 = game.teams[1].players.map((player) => player.playerId);
-  const normalScore = side1.filter((id) => originalTeam1.has(id)).length + side2.filter((id) => originalTeam2.has(id)).length;
-  const swappedScore = side1.filter((id) => originalTeam2.has(id)).length + side2.filter((id) => originalTeam1.has(id)).length;
+  const normalScore =
+    side1.filter((id) => originalTeam1.has(id)).length + side2.filter((id) => originalTeam2.has(id)).length;
+  const swappedScore =
+    side1.filter((id) => originalTeam2.has(id)).length + side2.filter((id) => originalTeam1.has(id)).length;
   const chosenScore = game.teams[0].sourceTeamNumber === 1 ? normalScore : swappedScore;
   if (chosenScore < Math.max(normalScore, swappedScore)) {
     throw new MatchServiceError("선택한 팀 방향이 선수 겹침 결과와 일치하지 않습니다.", 409);
@@ -316,7 +322,8 @@ async function resolveExistingMatch(
     select: { matchId: true, sourceReplayHash: true },
   });
   if (overlap.length === 0) return null;
-  if (overlap.length !== hashes.length || new Set(overlap.map((game) => game.matchId)).size !== 1) throw replayConflict();
+  if (overlap.length !== hashes.length || new Set(overlap.map((game) => game.matchId)).size !== 1)
+    throw replayConflict();
   const match = await tx.match.findUnique({ where: { id: overlap[0].matchId }, select: existingMatchSelect });
   if (!match || !matchesExactly(match, input)) throw replayConflict();
   return match;
@@ -331,25 +338,47 @@ function matchesExactly(
     match.playedAt.getTime() !== input.playedAt.getTime() ||
     match.replayImportFingerprint !== input.replayImportFingerprint ||
     match.games.length !== input.games.length
-  ) return false;
+  )
+    return false;
   const teamByNumber = new Map(match.teams.map((team) => [team.teamNumber, team]));
   const team1 = teamByNumber.get(1);
   const team2 = teamByNumber.get(2);
-  if (!team1 || !team2 || team1.leaderId !== input.team1LeaderId || team2.leaderId !== input.team2LeaderId) return false;
-  if (!sameSet(team1.members.map((member) => member.playerId), input.originalTeam1PlayerIds)) return false;
-  if (!sameSet(team2.members.map((member) => member.playerId), input.originalTeam2PlayerIds)) return false;
-  const matchTeamIdByNumber = new Map([[1, team1.id], [2, team2.id]]);
+  if (!team1 || !team2 || team1.leaderId !== input.team1LeaderId || team2.leaderId !== input.team2LeaderId)
+    return false;
+  if (
+    !sameSet(
+      team1.members.map((member) => member.playerId),
+      input.originalTeam1PlayerIds,
+    )
+  )
+    return false;
+  if (
+    !sameSet(
+      team2.members.map((member) => member.playerId),
+      input.originalTeam2PlayerIds,
+    )
+  )
+    return false;
+  const matchTeamIdByNumber = new Map([
+    [1, team1.id],
+    [2, team2.id],
+  ]);
   const existingGames = match.games.toSorted((a, b) => a.gameNumber - b.gameNumber);
   return existingGames.every((existing, index) => {
     const requested = input.games[index];
-    if (!requested || existing.gameNumber !== requested.gameNumber || existing.sourceReplayHash !== requested.sourceReplayHash) return false;
+    if (
+      !requested ||
+      existing.gameNumber !== requested.gameNumber ||
+      existing.sourceReplayHash !== requested.sourceReplayHash
+    )
+      return false;
     if (existing.teams.length !== 2) return false;
     return existing.teams.every((existingTeam) => {
       const requestedTeam = requested.teams.find((team) => team.teamNumber === existingTeam.teamNumber);
       return Boolean(
         requestedTeam &&
-          existingTeam.sourceMatchTeamId === matchTeamIdByNumber.get(requestedTeam.sourceTeamNumber) &&
-          sameMembers(existingTeam.members, requestedTeam.players),
+        existingTeam.sourceMatchTeamId === matchTeamIdByNumber.get(requestedTeam.sourceTeamNumber) &&
+        sameMembers(existingTeam.members, requestedTeam.players),
       );
     });
   });
@@ -364,7 +393,10 @@ function sameMembers(
   requested: ReadonlyArray<{ readonly playerId: string; readonly hero: string }>,
 ): boolean {
   const requestedKeys = requested.map((member) => `${member.playerId}:${member.hero}`);
-  return sameSet(existing.map((member) => `${member.playerId}:${member.hero}`), requestedKeys);
+  return sameSet(
+    existing.map((member) => `${member.playerId}:${member.hero}`),
+    requestedKeys,
+  );
 }
 
 function parseSeoulDate(dateKey: string): Date {
@@ -372,8 +404,18 @@ function parseSeoulDate(dateKey: string): Date {
   const month = Number(dateKey.slice(4, 6));
   const day = Number(dateKey.slice(6, 8));
   const value = new Date(`${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}T00:00:00+09:00`);
-  const check = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(value);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day) || check !== `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`) {
+  const check = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(value);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    check !== `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
+  ) {
     throw new MatchServiceError(`${dateKey}: 존재하지 않는 날짜입니다.`);
   }
   return value;
@@ -388,16 +430,19 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 function readObject(value: unknown, label: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new MatchServiceError(`${label}는 객체여야 합니다.`);
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw new MatchServiceError(`${label}는 객체여야 합니다.`);
   return value as Record<string, unknown>;
 }
 
 function readString(value: unknown, label: string): string {
-  if (typeof value !== "string" || value.trim().length === 0) throw new MatchServiceError(`${label}는 문자열이어야 합니다.`);
+  if (typeof value !== "string" || value.trim().length === 0)
+    throw new MatchServiceError(`${label}는 문자열이어야 합니다.`);
   return value.trim();
 }
 
 function readPositiveInt(value: unknown, label: string): number {
-  if (!Number.isSafeInteger(value) || Number(value) < 1) throw new MatchServiceError(`${label}는 1 이상의 정수여야 합니다.`);
+  if (!Number.isSafeInteger(value) || Number(value) < 1)
+    throw new MatchServiceError(`${label}는 1 이상의 정수여야 합니다.`);
   return Number(value);
 }

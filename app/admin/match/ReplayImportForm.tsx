@@ -5,7 +5,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { PlayerListItem } from "@/app/api/players/route";
 import { Dropzone } from "@/components/Dropzone";
 import type { ReplayImportPlayer } from "@/domain/hots/replay/contracts";
-import { fetchWithTimeout } from "./fetch-with-timeout";
+import { fetchWithTimeout } from "@/utils/fetch-with-timeout";
 import { SelectField, isRecord, readApiMessage, toSelectOption } from "./form-shared";
 import {
   buildConfirmRequest,

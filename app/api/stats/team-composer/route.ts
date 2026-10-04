@@ -1,7 +1,7 @@
 import { TeamComposerResponse, TeamingPairStatResponse, TeamingWindowStats } from "@/app/api/stats/types";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { prisma } from "@/config/prisma";
-import { HeroRole, HeroRoles } from "@/domain/hots/models";
+import { HeroRole, GameResult } from "@/domain/hots/models";
 import { maxBy, round } from "es-toolkit";
 import { NextResponse } from "next/server";
 import {
@@ -11,11 +11,10 @@ import {
   toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
-import { GameResult } from "@/generated/prisma/client";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
 const RECENT_MATCH_COUNT = 6;
-const ROLE_ORDER = Object.values(HeroRoles);
+const ROLE_ORDER = Object.values(HeroRole);
 
 type PairWindowCounter = {
   encounterMatches: number;

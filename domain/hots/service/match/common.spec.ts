@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GameResult } from "@/generated/prisma/client";
+import { GameResult } from "../../models";
 import { calculateGameResult, parseTakeParam, toPlayerStats } from "./common";
 
 describe("match/common 유틸", () => {

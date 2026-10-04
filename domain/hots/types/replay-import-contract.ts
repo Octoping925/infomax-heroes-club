@@ -1,6 +1,4 @@
-import type { GameMap } from "@/generated/prisma/enums";
-import type { Hero, HeroRole, TalentTier } from "@/domain/hots/models";
-import { Talent } from "../models/talent";
+import type { Hero, HeroRole, TalentTier, GameMap, Talent } from "@/domain/hots/models";
 
 export type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
 

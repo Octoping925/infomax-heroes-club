@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Chip } from "@/components/Chip";
 import { HERO_CATALOG } from "@/domain/hots/constants";
-import { Hero, HeroRole, HeroRoleLabelMap, HeroRoles } from "@/domain/hots/models";
+import { Hero, HeroRole, HeroRoleLabelMap } from "@/domain/hots/models";
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import type { MatchStatsResponse } from "@/app/api/matches/[matchId]/stats/route";
 import type { PlayerListItem } from "@/app/api/players/route";
@@ -99,7 +99,7 @@ export default function MatchStatsPage() {
     HERO_CATALOG[a as Hero].nameKo.localeCompare(HERO_CATALOG[b as Hero].nameKo, "ko"),
   );
 
-  const positionOptions: HeroRole[] = Object.values(HeroRoles);
+  const positionOptions: HeroRole[] = Object.values(HeroRole);
 
   const filteredMatches = (() => {
     const trimmed = matchSearchText.trim();
