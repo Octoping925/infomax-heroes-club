@@ -1,6 +1,6 @@
 const SHA_256_PATTERN = /^[a-f0-9]{64}$/;
 
-export function readAcceptedCorrections(value: unknown): Readonly<Record<string, string>> {
+export function readAcceptedCorrections(value: unknown): Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new Error("리플레이 교정 allowlist는 객체여야 합니다.");
   }
@@ -12,7 +12,7 @@ export function readAcceptedCorrections(value: unknown): Readonly<Record<string,
 }
 
 export function matchesAcceptedCorrection(
-  corrections: Readonly<Record<string, string>>,
+  corrections: Record<string, string>,
   sourceReplayHash: string,
   rejectionCode: string,
 ): boolean {

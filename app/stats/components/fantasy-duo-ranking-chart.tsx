@@ -166,7 +166,7 @@ export function FantasyDuoRankingChart() {
               {rows.map((row, index) => (
                 <tr
                   key={`${row.duoName}-${index}`}
-                  className="border-t border-white/10 hover:bg-white/[0.06] transition-colors"
+                  className="border-t border-white/10 hover:bg-white/6 transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-400">{index + 1}</td>
                   <td className="px-4 py-3 font-medium text-white">{row.duoName}</td>

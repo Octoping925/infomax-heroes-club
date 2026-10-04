@@ -76,7 +76,7 @@ function parseTeams(lines: string[]): ParsedTeam[] {
 
   for (const line of lines) {
     // 팀 헤더 파싱: <Team 1: Level 19>
-    const teamMatch = line.match(/<Team (\d+):/);
+    const teamMatch = new RegExp(/<Team (\d+):/).exec(line);
     if (teamMatch) {
       // 이전 팀 저장
       if (currentTeamNumber !== null) {
@@ -89,14 +89,14 @@ function parseTeams(lines: string[]): ParsedTeam[] {
         });
       }
 
-      currentTeamNumber = parseInt(teamMatch[1], 10);
+      currentTeamNumber = Number.parseInt(teamMatch[1], 10);
       currentPlayers = [];
       currentPlayerData = null;
       continue;
     }
 
     // 플레이어 헤더 파싱: [닉네임 (영웅)]
-    const playerMatch = line.match(/^\[(.+?)\s+\((.+?)\)\]$/);
+    const playerMatch = new RegExp(/^\[(.+?)\s+\((.+?)\)\]$/).exec(line);
     if (playerMatch) {
       // 이전 플레이어 저장
       if (currentPlayerData && isCompletePlayerData(currentPlayerData)) {
@@ -118,9 +118,9 @@ function parseTeams(lines: string[]): ParsedTeam[] {
     // KDA 파싱: Kill: 2 / Death: 2 / Takedown: 5
     const kdaMatch = line.match(/Kill:\s*(\d+)\s*\/\s*Death:\s*(\d+)\s*\/\s*Takedown:\s*(\d+)/);
     if (kdaMatch && currentPlayerData) {
-      currentPlayerData.kills = parseInt(kdaMatch[1], 10);
-      currentPlayerData.deaths = parseInt(kdaMatch[2], 10);
-      currentPlayerData.takedowns = parseInt(kdaMatch[3], 10);
+      currentPlayerData.kills = Number.parseInt(kdaMatch[1], 10);
+      currentPlayerData.deaths = Number.parseInt(kdaMatch[2], 10);
+      currentPlayerData.takedowns = Number.parseInt(kdaMatch[3], 10);
       continue;
     }
 

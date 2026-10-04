@@ -7,24 +7,26 @@ import type { HeroRole } from "@/domain/hots/models";
 it("renders default and customized chips", () => {
   const defaults = renderToStaticMarkup(Chip({ children: "순위" }));
   expect(defaults).toContain("text-sm");
-  expect(defaults).not.toContain('style=');
+  expect(defaults).not.toContain("style=");
   expect(defaults).not.toContain("font-bold");
 
-  const custom = renderToStaticMarkup(Chip({
-    children: "MVP",
-    textSize: "xs",
-    bold: true,
-    className: "bg-[#EB9C00] text-cyan-300 rounded-full border px-3 py-1",
-  }));
+  const custom = renderToStaticMarkup(
+    Chip({
+      children: "MVP",
+      textSize: "xs",
+      bold: true,
+      className: "bg-[#EB9C00] text-cyan-300 rounded-full border px-3 py-1",
+    }),
+  );
   expect(custom).toContain("text-xs font-bold bg-[#EB9C00] text-cyan-300 rounded-full border px-3 py-1");
   expect(custom).not.toContain("text-sm");
   expect(custom).not.toContain("text-white");
-  expect(custom).not.toContain('style=');
+  expect(custom).not.toContain("style=");
   expect(custom).toContain("MVP</span>");
 });
 
 it("preserves role colors and small or large position labels", () => {
-  const roles: ReadonlyArray<{ role: HeroRole; color: string }> = [
+  const roles: { role: HeroRole; color: string }[] = [
     { role: "TANKER", color: "blue" },
     { role: "OFFLANER", color: "green" },
     { role: "MAIN_DEALER", color: "red" },
