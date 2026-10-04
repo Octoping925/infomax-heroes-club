@@ -7,10 +7,10 @@ export function Kda({ deaths, takedowns }: KdaProps) {
   const kda = takedowns / deaths;
 
   if (deaths === 0) {
-    return <span className="text-xs font-bold text-yellow-500">PERFECT</span>;
+    return <span className="text-sm font-bold text-yellow-500">PERFECT</span>;
   }
 
-  return <span className={`text-xs font-bold ${getKdaColor(kda)}`}>KDA: {kda.toFixed(2)}:1</span>;
+  return <span className={`text-sm font-bold ${getKdaColor(kda)}`}>KDA: {kda.toFixed(2)}:1</span>;
 }
 
 function getKdaColor(kda: number): string {

@@ -37,16 +37,8 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
   const [isHighlightFormOpen, setIsHighlightFormOpen] = useState<boolean>(false);
   const [selectedGameIndex, setSelectedGameIndex] = useState<number>(0);
 
-  const {
-    team1,
-    team2,
-    team1Name,
-    team2Name,
-    team1Wins,
-    team2Wins,
-    isTeam1Winner,
-    isTeam2Winner,
-  } = useMatchResult(match);
+  const { team1, team2, team1Name, team2Name, team1Wins, team2Wins, isTeam1Winner, isTeam2Winner } =
+    useMatchResult(match);
 
   useEffect(() => {
     setHighlights(match.highlights);
@@ -143,32 +135,32 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
-        className={`w-full text-left px-3 md:px-4 py-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-[96px_minmax(0,1fr)_108px_minmax(0,1fr)_20px] gap-x-4 gap-y-2 items-center transition-colors hover:bg-white/5 ${
+        className={`w-full text-left px-3 md:px-4 py-4.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-[96px_minmax(0,1fr)_108px_minmax(0,1fr)_20px] gap-x-4 gap-y-2 items-center transition-colors hover:bg-white/5 ${
           isExpanded ? "bg-white/5" : ""
         }`}
       >
         <div className="col-span-3 md:col-span-1 flex md:flex-col items-baseline md:items-start gap-x-2 gap-y-0.5">
-          <span className="text-sm text-gray-200 tabular-nums">
+          <span className="text-lg text-gray-200 tabular-nums">
             {dayjs(match.playedAt).locale("ko").format("YY.MM.DD dd")}
           </span>
-          <span className="text-[11px] text-gray-400">{match.type === "LUNCH" ? "점심" : "저녁"} 내전</span>
+          <span className="text-base text-gray-400">{match.type === "LUNCH" ? "점심" : "저녁"} 내전</span>
         </div>
 
         <TeamPanel side={1} name={team1Name} team={team1} isWinner={isTeam1Winner} isLoser={isTeam2Winner} />
 
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-2 text-2xl md:text-[26px] font-black tabular-nums leading-none">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-2 text-3xl font-black tabular-nums leading-none">
             <span className={isTeam1Winner ? "text-cyan-300" : "text-gray-500"}>{team1Wins}</span>
             <span className="text-gray-600 font-normal">:</span>
             <span className={isTeam2Winner ? "text-fuchsia-300" : "text-gray-500"}>{team2Wins}</span>
           </div>
           {/* 게임별 승리 팀 */}
-          <div className="flex gap-[3px]">
+          <div className="flex gap-1">
             {match.games.map((game) => (
               <span
                 key={game.id}
                 title={`Game ${game.gameNumber} · ${MAP_CATALOG[game.map].nameKo}`}
-                className={`w-3.5 h-[5px] rounded-sm ${WINNER_BG[game.winnerTeamNumber ?? 0]}`}
+                className={`w-4.5 h-1.5 rounded-sm ${WINNER_BG[game.winnerTeamNumber ?? 0]}`}
               />
             ))}
           </div>
@@ -187,151 +179,98 @@ export function MatchCard({ match, isExpanded, onToggle }: MatchCardProps) {
       {/* Expanded Detail */}
       {isExpanded && (
         <div className="bg-black/30 border-t border-white/10 px-3 md:px-4 pt-3.5 pb-4 space-y-3.5 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {embedUrl && (
-              <button
-                type="button"
-                onClick={handleToggleEmbed}
-                className="px-2.5 py-1 rounded-full text-xs font-bold border bg-red-500/15 text-red-200 border-red-400/30 hover:bg-red-500/25 transition-all"
-              >
-                {isEmbedOpen ? "플레이어 닫기" : "▶ 풀영상"}
-              </button>
-            )}
-            <span className="text-xs text-gray-400 mx-1">하이라이트 {highlights.length}</span>
-            {highlights.map((highlight) => {
-              const timestampLabel = formatHighlightTimestamp(highlight.seconds);
-              const caption = highlight.note ? `${timestampLabel} · ${highlight.note}` : timestampLabel;
-
-              if (embedUrl) {
-                return (
-                  <button
-                    type="button"
-                    key={highlight.id}
-                    onClick={() => handlePlayHighlight(highlight.seconds)}
-                    className="px-2.5 py-1 rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 text-xs font-semibold hover:bg-cyan-500/30"
-                  >
-                    {caption}
-                  </button>
-                );
-              }
-
-              return (
-                <span
-                  key={highlight.id}
-                  className="px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs font-semibold"
-                >
-                  {caption}
-                </span>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setIsHighlightFormOpen((prev) => !prev)}
-              aria-expanded={isHighlightFormOpen}
-              className="px-2.5 py-1 rounded-full border border-dashed border-white/20 text-gray-400 text-xs font-semibold hover:border-white/40 hover:text-gray-200"
-            >
-              {isHighlightFormOpen ? "닫기" : "＋ 제보"}
-            </button>
-          </div>
-
-          {isHighlightFormOpen && (
-            <div className="space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_auto] gap-2">
-                <input
-                  value={highlightTimeInput}
-                  onChange={(event) => setHighlightTimeInput(event.target.value)}
-                  placeholder="예: 13:24"
-                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
-                />
-                <input
-                  value={highlightNoteInput}
-                  onChange={(event) => setHighlightNoteInput(event.target.value)}
-                  placeholder="장면 설명 (선택)"
-                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
-                />
-                <button
-                  type="button"
-                  onClick={handleSubmitHighlight}
-                  disabled={highlightSaveResult.status === "saving"}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${
-                    highlightSaveResult.status === "saving"
-                      ? "bg-gray-600/40 border-gray-500/40 text-gray-300 cursor-not-allowed"
-                      : "bg-cyan-500/20 border-cyan-400/30 text-cyan-100 hover:bg-cyan-500/30"
-                  }`}
-                >
-                  {highlightSaveResult.status === "saving" ? "등록 중..." : "제보"}
-                </button>
-              </div>
-
-              <p className="text-xs text-gray-500">초 단위 또는 mm:ss / hh:mm:ss 형식으로 입력할 수 있습니다.</p>
-
-              {highlightSaveResult.status === "error" && (
-                <p className="text-xs text-red-300">❌ {highlightSaveResult.message}</p>
-              )}
-              {highlightSaveResult.status === "success" && (
-                <p className="text-xs text-emerald-300">✅ {highlightSaveResult.message}</p>
-              )}
-            </div>
-          )}
-
-          {isEmbedOpen && embedUrl && (
-            <div className="rounded-xl border border-red-400/20 bg-black/40 overflow-hidden">
-              <div className="px-3 py-2 flex items-center justify-between border-b border-white/10">
-                <span className="text-sm font-semibold text-red-100">유튜브 풀영상 플레이어</span>
-                {match.youtubeUrl && (
-                  <a
-                    href={buildYoutubeTimestampUrl(match.youtubeUrl, embedStartSeconds)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-red-200/80 hover:text-red-100"
-                  >
-                    유튜브에서 열기 ↗
-                  </a>
-                )}
-              </div>
-              <div className="aspect-video bg-black">
-                <iframe
-                  key={`${match.id}-${embedStartSeconds}-${embedNonce}`}
-                  src={embedUrl}
-                  title={`${dayjs(match.playedAt).format("YYYY-MM-DD")} 내전 풀영상`}
-                  className="w-full h-full"
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-              </div>
-            </div>
-          )}
-
           {selectedGame && (
             <>
-              <div role="tablist" className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                {match.games.map((game, index) => {
-                  const isSelected = game.id === selectedGame.id;
+              <div className="flex justify-between">
+                <div role="tablist" className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                  {match.games.map((game, index) => {
+                    const isSelected = game.id === selectedGame.id;
 
-                  return (
+                    return (
+                      <button
+                        type="button"
+                        role="tab"
+                        key={game.id}
+                        aria-selected={isSelected}
+                        onClick={() => setSelectedGameIndex(index)}
+                        className={`shrink-0 px-3 py-2 rounded-lg border border-t-[3px] text-left transition-colors ${
+                          WINNER_BORDER_TOP[game.winnerTeamNumber ?? 0]
+                        } ${isSelected ? "bg-white/10 border-white/25" : "bg-white/3 border-white/10 hover:bg-white/5"}`}
+                      >
+                        <span className="block text-base text-gray-400 tabular-nums">
+                          G{game.gameNumber} · {formatGameLength(game.gameLength)}
+                        </span>
+                        <span className={`block text-base font-bold ${isSelected ? "text-white" : "text-gray-400"}`}>
+                          {MAP_CATALOG[game.map].nameKo}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {embedUrl && (
+                      <button
+                        type="button"
+                        onClick={handleToggleEmbed}
+                        className="px-2.5 py-1 rounded-full text-base font-bold border bg-red-500/15 text-red-200 border-red-400/30 hover:bg-red-500/25 transition-all"
+                      >
+                        {isEmbedOpen ? "플레이어 닫기" : "▶ 풀영상"}
+                      </button>
+                    )}
+                    <span className="text-base text-gray-400 mx-1">하이라이트 {highlights.length}</span>
+                    {highlights.map((highlight) => {
+                      const timestampLabel = formatHighlightTimestamp(highlight.seconds);
+                      const caption = highlight.note ? `${timestampLabel} · ${highlight.note}` : timestampLabel;
+
+                      if (embedUrl) {
+                        return (
+                          <button
+                            type="button"
+                            key={highlight.id}
+                            onClick={() => handlePlayHighlight(highlight.seconds)}
+                            className="px-2.5 py-1 rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 text-base font-semibold hover:bg-cyan-500/30"
+                          >
+                            {caption}
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <span
+                          key={highlight.id}
+                          className="px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 text-base font-semibold"
+                        >
+                          {caption}
+                        </span>
+                      );
+                    })}
                     <button
                       type="button"
-                      role="tab"
-                      key={game.id}
-                      aria-selected={isSelected}
-                      onClick={() => setSelectedGameIndex(index)}
-                      className={`shrink-0 px-3 py-2 rounded-lg border border-t-[3px] text-left transition-colors ${
-                        WINNER_BORDER_TOP[game.winnerTeamNumber ?? 0]
-                      } ${isSelected ? "bg-white/10 border-white/25" : "bg-white/3 border-white/10 hover:bg-white/5"}`}
+                      onClick={() => setIsHighlightFormOpen((prev) => !prev)}
+                      aria-expanded={isHighlightFormOpen}
+                      className="px-2.5 py-1 rounded-full border border-dashed border-white/20 text-gray-400 text-base font-semibold hover:border-white/40 hover:text-gray-200"
                     >
-                      <span className="block text-[11px] text-gray-400 tabular-nums">
-                        G{game.gameNumber} · {formatGameLength(game.gameLength)}
-                      </span>
-                      <span className={`block text-sm font-bold ${isSelected ? "text-white" : "text-gray-400"}`}>
-                        {MAP_CATALOG[game.map].nameKo}
-                      </span>
+                      {isHighlightFormOpen ? "닫기" : "＋ 제보"}
                     </button>
-                  );
-                })}
-              </div>
+                  </div>
 
+                  {isEmbedOpen && embedUrl && (
+                    <div className="rounded-xl border border-red-400/20 overflow-hidden aspect-video">
+                      <iframe
+                        key={`${match.id}-${embedStartSeconds}-${embedNonce}`}
+                        src={embedUrl}
+                        title={`${dayjs(match.playedAt).format("YYYY-MM-DD")} 내전 풀영상`}
+                        className="w-full h-full"
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
               <GameCard game={selectedGame} team1Name={team1Name} team2Name={team2Name} />
             </>
           )}
@@ -372,11 +311,11 @@ function TeamPanel({ side, name, team, isWinner, isLoser }: TeamPanelProps) {
 
   return (
     <div className={`flex flex-col gap-1 min-w-0 ${style.align}`}>
-      <div className={`flex items-center gap-1.5 text-[15px] font-black ${isLoser ? "text-gray-400" : style.name}`}>
+      <div className={`flex items-center gap-1.5 text-xl font-black ${isLoser ? "text-gray-400" : style.name}`}>
         {name}
-        {isWinner && <span className={`px-1.5 py-px rounded text-[10px] ${style.win}`}>승</span>}
+        {isWinner && <span className={`px-1.5 py-px rounded text-lg ${style.win}`}>승</span>}
       </div>
-      <div className={`flex flex-wrap gap-x-2.5 gap-y-0.5 text-[12.5px] text-gray-400 ${side === 2 ? "justify-end" : ""}`}>
+      <div className={`flex flex-wrap gap-x-2.5 gap-y-0.5 text-base text-gray-400 ${side === 2 ? "justify-end" : ""}`}>
         {team.members.map((m) => (
           <span key={m.id} className={m.id === team.leader.id ? "text-gray-100 font-semibold" : ""}>
             {m.nickname}
