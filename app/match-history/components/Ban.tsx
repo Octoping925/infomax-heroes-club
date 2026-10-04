@@ -5,7 +5,7 @@ import Image from "next/image";
 type GameTeamBan = MatchHistoryItem["games"][number]["teams"][number]["bans"][number];
 
 interface Props {
-  readonly bans: ReadonlyArray<GameTeamBan>;
+  readonly bans: GameTeamBan[];
 }
 
 export function Ban({ bans = [] }: Props) {

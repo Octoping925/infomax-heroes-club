@@ -1,8 +1,5 @@
 import { prisma } from "@/config/prisma";
-import {
-  HERO_BY_KOREAN_NAME,
-  MAP_BY_KOREAN_NAME,
-} from "@/domain/hots/constants/korean-name-lookups";
+import { HERO_BY_KOREAN_NAME, MAP_BY_KOREAN_NAME } from "@/domain/hots/constants/korean-name-lookups";
 import { Hero, HeroRole, HeroRoles, HOTS_TALENT_TIERS, isTalentTier, TalentTier } from "@/domain/hots/models";
 import { resolveTalentKey } from "@/domain/hots/service/talent-resolver";
 import { MatchType } from "@/generated/prisma/enums";
@@ -18,6 +15,7 @@ import type {
   RawTalentRecord,
   RawTeam,
 } from "@/domain/hots/types/replay-import-contract";
+import { Talent } from "../../models/talent";
 
 export type CreateMatchesFromJsonRequest = {
   readonly team1LeaderId: string;
@@ -97,10 +95,7 @@ export async function createMatchesFromJson(input: unknown): Promise<CreateMatch
             map: game.map,
             winnerTeamNumber: game.winnerTeamNumber,
             sourceReplayHash: null,
-            teams: [
-              toPersistTeam(game.team1, 1, playerIdByNickname),
-              toPersistTeam(game.team2, 2, playerIdByNickname),
-            ],
+            teams: [toPersistTeam(game.team1, 1, playerIdByNickname), toPersistTeam(game.team2, 2, playerIdByNickname)],
           })),
         }),
       {
@@ -130,10 +125,12 @@ function toPersistTeam(
     sourceTeamNumber: teamNumber,
     teamLevel: team.teamLevel,
     bans: [...team.bans],
-    players: team.players.map(({ nickname, ...stats }): PersistPlayer => ({
-      playerId: playerIdByNickname.get(nickname)!,
-      ...stats,
-    })),
+    players: team.players.map(
+      ({ nickname, ...stats }): PersistPlayer => ({
+        playerId: playerIdByNickname.get(nickname)!,
+        ...stats,
+      }),
+    ),
   };
 }
 
@@ -321,15 +318,7 @@ function normalizePlayer(rawPlayer: RawPlayerStat, teamLabel: string): Normalize
   };
 }
 
-function normalizeTalents(
-  input: RawPlayerStat["talents"],
-  hero: Hero,
-  label: string,
-): ReadonlyArray<{
-  readonly tier: TalentTier;
-  readonly rawCode: string;
-  readonly talentKey: string | null;
-}> {
+function normalizeTalents(input: RawPlayerStat["talents"], hero: Hero, label: string): ReadonlyArray<Talent> {
   if (!input) {
     return [];
   }
@@ -379,13 +368,12 @@ function normalizeTalents(
     deduped.set(entry.tier, { tier: entry.tier, code: rawCode });
   }
 
-  return Array.from(deduped.values())
-    .map((entry) => ({
-      tier: entry.tier,
-      rawCode: entry.code,
-      talentKey: resolveTalentKey(hero, entry.code),
-    }))
-    .toSorted((a, b) => a.tier - b.tier);
+  return Array.from(deduped.values(), (entry) => ({
+    tier: entry.tier,
+    rawCode: entry.code,
+    talentKey: resolveTalentKey(hero, entry.code),
+    imagePath: null,
+  })).toSorted((a, b) => a.tier - b.tier);
 }
 
 function parsePosition(position: string | undefined, label: string): HeroRole {

@@ -3,3 +3,4 @@ export * from "./map";
 export * from "./match-type";
 export * from "./hero-role";
 export * from "./talent-tier";
+export * from "./talent";

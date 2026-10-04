@@ -1,6 +1,6 @@
 import type { MatchHistoryItem } from "@/domain/hots/types/match-contract";
 import { HeroImage } from "@/domain/hots/constants";
-import { HeroRoleLabelMap, HOTS_TALENT_TIERS, TalentTier } from "@/domain/hots/models";
+import { HeroRoleLabelMap, HOTS_TALENT_TIERS, Talent } from "@/domain/hots/models";
 import { commarize } from "@/utils/commarize";
 import { round, sumBy } from "es-toolkit";
 import Image from "next/image";
@@ -157,14 +157,7 @@ function getTeamBackgroundClass(result: string | null) {
   return "bg-white/3";
 }
 
-type TalentType = {
-  readonly tier: TalentTier;
-  readonly rawCode: string;
-  readonly talentKey: string | null;
-  readonly imagePath: string | null;
-};
-
-function TalentStrip({ talents }: { readonly talents: ReadonlyArray<TalentType> }) {
+function TalentStrip({ talents }: { readonly talents: ReadonlyArray<Talent> }) {
   const talentByTier = new Map(talents.map((talent) => [talent.tier, talent] as const));
 
   return (

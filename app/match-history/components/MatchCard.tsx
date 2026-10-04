@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MatchHighlightItem, MatchHistoryItem } from "@/domain/hots/types/match-contract";
-import { buildYoutubeEmbedUrl, buildYoutubeTimestampUrl } from "@/domain/hots/utils/youtube";
+import { buildYoutubeEmbedUrl } from "@/domain/hots/utils/youtube";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import { MAP_CATALOG } from "@/domain/hots/constants/maps";

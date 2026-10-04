@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { HERO_CATALOG } from "@/domain/hots/constants";
-import { isTalentTier, type Hero, type TalentTier } from "@/domain/hots/models";
+import { isTalentTier, type Hero } from "@/domain/hots/models";
+import { Talent } from "../models/talent";
 
 export type TalentPickInput = {
   readonly tier: number;
@@ -9,16 +10,9 @@ export type TalentPickInput = {
   readonly talentKey?: string | null;
 };
 
-export type ResolvedTalentPick = {
-  readonly tier: TalentTier;
-  readonly rawCode: string;
-  readonly talentKey: string | null;
-  readonly imagePath: string | null;
-};
-
 const talentFileNameCache = new Map<string, ReadonlyArray<string>>();
 
-export function resolveTalentPick(hero: Hero, input: TalentPickInput): ResolvedTalentPick {
+export function resolveTalentPick(hero: Hero, input: TalentPickInput): Talent {
   if (!isTalentTier(input.tier)) {
     throw new Error(`Unsupported talent tier: ${input.tier}`);
   }
@@ -35,9 +29,9 @@ export function resolveTalentPick(hero: Hero, input: TalentPickInput): ResolvedT
   };
 }
 
-export function resolveTalentPicks(hero: Hero, inputs: ReadonlyArray<TalentPickInput>): ReadonlyArray<ResolvedTalentPick> {
+export function resolveTalentPicks(hero: Hero, inputs: TalentPickInput[]): Talent[] {
   return inputs
-    .filter((input): input is TalentPickInput & { tier: TalentTier } => isTalentTier(input.tier))
+    .filter((input) => isTalentTier(input.tier))
     .map((input) => resolveTalentPick(hero, input))
     .toSorted((a, b) => a.tier - b.tier);
 }

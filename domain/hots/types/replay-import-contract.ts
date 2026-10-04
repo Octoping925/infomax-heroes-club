@@ -1,5 +1,6 @@
 import type { GameMap } from "@/generated/prisma/enums";
 import type { Hero, HeroRole, TalentTier } from "@/domain/hots/models";
+import { Talent } from "../models/talent";
 
 export type RawTalentRecord = Partial<Record<`${TalentTier}`, string | null>>;
 
@@ -51,11 +52,7 @@ export type NormalizedPlayer = {
   readonly nickname: string;
   readonly hero: Hero;
   readonly position: HeroRole;
-  readonly talents: ReadonlyArray<{
-    readonly tier: TalentTier;
-    readonly rawCode: string;
-    readonly talentKey: string | null;
-  }>;
+  readonly talents: ReadonlyArray<Talent>;
   readonly kills: number;
   readonly deaths: number;
   readonly takedowns: number;

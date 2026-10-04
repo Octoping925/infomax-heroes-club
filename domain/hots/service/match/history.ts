@@ -119,15 +119,12 @@ export async function getMatchHistory(take: number): Promise<MatchHistoryItem[]>
         `)
       : [];
 
-  const talentMap = talentRows.reduce(
-    (acc, row) => {
-      const list = acc.get(row.gameTeamMemberId) ?? [];
-      list.push(row);
-      acc.set(row.gameTeamMemberId, list);
-      return acc;
-    },
-    new Map<string, Array<(typeof talentRows)[number]>>(),
-  );
+  const talentMap = talentRows.reduce((acc, row) => {
+    const list = acc.get(row.gameTeamMemberId) ?? [];
+    list.push(row);
+    acc.set(row.gameTeamMemberId, list);
+    return acc;
+  }, new Map<string, Array<(typeof talentRows)[number]>>());
 
   return matches.map((match) => ({
     id: match.id,
