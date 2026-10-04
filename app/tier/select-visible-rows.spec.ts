@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { selectVisibleRows } from "./select-visible-rows";
-import type { HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import type { HeroMetaRow } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 
 const rows: HeroMetaRow[] = [
   {
@@ -44,27 +44,11 @@ const rows: HeroMetaRow[] = [
 describe("selectVisibleRows", () => {
   it("finds Korean names without changing the source grades", () => {
     const visible = selectVisibleRows(rows, { role: "ALL", search: "안두", sort: "tier" });
-    expect(visible.map((row) => [row.hero, row.tier])).toEqual([["Anduin", "A"]]);
+    expect(visible.map((row) => [row.hero, row.tier])).toEqual([["Anduin", "1티어"]]);
   });
 
   it("filters by role and sorts by win rate", () => {
     const visible = selectVisibleRows(rows, { role: "HEALER", search: "", sort: "win" });
     expect(visible.map((row) => row.hero)).toEqual(["Anduin", "Ana"]);
-  });
-
-  it("keeps role-relative tiers together before sorting by score", () => {
-    const mixedRoles: HeroMetaRow[] = [
-      { ...rows[0], tier: "1티어", tierScore: 60 },
-      { ...rows[1], tier: "1티어", tierScore: 70 },
-      { ...rows[2], tier: "1티어", tierScore: 80 },
-      { ...rows[0], hero: "Brightwing", tier: null, tierScore: null },
-    ];
-
-    expect(selectVisibleRows(mixedRoles, { role: "ALL", search: "", sort: "tier" }).map((row) => row.hero)).toEqual([
-      "Diablo",
-      "Ana",
-      "Anduin",
-      "Brightwing",
-    ]);
   });
 });

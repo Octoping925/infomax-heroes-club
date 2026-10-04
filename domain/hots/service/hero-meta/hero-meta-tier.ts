@@ -1,6 +1,6 @@
-import type { GameMap, Hero } from "../models";
-import type { HeroRole } from "../models/hero-role";
-import { HERO_CATALOG, MAP_CATALOG } from "../constants";
+import type { GameMap, Hero } from "../../models";
+import type { HeroRole } from "../../models/hero-role";
+import { HERO_CATALOG, MAP_CATALOG } from "../../constants";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { groupBy, round } from "es-toolkit";
 

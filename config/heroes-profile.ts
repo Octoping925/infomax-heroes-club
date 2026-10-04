@@ -1,5 +1,9 @@
-import type { FilterOptions, HeroMetaAudience, HeroMetaFilters } from "@/domain/hots/service/hero-meta-filters";
-import type { HeroMetaSource, HeroMetaSourceResult } from "@/domain/hots/service/hero-meta-loader";
+import type {
+  FilterOptions,
+  HeroMetaAudience,
+  HeroMetaFilters,
+} from "@/domain/hots/service/hero-meta/hero-meta-filters";
+import type { HeroMetaSource, HeroMetaSourceResult } from "@/domain/hots/service/hero-meta/hero-meta-loader";
 import { uniq } from "es-toolkit";
 
 const BASE_URL = "https://www.heroesprofile.com/api/external/v1";

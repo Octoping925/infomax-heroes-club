@@ -1,4 +1,4 @@
-import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 import type { HeroRole } from "@/domain/hots/models";
 import { HERO_CATALOG } from "@/domain/hots/constants";
 
@@ -8,14 +8,14 @@ export interface VisibleRowsSelection {
   readonly sort: "tier" | "win" | "pick";
 }
 
-const TIER_ORDER: Record<HeroMetaGrade, number> = {
+const TIER_ORDER = {
   OP: 0,
   "1티어": 1,
   "2티어": 2,
   "3티어": 3,
   "4티어": 4,
   "5티어": 5,
-};
+} as const satisfies Record<HeroMetaGrade, number>;
 
 export function selectVisibleRows(rows: ReadonlyArray<HeroMetaRow>, selection: VisibleRowsSelection): HeroMetaRow[] {
   const search = selection.search.trim().toLocaleLowerCase();

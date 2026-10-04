@@ -4,7 +4,7 @@ import type { DooraySlashCommandRequest, DooraySlashCommandResponse } from "@/do
 import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import { HeroRoleLabelMap, type GameMap, type HeroRole } from "@/domain/hots/models";
 import { createHeroMetaDailyStore } from "@/domain/hots/repositories/hero-meta-snapshot";
-import { gradeHeroStats, type HeroMetaGrade, type HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import { gradeHeroStats, type HeroMetaGrade, type HeroMetaRow } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 import { selectHoneyPicks } from "@/app/tier/select-honey-picks";
 import { selectVisibleRows } from "@/app/tier/select-visible-rows";
 

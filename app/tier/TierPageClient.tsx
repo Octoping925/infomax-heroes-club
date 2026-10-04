@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { HeroTierTable } from "@/components/HeroTierTable";
 import type { HeroRole } from "@/domain/hots/models";
-import type { HeroMetaAudience } from "@/domain/hots/service/hero-meta-filters";
-import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import type { HeroMetaAudience } from "@/domain/hots/service/hero-meta/hero-meta-filters";
+import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 import type { GameMap } from "@/domain/hots/models/map";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 import { selectHoneyPicks } from "./select-honey-picks";

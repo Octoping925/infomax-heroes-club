@@ -17,8 +17,7 @@ export default function TierPage() {
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Heroes Profile · Global Meta</p>
           <h2 className="text-3xl font-bold tracking-tight md:text-5xl">영웅 메타 티어</h2>
           <p className="max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
-            전 세계 경기 통계를 바탕으로 영웅의 역할별 티어를 확인하세요. 1~5티어는 Heroes Profile이 제공하는 등급이
-            아니라 이 사이트가 계산한 결과입니다.
+            전 세계 경기 통계 바탕 영웅 티어를 확인하세요. (Heroes Profile이 제공하는 등급 기반)
           </p>
           <div className="flex flex-wrap gap-3 text-sm">
             <Link

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HeroMetaRow } from "@/domain/hots/service/hero-meta-tier";
+import type { HeroMetaRow } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 import { selectHoneyPicks } from "./select-honey-picks";
 
 const healers: HeroMetaRow[] = [
