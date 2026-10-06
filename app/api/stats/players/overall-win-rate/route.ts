@@ -1,3 +1,4 @@
+import { calculateGameResult } from "@/domain/hots/service/match/common";
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerOverallWinRateResponse } from "@/app/api/stats/types";
@@ -6,7 +7,6 @@ import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
-  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
@@ -98,7 +98,7 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
     const entry = getOrCreate(membership.playerId, playerInfo.name, playerInfo.nickname);
 
     const winner = membership.matchTeam.match.winnerTeamNumber;
-    const result = toResultByWinnerTeamNumber(winner, membership.matchTeam.teamNumber);
+    const result = calculateGameResult(membership.matchTeam.teamNumber, winner);
     updateCountsByResult(entry.matchStats, result);
   }
 

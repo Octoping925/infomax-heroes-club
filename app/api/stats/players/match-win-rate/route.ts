@@ -1,3 +1,4 @@
+import { calculateGameResult } from "@/domain/hots/service/match/common";
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { PlayerWinRateResponse } from "@/app/api/stats/types";
@@ -6,7 +7,6 @@ import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
-  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 
@@ -54,7 +54,7 @@ export async function GET(): Promise<NextResponse<PlayerWinRateResponse[]>> {
     const current = accumulatorMap.get(playerId) ?? createAccumulator(playerId, playerInfo.name, playerInfo.nickname);
 
     const winnerTeamNumber = membership.matchTeam.match.winnerTeamNumber;
-    const result = toResultByWinnerTeamNumber(winnerTeamNumber, membership.matchTeam.teamNumber);
+    const result = calculateGameResult(membership.matchTeam.teamNumber, winnerTeamNumber);
     updateCountsByResult(current.stats, result);
 
     accumulatorMap.set(playerId, current);

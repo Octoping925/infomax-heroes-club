@@ -1,3 +1,4 @@
+import { calculateGameResult } from "@/domain/hots/service/match/common";
 import type {
   StrategyHeroSummary,
   StrategyHeroRecommendation,
@@ -16,12 +17,7 @@ import type {
   StrategyTeamRoleCoverage,
   StrategyTeamSynergyPair,
 } from "@/app/admin/strategy/types";
-import {
-  buildWinRateStatsFromCounts,
-  createResultCounts,
-  toResultByWinnerTeamNumber,
-  updateCountsByResult,
-} from "@/app/api/stats/utils/stats";
+import { buildWinRateStatsFromCounts, createResultCounts, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import { GameMap, GameResult, Hero, HeroRole } from "@/domain/hots/models";
 import type { PrismaClient } from "@/generated/prisma/client";
@@ -692,7 +688,7 @@ function buildSynergyPairs(
 
         if (teamA === teamB) {
           pair.sameTeamMatches += 1;
-          updateCountsByResult(pair.sameTeamCounts, toResultByWinnerTeamNumber(match.winnerTeamNumber, teamA));
+          updateCountsByResult(pair.sameTeamCounts, calculateGameResult(teamA, match.winnerTeamNumber));
         }
       }
     }
@@ -750,7 +746,7 @@ function buildMatchupReport(input: {
     const enemyTeamNumber = findContainingTeamNumber(enemyIds, teamByPlayerId);
 
     if (allyTeamNumber && enemyTeamNumber && allyTeamNumber !== enemyTeamNumber) {
-      updateCountsByResult(enteredRosterCounts, toResultByWinnerTeamNumber(match.winnerTeamNumber, allyTeamNumber));
+      updateCountsByResult(enteredRosterCounts, calculateGameResult(allyTeamNumber, match.winnerTeamNumber));
     }
 
     for (const allyPlayer of input.allyPlayers) {
@@ -774,7 +770,7 @@ function buildMatchupReport(input: {
           draws: 0,
         };
 
-        const result = toResultByWinnerTeamNumber(match.winnerTeamNumber, allyPlayerTeam);
+        const result = calculateGameResult(allyPlayerTeam, match.winnerTeamNumber);
         if (result === GameResult.WIN) {
           current.allyWins += 1;
         } else if (result === GameResult.LOSE) {

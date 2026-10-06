@@ -1,14 +1,15 @@
+import { calculateGameResult } from "@/domain/hots/service/match/common";
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/prisma";
 import { FantasyDuoWinRateResponse } from "@/app/api/stats/types";
 import { fetchPlayerMap, PlayerMap } from "../../utils/player";
-import { buildPlayedAtYearFilter, parseClampedIntegerParam, parseEnumParam, parseYearParam } from "@/app/api/stats/utils/query";
 import {
-  buildWinRateStatsFromCounts,
-  calculateTotalGames,
-  toResultByWinnerTeamNumber,
-  updateCountsByResult,
-} from "@/app/api/stats/utils/stats";
+  buildPlayedAtYearFilter,
+  parseClampedIntegerParam,
+  parseEnumParam,
+  parseYearParam,
+} from "@/app/api/stats/utils/query";
+import { buildWinRateStatsFromCounts, calculateTotalGames, updateCountsByResult } from "@/app/api/stats/utils/stats";
 
 type DuoAccumulator = {
   readonly playerA: {
@@ -148,7 +149,7 @@ async function calculateDuoStatsByMatch(playerMap: PlayerMap, year?: number): Pr
       continue;
     }
 
-    const result = toResultByWinnerTeamNumber(matchTeam.match.winnerTeamNumber, matchTeam.teamNumber);
+    const result = calculateGameResult(matchTeam.teamNumber, matchTeam.match.winnerTeamNumber);
 
     for (let i = 0; i < players.length - 1; i++) {
       for (let j = i + 1; j < players.length; j++) {

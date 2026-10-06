@@ -5,7 +5,6 @@ import {
   buildWinRateStatsFromResults,
   calculateTotalGames,
   createResultCounts,
-  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "./stats";
 
@@ -25,12 +24,6 @@ describe("stats 집계 유틸", () => {
 
   it("calculateTotalGames는 총 경기 수를 계산한다", () => {
     expect(calculateTotalGames({ wins: 2, losses: 3, draws: 1 })).toBe(6);
-  });
-
-  it("toResultByWinnerTeamNumber는 승패무를 변환한다", () => {
-    expect(toResultByWinnerTeamNumber(null, 1)).toBe(GameResult.DRAW);
-    expect(toResultByWinnerTeamNumber(1, 1)).toBe(GameResult.WIN);
-    expect(toResultByWinnerTeamNumber(2, 1)).toBe(GameResult.LOSE);
   });
 
   it("buildWinRateStatsFromCounts는 응답 스키마를 만든다", () => {

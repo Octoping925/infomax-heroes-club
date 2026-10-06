@@ -1,3 +1,4 @@
+import { calculateGameResult } from "@/domain/hots/service/match/common";
 import { TeamComposerResponse, TeamingPairStatResponse, TeamingWindowStats } from "@/app/api/stats/types";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { prisma } from "@/config/prisma";
@@ -8,7 +9,6 @@ import {
   buildWinRateStatsFromCounts,
   createResultCounts,
   ResultCounts,
-  toResultByWinnerTeamNumber,
   updateCountsByResult,
 } from "@/app/api/stats/utils/stats";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
@@ -107,7 +107,7 @@ export async function GET(request: Request): Promise<NextResponse<TeamComposerRe
     }
 
     for (const team of match.teams) {
-      const result = toResultByWinnerTeamNumber(match.winnerTeamNumber, team.teamNumber);
+      const result = calculateGameResult(team.teamNumber, match.winnerTeamNumber);
       for (const member of team.members) {
         updateMatchResultCounter(allTimeResultByPlayer, member.playerId, result);
 
@@ -205,7 +205,7 @@ function toPairTeams(match: {
 }): PairTeam[] {
   return match.teams.map((team) => ({
     playerIds: team.members.map((member) => member.playerId),
-    result: toResultByWinnerTeamNumber(match.winnerTeamNumber, team.teamNumber),
+    result: calculateGameResult(team.teamNumber, match.winnerTeamNumber),
   }));
 }
 
