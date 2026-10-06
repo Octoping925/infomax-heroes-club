@@ -3,7 +3,6 @@ import { prisma } from "@/config/prisma";
 import { HeroTierResponse, HeroTierLabel } from "@/app/api/stats/types";
 import { calculateWinRate } from "@/utils/win-rate";
 import { GameResult, Hero } from "@/domain/hots/models";
-import { groupBy } from "@/utils/groupBy";
 import { calculateConservativeWinRateScore } from "@/app/stats/utils/conservative-win-rate";
 import { round } from "es-toolkit";
 import { updateCountsByResult } from "@/app/api/stats/utils/stats";
@@ -99,11 +98,7 @@ async function fetchBanStats(year?: number): Promise<BanStats> {
     heroBanGameMap.set(ban.hero, heroBanGames);
   }
 
-  const banCounts = groupBy(
-    Array.from(heroBanGameMap.entries()),
-    ([hero]) => hero,
-    ([, gameIds]) => gameIds.size,
-  );
+  const banCounts = new Map([...heroBanGameMap].map(([hero, gameIds]) => [hero, gameIds.size]));
 
   return {
     banCounts,
