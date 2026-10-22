@@ -250,7 +250,6 @@ export function TierPageClient() {
                   ban: formatRate(row.banRate),
                   games: row.games.toLocaleString("ko-KR"),
                   score: row.tierScore?.toFixed(1) ?? "-",
-                  onSelect: () => {},
                 }))}
               />
             ) : (
