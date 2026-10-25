@@ -17,7 +17,7 @@ type ScrimTierRule = ScrimTier & {
   readonly min: number;
 };
 
-const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
+export const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
   {
     key: "challenger",
     label: "챌린저",
