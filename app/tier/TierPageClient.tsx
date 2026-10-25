@@ -8,7 +8,7 @@ import type { HeroMetaGrade, HeroMetaRow } from "@/domain/hots/service/hero-meta
 import type { GameMap } from "@/domain/hots/models/map";
 import { selectVisibleRows, type VisibleRowsSelection } from "./select-visible-rows";
 import { selectHoneyPicks } from "./select-honey-picks";
-import { Tier1, Tier2, Tier3, Tier4, Tier5, OpTier, HoneyIcon } from "@/components/tier";
+import { Tier1, Tier2, Tier3, Tier4, Tier5, OpTier } from "@/components/tier";
 import { Loading } from "@/components/Loading";
 
 interface PageResult {
@@ -237,13 +237,11 @@ export function TierPageClient() {
           <>
             {rows.length > 0 ? (
               <HeroTierTable
-                showRole={selection.role === "ALL"}
-                showGames
                 rows={rows.map((row, index) => ({
                   hero: row.hero,
                   rank: index + 1,
                   tier: <TierBadge tier={row.tier} games={row.games} />,
-                  accessory: honeyPicks.has(row.hero) ? <HoneyIcon /> : undefined,
+                  isHoneyPick: honeyPicks.has(row.hero),
                   winRate: row.winRate,
                   win: formatRate(row.winRate),
                   pick: formatRate(row.pickRate),
