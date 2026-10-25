@@ -6,6 +6,8 @@ export type ScrimTier = {
   readonly key: "challenger" | "diamond" | "platinum" | "gold" | "silver" | "bronze";
   readonly label: string;
   readonly className: string;
+  /** 순위표 왼쪽 랭크 레일 색 */
+  readonly railClassName: string;
 };
 
 export type ScrimTierResult = {
@@ -23,36 +25,42 @@ export const TIER_RULES: ReadonlyArray<ScrimTierRule> = [
     label: "챌린저",
     min: 49,
     className: "text-purple-200 bg-purple-500/15 border-purple-400/40",
+    railClassName: "bg-purple-400",
   },
   {
     key: "diamond",
     label: "다이아",
     min: 45,
     className: "text-cyan-200 bg-cyan-500/15 border-cyan-400/40",
+    railClassName: "bg-cyan-400",
   },
   {
     key: "platinum",
     label: "플래티넘",
     min: 42,
     className: "text-sky-200 bg-sky-500/15 border-sky-400/40",
+    railClassName: "bg-sky-400",
   },
   {
     key: "gold",
     label: "골드",
     min: 36,
     className: "text-amber-200 bg-amber-500/15 border-amber-400/40",
+    railClassName: "bg-amber-400",
   },
   {
     key: "silver",
     label: "실버",
     min: 32,
     className: "text-slate-200 bg-slate-500/15 border-slate-400/40",
+    railClassName: "bg-slate-400",
   },
   {
     key: "bronze",
     label: "브론즈",
     min: 0,
     className: "text-orange-200 bg-orange-500/15 border-orange-400/40",
+    railClassName: "bg-orange-400",
   },
 ];
 

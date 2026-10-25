@@ -4,14 +4,17 @@ import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { TIER_RULES, useScrimWinRateTier } from "../../hooks/useScrimWinRateTier";
 import { useMemo } from "react";
 import { round } from "es-toolkit";
-import { Chip } from "@/components/Chip";
 
-const TIER_BADGE_CLASS = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0";
+const TIER_BADGE_CLASS =
+  "inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0";
 
 interface ScrimWinRateProps {
   readonly onPlayerRowClick: (playerId: string) => void;
 }
 
+/**
+ * 선수 순위 패널. 점수순으로 정렬하고, 행 왼쪽의 랭크 레일로 랭크 구간 경계를 보여준다.
+ */
 export function ScrimWinRate({ onPlayerRowClick }: ScrimWinRateProps) {
   const { data } = useOverallWinRate();
   const getTier = useScrimWinRateTier();
@@ -26,119 +29,129 @@ export function ScrimWinRate({ onPlayerRowClick }: ScrimWinRateProps) {
   }, [data, getTier]);
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-white/10 p-4 bg-black/20">
-        <table className="min-w-full text-sm overflow-x-scroll">
-          <thead className="bg-white/5 text-gray-300">
-            <tr>
-              <th className="px-4 py-3 text-left">플레이어</th>
-              <th className="px-4 py-3 text-left">내전 승률</th>
-              <th className="px-4 py-3 text-left max-md:hidden">내전 전적</th>
-              <th className="px-4 py-3 text-left">경기 승률</th>
-              <th className="px-4 py-3 text-left max-md:hidden">경기 전적</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.map((row) => {
-              const { tier } = row;
-              const tierScore = formatTierScore(tier.score);
-
-              return (
-                <tr
-                  key={row.playerId}
-                  className="border-t border-white/10 transition-colors hover:bg-white/6 cursor-pointer"
-                  onClick={() => onPlayerRowClick(row.playerId)}
-                >
-                  <td className="px-4 py-2 font-medium text-white">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* 키보드 접근용 버튼. 클릭은 행(tr)의 onClick으로 버블링된다. */}
-                      <button type="button" aria-label={`${row.playerName} 개인 통계 보기`} className="text-left">
-                        {row.playerName}
-                      </button>
-                      <span className={`${TIER_BADGE_CLASS} ${tier.tier.className}`}>{tier.tier.label}</span>
-                      <span className="text-[11px] font-semibold text-gray-300">{tierScore}</span>
-                    </div>
-                    <div className="text-xs text-gray-400">{row.playerNickname}</div>
-                  </td>
-                  <td className="px-4 py-2">
-                    <WinRatePill stats={row.matchStats} unit="회" />
-                  </td>
-                  <td className="px-4 py-2 text-gray-300 max-md:hidden">{formatRecord(row.matchStats, "회")}</td>
-                  <td className="px-4 py-2">
-                    <WinRatePill stats={row.gameStats} unit="경기" accent="purple" />
-                  </td>
-                  <td className="px-4 py-2 text-gray-300 max-md:hidden">{formatRecord(row.gameStats, "경기")}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <section className="rounded-[14px] border border-white/10 bg-white/3 px-2 py-3 sm:px-4">
+      <div className="mb-2 flex items-baseline justify-between gap-2 px-1">
+        <h3 className="text-base font-bold text-white">선수 순위</h3>
+        <p className="text-xs text-gray-400">점수순 · {stats.length}명</p>
       </div>
+
+      <table className="w-full text-sm">
+        <thead className="text-xs text-gray-400">
+          <tr>
+            <th className="w-1.5 p-0" aria-label="랭크 구간" />
+            <th className="w-6 px-1 py-2 text-right font-medium sm:w-8 sm:px-2">#</th>
+            <th className="px-1 py-2 text-left font-medium sm:px-2">선수</th>
+            <th className="px-1 py-2 text-left font-medium sm:px-2 max-sm:hidden">랭크</th>
+            <th className="px-1 py-2 text-right font-medium sm:px-2">점수</th>
+            <th className="px-1 py-2 text-right font-medium sm:px-2">내전 승률</th>
+            <th className="px-1 py-2 text-right font-medium sm:px-2">경기 승률</th>
+          </tr>
+        </thead>
+        <tbody className="tabular-nums">
+          {/* 랭크 구간마다 머리 행을 둬서, 비어 있는 구간까지 사다리 전체가 보이게 한다. */}
+          {TIER_RULES.flatMap((rule, ruleIndex) => {
+            const bandRows = stats.filter((row) => row.tier.tier.key === rule.key);
+            const range = rule.min > 0 ? `${rule.min}점 이상` : `${TIER_RULES[ruleIndex - 1].min}점 미만`;
+
+            return [
+              <tr key={rule.key}>
+                <td className={`p-0 ${rule.railClassName}`}>
+                  <div className="w-1.5" />
+                </td>
+                <td colSpan={6} className="px-1 pb-1 pt-3 text-[11px] text-gray-400 sm:px-2">
+                  {rule.label} · {range}
+                  {bandRows.length === 0 && " · 아직 없음"}
+                </td>
+              </tr>,
+              ...bandRows.map((row) => renderRow(row, stats.indexOf(row))),
+            ];
+          })}
+        </tbody>
+      </table>
+
       <TierLegend />
-    </div>
+    </section>
   );
+
+  function renderRow(row: (typeof stats)[number], index: number) {
+    const { tier } = row;
+    const badge = <span className={`${TIER_BADGE_CLASS} ${tier.tier.className}`}>{tier.tier.label}</span>;
+
+    return (
+      <tr
+        key={row.playerId}
+        className="cursor-pointer transition-colors hover:bg-white/5 [&>td:not(:first-child)]:border-t [&>td:not(:first-child)]:border-white/6"
+        onClick={() => onPlayerRowClick(row.playerId)}
+      >
+        <td className={`p-0 ${tier.tier.railClassName}`}>
+          {/* 빈 셀은 자동 표 레이아웃에서 폭 0으로 줄어들므로 고정 폭 요소를 넣는다. */}
+          <div className="w-1.5" />
+        </td>
+        <td className="px-1 py-2.5 sm:px-2 text-right text-gray-400">{index + 1}</td>
+        <td className="max-w-0 px-1 py-2.5 sm:px-2 sm:w-[34%]">
+          {/* 키보드 접근용 버튼. 클릭은 행(tr)의 onClick으로 버블링된다. */}
+          <button
+            type="button"
+            aria-label={`${row.playerName} 개인 통계 보기`}
+            className="block whitespace-nowrap rounded-sm text-left font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+          >
+            {row.playerName}
+          </button>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+            <span className="shrink-0 sm:hidden">{badge}</span>
+            <span className="truncate text-xs text-gray-400 max-sm:hidden">{row.playerNickname}</span>
+          </div>
+        </td>
+        <td className="px-1 py-2.5 sm:px-2 max-sm:hidden">{badge}</td>
+        <td className="whitespace-nowrap px-1 py-2.5 sm:px-2 text-right">
+          <span className="text-base font-bold text-white">{formatScore(tier.score)}</span>
+          <span className="ml-0.5 text-xs text-gray-400">점</span>
+        </td>
+        <td className="px-1 py-2.5 sm:px-2 text-right">
+          <WinRateCell stats={row.matchStats} unit="회" />
+        </td>
+        <td className="px-1 py-2.5 sm:px-2 text-right">
+          <WinRateCell stats={row.gameStats} unit="경기" />
+        </td>
+      </tr>
+    );
+  }
 }
 
 /**
- * 순위 기준 안내. 점수 계산식은 conservative-win-rate.ts, 랭크 구간은 TIER_RULES를 따른다.
+ * 점수 계산 안내. 계산식은 conservative-win-rate.ts를 따르고, 랭크 구간 기준은 순위표의 구간 머리 행이 보여준다.
  */
 function TierLegend() {
-  const bronzeUpperBound = TIER_RULES.at(-2)!.min;
-
   return (
-    <div className="space-y-2 px-1 text-xs text-gray-400">
-      <p>
-        순위는 점수순입니다. 점수는 내전 승률을 경기 승률보다 두 배 무겁게 반영하고, 판수가 적을수록 낮게 잡아서 한두 판
-        결과만으로 순위가 튀지 않게 했습니다.
-      </p>
-      <ul className="flex flex-wrap gap-x-3 gap-y-1.5" aria-label="랭크 기준">
-        {TIER_RULES.map((rule) => (
-          <li key={rule.key} className="flex items-center gap-1.5">
-            <span className={`${TIER_BADGE_CLASS} ${rule.className}`}>{rule.label}</span>
-            <span>{rule.min > 0 ? `${rule.min}점 이상` : `${bronzeUpperBound}점 미만`}</span>
-          </li>
-        ))}
-      </ul>
+    <p className="mt-3 border-t border-white/6 px-1 pt-3 text-xs text-gray-400">
+      순위는 점수순입니다. 점수는 내전 승률을 경기 승률보다 두 배 무겁게 반영하고, 판수가 적을수록 낮게 잡아서 한두 판
+      결과만으로 순위가 튀지 않게 했습니다.
+    </p>
+  );
+}
+
+function WinRateCell({ stats, unit }: { readonly stats: WinRateStats; readonly unit: "회" | "경기" }) {
+  return (
+    <div className="whitespace-nowrap">
+      <div className="font-semibold text-gray-100">{formatRate(stats.winRate ?? 0)}%</div>
+      <div className="text-xs text-gray-400">
+        <span className="max-sm:hidden">{formatRecord(stats)} · </span>
+        {stats.totalGames}
+        {unit}
+      </div>
     </div>
   );
 }
 
-function WinRatePill({
-  stats,
-  unit,
-  accent = "cyan",
-}: {
-  readonly stats: WinRateStats;
-  readonly unit: "회" | "경기";
-  readonly accent?: "cyan" | "purple";
-}) {
-  const color = accent === "purple" ? "text-purple-300" : "text-cyan-300";
-  const bgColor = accent === "purple" ? "bg-purple-500/10" : "bg-cyan-500/10";
-  const borderColor = accent === "purple" ? "border-purple-500/30" : "border-cyan-500/30";
-
-  // 전적 열이 숨겨지는 모바일에서도 표본 수가 보이도록 승률 옆에 붙인다. md 이상에선 전적 열이 대신한다.
-  return (
-    <span className="inline-flex flex-col items-start gap-1 whitespace-nowrap">
-      <Chip
-        className={`inline-flex items-center px-3 py-1 rounded-full font-semibold ${color} ${bgColor} ${borderColor} border`}
-      >
-        {stats.winRate ?? 0}%
-      </Chip>
-      <span className="text-xs text-gray-400 md:hidden">
-        {stats.totalGames}
-        {unit}
-      </span>
-    </span>
-  );
+function formatRecord(stats: WinRateStats): string {
+  const record = `${stats.wins}승 ${stats.losses}패`;
+  return stats.draws > 0 ? `${record} ${stats.draws}무` : record;
 }
 
-function formatRecord(stats: WinRateStats, unit: "회" | "경기"): string {
-  return `${stats.wins}승 ${stats.losses}패 ${stats.draws}무 (${stats.totalGames}${unit})`;
+function formatRate(rate: number): string {
+  return String(round(rate, 1));
 }
 
-function formatTierScore(score: number): string {
-  const normalized = round(score, 1);
-  const display = Number.isInteger(normalized) ? normalized.toFixed(0) : normalized.toFixed(1);
-
-  return `${display}점`;
+function formatScore(score: number): string {
+  return String(round(score, 1));
 }
