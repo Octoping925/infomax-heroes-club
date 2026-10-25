@@ -1,6 +1,6 @@
 export function Tier2() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="2티어">
       <g fill="none" fillRule="nonzero">
         <path fill="#00BBA3" d="M2 0h20v18.056L12 23 2 18.056z" />
         <path

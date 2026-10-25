@@ -16,6 +16,7 @@ import { CounterPickTab } from "./counter-pick-tab";
 import { TeamComposerTab } from "./team-composer/team-composer-tab";
 import { TeammateFrequencyTab } from "./teammate-frequency-tab";
 import { StatsYearContext, useStatsYearFilter } from "../hooks/useStatsYearFilter";
+import { StatsErrorBoundary } from "./StatsErrorBoundary";
 
 type TabType =
   | "personalStats"
@@ -174,27 +175,29 @@ export function StatsPageLayout({ players, availableYears }: Props) {
               )}
 
               <SelectedPlayerContext.Provider value={selectedPlayer}>
-                <Suspense fallback={<Loading />}>
-                  {/* 각 탭별 차트 */}
-                  {activeTab === "personalStats" && <PersonalStatTab />}
-                  {activeTab === "scrimStats" && (
-                    <ScrimStatTab
-                      onPlayerRowClick={(playerId) => {
-                        handleSelectPlayer(playerId);
-                        handleTabSelect("personalStats");
-                      }}
-                    />
-                  )}
-                  {activeTab === "rivalry" && <RivalryTab />}
-                  {activeTab === "mapStats" && <MapStatTab />}
-                  {activeTab === "teamSwitch" && <TeamSwitchChart />}
-                  {activeTab === "avgKillsDeathsRanking" && <AvgStatsRankingChart />}
-                  {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
-                  {activeTab === "teammateFrequency" && <TeammateFrequencyTab />}
-                  {activeTab === "heroDuo" && <HeroDuoRankingChart />}
-                  {activeTab === "counterPicks" && <CounterPickTab />}
-                  {activeTab === "teamComposer" && <TeamComposerTab />}
-                </Suspense>
+                <StatsErrorBoundary key={`${activeTab}-${statsYear.selectedYear}`}>
+                  <Suspense fallback={<Loading />}>
+                    {/* 각 탭별 차트 */}
+                    {activeTab === "personalStats" && <PersonalStatTab />}
+                    {activeTab === "scrimStats" && (
+                      <ScrimStatTab
+                        onPlayerRowClick={(playerId) => {
+                          handleSelectPlayer(playerId);
+                          handleTabSelect("personalStats");
+                        }}
+                      />
+                    )}
+                    {activeTab === "rivalry" && <RivalryTab />}
+                    {activeTab === "mapStats" && <MapStatTab />}
+                    {activeTab === "teamSwitch" && <TeamSwitchChart />}
+                    {activeTab === "avgKillsDeathsRanking" && <AvgStatsRankingChart />}
+                    {activeTab === "fantasyDuo" && <FantasyDuoRankingChart />}
+                    {activeTab === "teammateFrequency" && <TeammateFrequencyTab />}
+                    {activeTab === "heroDuo" && <HeroDuoRankingChart />}
+                    {activeTab === "counterPicks" && <CounterPickTab />}
+                    {activeTab === "teamComposer" && <TeamComposerTab />}
+                  </Suspense>
+                </StatsErrorBoundary>
               </SelectedPlayerContext.Provider>
             </div>
           </div>
