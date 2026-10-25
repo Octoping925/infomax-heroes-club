@@ -5,7 +5,7 @@ interface TopBarProps {
   readonly value: string;
 }
 
-const selectedStyle = "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25";
+const selectedStyle = "bg-cyan-500 text-black shadow-lg shadow-cyan-500/25";
 const unselectedStyle = "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all";
 
 export function TopBar({ value = "home", title }: TopBarProps) {

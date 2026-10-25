@@ -48,7 +48,10 @@ export function ScrimWinRate({ onPlayerRowClick }: ScrimWinRateProps) {
               >
                 <td className="px-4 py-2 font-medium text-white">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span>{row.playerName}</span>
+                    {/* 키보드 접근용 버튼. 클릭은 행(tr)의 onClick으로 버블링된다. */}
+                    <button type="button" aria-label={`${row.playerName} 개인 통계 보기`} className="text-left">
+                      {row.playerName}
+                    </button>
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${tier.tier.className}`}
                     >

@@ -97,7 +97,7 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                   onClick={() => handleTabSelect(TABS.find((tab) => tab.group === group.id)!.id)}
                   className={`whitespace-nowrap px-4 md:px-5 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedTab.group === group.id
-                      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                      ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/25"
                       : "text-gray-300 hover:bg-white/10 hover:text-white"
                   }`}
                   aria-pressed={selectedTab.group === group.id}

@@ -138,7 +138,7 @@ export function StatCardGenerator({ playerId, playerName, playerNickname }: Prop
           }}
           disabled={isPending}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            isPending ? "bg-white/10 text-gray-400 cursor-not-allowed" : "bg-cyan-500 text-white hover:bg-cyan-400"
+            isPending ? "bg-white/10 text-gray-400 cursor-not-allowed" : "bg-cyan-500 text-black hover:bg-cyan-400"
           }`}
         >
           PNG 다운로드
