@@ -160,10 +160,12 @@ A monochrome dark system with one interaction hue (cyan) and one categorical sca
 
 ### Hierarchy
 - **Headline** (700, 20px): the tab title on /stats and the TopBar site title.
-- **Title** (700, 16px): panel headings ("선수 순위", "동호회 메타"). The player score in a standings row also uses 16px bold, so it is the largest number in the row.
-- **Body** (400 to 600, 14px): table cells, names (600), buttons.
+- **Title** (700, 16px): panel headings ("선수 순위", "동호회 메타").
+- **Body** (400 to 600, 14px): table cells, names (600), buttons. The player score is set like a win rate (600, body size, ink soft); rank, not score, is what a standings row emphasises.
 - **Label** (500, 12px): table headers, sub-lines (nickname, record, sample size), counts, footnotes, chip text (600).
-- **Micro** (600, 11px): rank badges and rank-band header rows.
+- **Micro** (600, 11px): rank badges and rank-band header rows on small screens.
+
+On desktop (`lg`, 1024px and up) the scrim tab steps every role up once: title 18px, body 16px, label 14px. Rank badges and band header rows jump two steps to 14px, so the rank reads before the numbers.
 
 ### Named Rules
 **The Tabular Rule.** Every table body sets `tabular-nums`; numbers are right-aligned with their unit in muted 12px after the figure.
@@ -218,7 +220,7 @@ Soft, consistent corners scaled to element size: 14px panels (16px on older /sta
 - Primary figure on top (14px semibold, gray-100), context under it (12px gray-400: record and sample size).
 
 ### Rank Rail (signature)
-A 6px column on the left edge of each standings row filled with the row's rank colour. Each rank band opens with an 11px gray-400 header row (rank name and threshold) that carries the rail too, so the ladder is continuous even for empty bands. The rank badge (micro pill in the rank tint) repeats the rank in text.
+A 6px column on the left edge of each standings row filled with the row's rank colour. Each rank band opens with an 11px (14px on desktop) gray-400 header row (rank name and threshold) that carries the rail too, so the ladder is continuous even for empty bands. The rank badge (micro pill in the rank tint) repeats the rank in text.
 
 ## Do's and Don'ts
 

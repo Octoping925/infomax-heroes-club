@@ -25,13 +25,13 @@ export function HeroTierList() {
   return (
     <section className="rounded-[14px] border border-white/10 bg-white/3 px-3 py-3 sm:px-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <h3 className="text-base font-bold text-white">동호회 메타</h3>
-        <label className="flex items-center gap-2 text-xs text-gray-400">
+        <h3 className="text-base lg:text-lg font-bold text-white">동호회 메타</h3>
+        <label className="flex items-center gap-2 text-xs lg:text-sm text-gray-400">
           최소 픽
           <select
             value={minPickCount}
             onChange={(event) => setMinPickCount(Number(event.target.value))}
-            className="rounded-md border border-white/15 bg-[#0a0a12] px-2 py-1 text-sm text-white outline-none focus:border-cyan-300"
+            className="rounded-md border border-white/15 bg-[#0a0a12] px-2 py-1 text-sm lg:text-base text-white outline-none focus:border-cyan-300"
           >
             {[1, 3, 5, 10].map((count) => (
               <option key={count} value={count}>
@@ -52,7 +52,7 @@ export function HeroTierList() {
               type="button"
               aria-pressed={active}
               onClick={() => setPositionFilter(tab.value)}
-              className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs lg:text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
                 active
                   ? "border-cyan-300/80 bg-cyan-300/15 text-cyan-100"
                   : "border-white/15 text-gray-300 hover:bg-white/10"
@@ -65,12 +65,12 @@ export function HeroTierList() {
       </div>
 
       {tierRows.length === 0 ? (
-        <p className="px-1 py-10 text-center text-sm text-gray-400">
+        <p className="px-1 py-10 text-center text-sm lg:text-base text-gray-400">
           조건에 맞는 영웅이 없습니다. 최소 픽 횟수를 낮추거나 포지션을 바꿔 보세요.
         </p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-xs text-gray-400">
+        <table className="w-full text-sm lg:text-base">
+          <thead className="text-xs lg:text-sm text-gray-400">
             <tr>
               <th className="w-9 px-1 py-2 text-center font-medium">티어</th>
               <th className="px-2 py-2 text-left font-medium">영웅</th>
@@ -111,7 +111,7 @@ export function HeroTierList() {
                           {hero.nameKo}
                           {row.isHoneyPick && <span className="sr-only"> (꿀픽)</span>}
                         </div>
-                        <div className="text-xs text-gray-400">{HeroRoleLabelMap[hero.role]}</div>
+                        <div className="text-xs lg:text-sm text-gray-400">{HeroRoleLabelMap[hero.role]}</div>
                       </div>
                     </div>
                   </td>
@@ -119,7 +119,7 @@ export function HeroTierList() {
                     <div className={`font-semibold ${row.pickWinRate >= 50 ? "text-emerald-200" : "text-rose-200"}`}>
                       {formatNumber(row.pickWinRate)}%
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs lg:text-sm text-gray-400">
                       {row.wins}승 {row.losses}패
                     </div>
                   </td>
@@ -134,7 +134,7 @@ export function HeroTierList() {
         </table>
       )}
 
-      <p className="mt-3 border-t border-white/6 px-1 pt-3 text-xs text-gray-400">
+      <p className="mt-3 border-t border-white/6 px-1 pt-3 text-xs lg:text-sm text-gray-400">
         🐝 꿀픽: 승률 60% 이상인데 밴은 잘 안 당하는 영웅
       </p>
     </section>
