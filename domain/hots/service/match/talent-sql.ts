@@ -20,7 +20,10 @@ export async function insertGameTeamMemberTalents(
   await tx.gameTeamMemberTalent.createMany({
     data: talents.map((talent) => ({
       id: randomUUID(),
-      ...talent,
+      gameTeamMemberId: talent.gameTeamMemberId,
+      tier: talent.tier,
+      rawCode: talent.rawCode,
+      talentKey: talent.talentKey,
     })),
   });
 }
