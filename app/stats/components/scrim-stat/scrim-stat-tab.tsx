@@ -31,7 +31,7 @@ export function ScrimStatTab({ onPlayerRowClick }: ScrimStatTabProps) {
             type="button"
             aria-pressed={mobilePanel === panel.value}
             onClick={() => setMobilePanel(panel.value)}
-            className={`flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
+            className={`min-h-11 flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
               mobilePanel === panel.value
                 ? "border-cyan-400 bg-cyan-500/20 text-white"
                 : "border-transparent text-gray-400 hover:text-white"

@@ -1,22 +1,23 @@
 "use client";
 
-import { createContext, Suspense, useState } from "react";
-import { TeamSwitchChart } from "./team-switch-chart";
-import { AvgStatsRankingChart } from "./avg-kills-deaths-ranking-chart";
-import { FantasyDuoRankingChart } from "./fantasy-duo-ranking-chart";
-import { HeroDuoRankingChart } from "./hero-duo-ranking-chart";
+import { createContext, lazy, Suspense, useState } from "react";
 import type { PlayerListItem } from "../../api/players/route";
 import { useHashSyncedTab } from "../hooks/use-tab-hash";
 import { PersonalStatTab } from "./personal-stat/personal-stat-tab";
 import { Loading } from "@/components/Loading";
-import { ScrimStatTab } from "./scrim-stat/scrim-stat-tab";
-import { RivalryTab } from "../rivalry/rivalry-tab";
-import { MapStatTab } from "./map-stat/map-stat-tab";
-import { CounterPickTab } from "./counter-pick-tab";
-import { TeamComposerTab } from "./team-composer/team-composer-tab";
-import { TeammateFrequencyTab } from "./teammate-frequency-tab";
 import { StatsYearContext, useStatsYearFilter } from "../hooks/useStatsYearFilter";
 import { StatsErrorBoundary } from "./StatsErrorBoundary";
+
+const TeamSwitchChart = lazy(() => import("./team-switch-chart").then((module) => ({ default: module.TeamSwitchChart })));
+const AvgStatsRankingChart = lazy(() => import("./avg-kills-deaths-ranking-chart").then((module) => ({ default: module.AvgStatsRankingChart })));
+const FantasyDuoRankingChart = lazy(() => import("./fantasy-duo-ranking-chart").then((module) => ({ default: module.FantasyDuoRankingChart })));
+const HeroDuoRankingChart = lazy(() => import("./hero-duo-ranking-chart").then((module) => ({ default: module.HeroDuoRankingChart })));
+const ScrimStatTab = lazy(() => import("./scrim-stat/scrim-stat-tab").then((module) => ({ default: module.ScrimStatTab })));
+const RivalryTab = lazy(() => import("../rivalry/rivalry-tab").then((module) => ({ default: module.RivalryTab })));
+const MapStatTab = lazy(() => import("./map-stat/map-stat-tab").then((module) => ({ default: module.MapStatTab })));
+const CounterPickTab = lazy(() => import("./counter-pick-tab").then((module) => ({ default: module.CounterPickTab })));
+const TeamComposerTab = lazy(() => import("./team-composer/team-composer-tab").then((module) => ({ default: module.TeamComposerTab })));
+const TeammateFrequencyTab = lazy(() => import("./teammate-frequency-tab").then((module) => ({ default: module.TeammateFrequencyTab })));
 
 type TabType =
   | "personalStats"
@@ -88,18 +89,25 @@ export function StatsPageLayout({ players, availableYears }: Props) {
 
   return (
     <StatsYearContext.Provider value={statsYear}>
-      <div className="w-full px-2">
-        <nav className="w-full px-3 md:px-6 pt-3 border-b border-white/10">
-          <div className="max-w-7xl mx-auto flex flex-col gap-2">
-            <div className="flex w-max max-w-full gap-1 rounded-xl bg-white/5 p-1">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 py-7 sm:py-10">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">내전 기록실</h1>
+            <p className="mt-2 text-sm leading-6 text-gray-400">우리의 경기를 숫자로 돌아보세요.</p>
+          </div>
+          {statsYear.selectedYear && <p className="text-sm text-gray-400">현재 기록 <span className="ml-2 font-semibold tabular-nums text-white">{statsYear.selectedYear}년</span></p>}
+        </div>
+        <div className="grid gap-8 pt-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10 lg:pt-8">
+          <nav aria-label="통계 탐색" className="min-w-0">
+            <div className="flex gap-1 overflow-x-auto border-b border-white/10 lg:flex-col lg:overflow-visible lg:border-b-0">
               {GROUPS.map((group) => (
                 <button
                   key={group.id}
                   onClick={() => handleTabSelect(TABS.find((tab) => tab.group === group.id)!.id)}
-                  className={`whitespace-nowrap px-4 md:px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 lg:border-b-0 lg:px-3 ${
                     selectedTab.group === group.id
-                      ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/25"
-                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                      ? "border-cyan-400 text-white lg:bg-white/10"
+                      : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
                   }`}
                   aria-pressed={selectedTab.group === group.id}
                 >
@@ -107,12 +115,14 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                 </button>
               ))}
             </div>
-            <div className="flex gap-5 overflow-x-auto scrollbar-hide">
+          </nav>
+          <main className="min-w-0">
+            <div className="flex gap-6 overflow-x-auto border-b border-white/10">
               {TABS.filter((tab) => tab.group === selectedTab.group).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabSelect(tab.id)}
-                  className={`shrink-0 whitespace-nowrap border-b-2 px-0.5 py-2.5 text-sm transition-all ${
+                  className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
                     activeTab === tab.id
                       ? "border-cyan-400 font-semibold text-white"
                       : "border-transparent text-gray-400 hover:text-white"
@@ -123,25 +133,17 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                 </button>
               ))}
             </div>
-          </div>
-        </nav>
-
-        {/* 메인 컨텐츠 */}
-        <main className="max-w-7xl mx-auto mt-5">
-          <div className="flex max-lg:flex-col gap-6">
-            {/* 차트 영역 */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-lg">
-                  {selectedTab.icon}
-                </span>
-                <h2 className="text-xl font-bold text-white">{selectedTab.label}</h2>
+              <div className="flex flex-wrap items-end justify-between gap-4 pb-5 pt-7">
+                <div>
+                  <h2 className="text-xl font-bold text-white sm:text-2xl">{selectedTab.label}</h2>
+                  <p className="mt-1.5 text-sm text-gray-400">{selectedTab.group === "player" ? "선수를 선택해 기록을 살펴보세요." : selectedTab.group === "scrim" ? "내전의 기록과 흐름을 확인하세요." : selectedTab.group === "ranking" ? "함께한 경기에서 발견한 순위입니다." : "다음 경기를 위한 기록을 살펴보세요."}</p>
+                </div>
                 {SHOW_PLAYER_SELECT_TABS.has(activeTab) && (
                   <select
                     value={selectedPlayer?.id ?? ""}
                     onChange={(event) => handleSelectPlayer(event.target.value)}
                     aria-label="플레이어 선택"
-                    className="ml-auto rounded-lg border border-white/10 bg-[#0b0f1c] px-3 py-2 text-sm text-white"
+                    className="min-h-11 max-w-52 rounded-lg border border-white/15 bg-[#0a0a12] px-3 py-2.5 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                   >
                     {players.map((player) => (
                       <option key={player.id} value={player.id}>
@@ -153,17 +155,17 @@ export function StatsPageLayout({ players, availableYears }: Props) {
               </div>
 
               {availableYears.length > 0 && (
-                <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="mb-7 border-y border-white/10 py-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">기준 연도</span>
+                    <span className="mr-2 text-xs font-semibold text-gray-400">기준 연도</span>
                     {statsYear.availableYears.map((year) => (
                       <button
                         key={year}
                         onClick={() => statsYear.setSelectedYear(year)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                        className={`min-h-11 min-w-11 rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
                           statsYear.selectedYear === year
-                            ? "border-cyan-400 bg-cyan-500/20 text-white"
-                            : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+                            ? "bg-cyan-500 text-black"
+                            : "text-gray-400 hover:bg-white/10 hover:text-white"
                         }`}
                         aria-pressed={statsYear.selectedYear === year}
                       >
@@ -199,9 +201,8 @@ export function StatsPageLayout({ players, availableYears }: Props) {
                   </Suspense>
                 </StatsErrorBoundary>
               </SelectedPlayerContext.Provider>
-            </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </StatsYearContext.Provider>
   );

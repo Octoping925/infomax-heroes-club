@@ -68,7 +68,7 @@ export function RivalryCard({ card, variant }: RivalryCardProps) {
               )}
             </p>
           </div>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-gray-400">
             승률 {a.playerNickname} {a.winRate}% · {b.playerNickname} {b.winRate}%
           </p>
         </section>

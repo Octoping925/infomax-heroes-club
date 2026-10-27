@@ -29,7 +29,7 @@ export function RivalryTab() {
           <span className="text-white">최근 경기 가중</span> +{" "}
           <span className="text-white">퍼포먼스 격차(작을수록 가산)</span>로 점수를 계산합니다.
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-400">
           표본이 적은 페어는 기본적으로 제외되며(최소 {params.minMatches}회), 옵션으로 포함할 수 있습니다.
         </p>
       </>
@@ -50,7 +50,7 @@ export function RivalryTab() {
         {note}
         <RivalryControls params={params} setParams={setParams} />
         <div className="flex justify-center py-12">
-          <p className="text-gray-500">조건에 맞는 라이벌 데이터가 없습니다.</p>
+          <p className="text-gray-400">조건에 맞는 라이벌 데이터가 없습니다.</p>
         </div>
       </div>
     );

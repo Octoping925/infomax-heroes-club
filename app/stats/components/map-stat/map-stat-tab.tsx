@@ -23,9 +23,9 @@ export function MapStatTab() {
             onChange={(e) => setSelectedMap(e.target.value as GameMap)}
             className=" ml-5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
           >
-            {Object.values(MAP_CATALOG).map((value) => (
-              <option key={value.nameKo} value={value.nameKo} className="bg-[#1a1a2e] text-white">
-                {value.nameKo}
+            {Object.values(GameMap).map((map) => (
+              <option key={map} value={map} className="bg-[#1a1a2e] text-white">
+                {MAP_CATALOG[map].nameKo}
               </option>
             ))}
           </select>

@@ -68,7 +68,7 @@ export function HeroDuoRankingChart() {
           <span className="text-white">경기 1판을 1경기</span>로 보고, <span className="text-white">같은 팀</span>이었던
           영웅 2개 조합의 승률을 집계합니다.
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-400">
           무승부는 분모(총 경기 수)에 포함되며, 승률 계산은 <span className="text-gray-300">승 / (승+패+무)</span>{" "}
           기준입니다.
         </p>
@@ -101,7 +101,7 @@ export function HeroDuoRankingChart() {
 
       {rows.length === 0 ? (
         <div className="flex justify-center py-12">
-          <p className="text-gray-500">조건에 맞는 영웅 듀오 데이터가 없습니다.</p>
+          <p className="text-gray-400">조건에 맞는 영웅 듀오 데이터가 없습니다.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-white/10">

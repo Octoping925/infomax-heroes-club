@@ -24,6 +24,13 @@ colors:
   rank-bronze: "#fb923c"
   win: "#a7f3d0"
   loss: "#fecdd3"
+  chart-grid: "#333333"
+  chart-axis: "#888888"
+  chart-tooltip: "#1a1a2e"
+  chart-tooltip-text: "#e0e0e0"
+  chart-win: "#22c55e"
+  chart-loss: "#ef4444"
+  chart-games: "#7b2ff7"
 typography:
   headline:
     fontFamily: "Pretendard, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
@@ -106,6 +113,11 @@ components:
     padding: "2px 8px"
   rank-rail:
     width: "6px"
+  stats-year-selected:
+    backgroundColor: "{colors.selection-cyan}"
+    textColor: "#000000"
+    rounded: "{rounded.sm}"
+    height: "44px"
 ---
 
 # Design System: 연합인포맥스 히오스 동호회
@@ -121,7 +133,7 @@ The landing page is the one place the world turns atmospheric: radial cyan and a
 **Key Characteristics:**
 - Deep blue-black ground, white text, gray-400 for everything secondary.
 - Translucent white for every surface, border and divider; no opaque grays.
-- Cyan means selection and focus; nothing else on a data surface is cyan except the diamond rank.
+- Cyan primarily marks selection and focus; the diamond rank and existing form-trend chart also use it.
 - Rank colour lives in a 6px left rail and a tinted pill badge, never in row backgrounds.
 - Tabular numerals in every table body.
 
@@ -130,7 +142,7 @@ The landing page is the one place the world turns atmospheric: radial cyan and a
 A monochrome dark system with one interaction hue (cyan) and one categorical scale (rank colours), all from the Tailwind 4 palette except the ground values.
 
 ### Primary
-- **Selection Cyan** (`selection-cyan`): solid fill of the selected segment in shell-level switchers (TopBar nav, /stats group switch), always with black text. Its lighter edge (`selection-cyan-edge`) marks active underline tabs and the border of tinted in-surface selections; `focus-cyan` is the focus outline and focused-input border.
+- **Selection Cyan** (`selection-cyan`): solid fill with black text in the TopBar and the selected /stats year. Its lighter edge (`selection-cyan-edge`) marks active underline tabs and the border of tinted in-surface selections; `focus-cyan` is the focus outline and focused-input border.
 
 ### Secondary
 - **Landing Cyan and Landing Amber** (`landing-cyan`, `landing-amber`): the globals.css `--primary` / `--secondary` pair. Used only by the landing atmosphere (radial glows, orbs, text selection tint). Data surfaces do not consume them.
@@ -138,6 +150,7 @@ A monochrome dark system with one interaction hue (cyan) and one categorical sca
 ### Tertiary
 - **Rank Ladder** (`rank-challenger` through `rank-bronze`): one colour per scrim rank (purple, cyan, sky, amber, slate, orange; the 400 step for rails, 200 text on a 500/15 fill with a 400/40 border for badges). Source of truth is `TIER_RULES` in `app/stats/hooks/useScrimWinRateTier.ts`.
 - **Win / Loss** (`win`, `loss`): emerald-200 and rose-200 for a win rate at or above / below 50%. Pale, never saturated.
+- **Existing chart colours** (`chart-win`, `chart-loss`, `chart-games`): personal and map bar charts currently use saturated green and red for win rate and purple for game count. These are observed implementation exceptions to the restrained data-surface rule, not a general-purpose state palette.
 
 ### Neutral
 - **Void** (`void`): body background and landing base (`--background`).
@@ -145,9 +158,10 @@ A monochrome dark system with one interaction hue (cyan) and one categorical sca
 - **Ink** (`ink`), **Ink Soft** (`ink-soft`), **Ink Muted** (`ink-muted`): primary text and numbers; secondary figures (pick rate, ban rate); headers, units, captions and every explanatory line.
 - **Panel Fill / Control Fill** (`panel-fill`, `control-fill`): white at 3% for panels, 5% for segment tracks and hover rows.
 - **Hairline / Row Divider** (`hairline`, `row-divider`): white at 10% for panel borders and nav rules; white at 6% between table rows and above panel footnotes.
+- **Existing chart neutrals** (`chart-grid`, `chart-axis`, `chart-tooltip`, `chart-tooltip-text`): shared literal values currently used by Recharts grids, axes and tooltips. They are implementation exceptions to the translucent surface rule.
 
 ### Named Rules
-**The Two Signals Rule.** On a data surface the only saturated colours are selection cyan and the rank ladder. Everything else is white at some opacity or gray.
+**The Two Signals Rule.** For new data-surface controls, reserve saturated colour for selection cyan and the rank ladder. Existing charts use additional data colours as documented above.
 
 **The Translucent Surface Rule.** Surfaces, borders and dividers are white at 3/5/6/10/15%, never a new opaque gray hex.
 
@@ -159,7 +173,7 @@ A monochrome dark system with one interaction hue (cyan) and one categorical sca
 **Character:** One Korean-first sans across every role; hierarchy comes from weight and size, not from a second face.
 
 ### Hierarchy
-- **Headline** (700, 20px): the tab title on /stats and the TopBar site title.
+- **Headline** (700, 20–24px): the /stats view title; the page introduction is 24px, increasing to 30px at sm. The TopBar site title scales from 16px to 20px.
 - **Title** (700, 16px): panel headings ("선수 순위", "동호회 메타").
 - **Body** (400 to 600, 14px): table cells, names (600), buttons. The player score is set like a win rate (600, body size, ink soft); rank, not score, is what a standings row emphasises.
 - **Label** (500, 12px): table headers, sub-lines (nickname, record, sample size), counts, footnotes, chip text (600).
@@ -172,13 +186,15 @@ On desktop (`lg`, 1024px and up) the scrim tab steps every role up once: title 1
 
 ## Layout
 
-Content is centred in a 1280px max container (`max-w-7xl`) under a sticky TopBar (`max-w-6xl`). Spacing steps by 4px: 4px between segments, 8px inside cells and chips, 12px panel padding and row gaps, 16px panel side padding on sm and up, 24px between panels.
+Content is centred in a 1280px max container (`max-w-7xl`) under a sticky TopBar (`max-w-6xl`). The /stats shell has a page introduction followed by category navigation and the active view. At lg (1024px) and up, the category navigation occupies a 180px left column; below lg it becomes a horizontally scrollable row above the view. Sub-tabs remain a horizontal scrollable row. Spacing steps by 4px: 4px between segments, 8px inside cells and chips, 12px panel padding and row gaps, 16px panel side padding on sm and up, 24px between panels.
 
 The scrim tab is the reference for paired data: at lg (1024px) and up, two panels side by side at 3fr/2fr; below lg, one panel at a time behind a two-button segment switch. Table cells tighten from 8px to 4px side padding below sm (640px), and secondary columns (rank column, W-L record) drop out rather than wrap.
 
+Personal hero charts stack below sm (640px), then share two equal columns. The personal summary stacks below md (768px) and becomes a row above it. Year and view switches have a 44px minimum touch height; the mobile scrim panel switch uses the same minimum.
+
 ## Elevation & Depth
 
-Flat. Depth on data surfaces is tonal: a 3%-white panel on the ground, a 5%-white track under segments, 5%-white on row hover. The TopBar is the only layered element (sticky, ground at 90% with a strong backdrop blur). Glows and gradients belong to the landing page only.
+Data panels are flat. Depth is tonal: a 3%-white panel on the ground, a 5%-white track under segments, 5%-white on row hover. The sticky TopBar uses a 90%-opacity ground and backdrop blur; its selected link currently has a cyan shadow. Glows and gradients are otherwise part of the landing-page atmosphere.
 
 ### Named Rules
 **The Flat Data Rule.** Panels, tables and controls on data surfaces carry no shadow and no gradient; separate them with a hairline or a fill step.
@@ -192,7 +208,7 @@ Soft, consistent corners scaled to element size: 14px panels (16px on older /sta
 ### Buttons (segment switches)
 - **Shape:** 8px segments inside a 12px track with 4px padding on 5%-white.
 - **Shell primary:** selected is solid selection cyan with black text, 14px medium; unselected is gray-300 text, hover 10%-white fill and white text.
-- **In-surface switch:** selected is cyan at 20% with a cyan-400 border and white text; unselected is transparent with gray-400 text. Used where the switch sits inside a tab (scrim mobile panel switch, year filter).
+- **In-surface switch:** selected is cyan at 20% with a cyan-400 border and white text; unselected is transparent with gray-400 text. Used for the mobile scrim panel switch. The /stats year filter uses a solid cyan selected button with black text.
 - **Focus:** 2px cyan-300 outline, 2px offset.
 
 ### Chips (filters)
@@ -213,7 +229,8 @@ Soft, consistent corners scaled to element size: 14px panels (16px on older /sta
 
 ### Navigation
 - **TopBar:** sticky, ground at 90% with backdrop blur, bottom hairline; links are 8px-radius pills using the shell primary segment states.
-- **/stats tabs:** group switch (shell primary segments), then underline tabs: 2px bottom border, cyan-400 and white semibold when active, gray-400 otherwise.
+- **/stats categories:** a 180px vertical navigation at lg and above; the selected category has a 10%-white background. Below lg, categories form a horizontal row with a cyan underline on the selected item.
+- **/stats tabs:** a second horizontal row with a 2px cyan-400 bottom border and white semibold text when active; inactive labels are gray-400. The row scrolls horizontally as needed.
 
 ### Data Table
 - Header 12px medium gray-400; rows separated by a 6% top border; clickable rows hover to 5%-white and carry a real button on the name for keyboard access.
@@ -226,7 +243,7 @@ A 6px column on the left edge of each standings row filled with the row's rank c
 
 ### Do:
 - **Do** build data surfaces from the ground, a 3%-white panel, 10%-white hairlines and 6%-white row dividers.
-- **Do** use solid selection cyan with black text only for shell-level selection; use the 20% cyan tint for selections inside a surface.
+- **Do** use solid selection cyan with black text for TopBar selection and the /stats year filter; use the 20% cyan tint for the mobile scrim panel switch.
 - **Do** take rank colours from `TIER_RULES` and show them as a rail plus badge.
 - **Do** set table numbers in tabular numerals, right-aligned, with muted units and sample size.
 - **Do** give every interactive control a 2px cyan-300 focus outline and `aria-pressed` on toggles.

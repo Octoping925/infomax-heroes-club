@@ -72,7 +72,7 @@ export function TeamComposerTab() {
 
   const effectiveCandidateIds = useMemo(() => {
     const normalized = normalizeCandidateIds(selectedCandidateIds, playerById);
-    if (normalized.length > 0) {
+    if (selectedCandidateIds !== null) {
       return normalized;
     }
 
@@ -214,6 +214,7 @@ export function TeamComposerTab() {
         <div className="flex flex-wrap items-center gap-3">
           <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">동팀 경험 조회</h4>
           <select
+            aria-label="동팀 경험 조회 선수"
             value={effectiveSelectedPlayerId ?? ""}
             onChange={(event) => setSelectedPlayerId(event.target.value)}
             className="rounded-md border border-white/30 bg-black/50 px-3 py-1.5 text-sm text-white outline-none focus:border-cyan-300"
@@ -273,16 +274,17 @@ export function TeamComposerTab() {
                 <button
                   type="button"
                   key={player.playerId}
+                  aria-pressed={active}
                   onClick={() => {
                     setSelectedCandidateIds((current) => {
-                      const base = normalizeCandidateIds(current, playerById);
+                      const base = current === null ? effectiveCandidateIds : normalizeCandidateIds(current, playerById);
                       if (base.includes(player.playerId)) {
                         return base.filter((id) => id !== player.playerId);
                       }
                       return [...base, player.playerId];
                     });
                   }}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`min-h-11 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${
                     active
                       ? "border-cyan-300 bg-cyan-400/20 text-cyan-100"
                       : "border-white/20 bg-white/5 text-gray-300 hover:bg-white/10"

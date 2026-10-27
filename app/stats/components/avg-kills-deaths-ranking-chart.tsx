@@ -44,7 +44,7 @@ export function AvgStatsRankingChart() {
   if (!data || data.length === 0) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-gray-500">데이터가 없습니다.</p>
+        <p className="text-gray-400">데이터가 없습니다.</p>
       </div>
     );
   }

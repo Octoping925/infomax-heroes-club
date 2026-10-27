@@ -35,17 +35,9 @@ export function OverallStats({ playerId }: Props) {
 
   return (
     <div className="flex flex-col md:flex-row gap-4">
-      <WinRateSummary
-        title="내전 승률"
-        stats={selectedPlayerStat.matchStats}
-        accent="from-cyan-500/30 to-cyan-700/20"
-      />
-      <WinRateSummary
-        title="경기 승률"
-        stats={selectedPlayerStat.gameStats}
-        accent="from-purple-500/30 to-purple-700/20"
-      />
-      <AverageStatsSummary title="평균 스탯" stats={selectedPlayerKda} accent="from-blue-500/30 to-blue-700/20" />
+      <WinRateSummary title="내전 승률" stats={selectedPlayerStat.matchStats} />
+      <WinRateSummary title="경기 승률" stats={selectedPlayerStat.gameStats} />
+      <AverageStatsSummary title="평균 스탯" stats={selectedPlayerKda} />
     </div>
   );
 }
@@ -53,14 +45,12 @@ export function OverallStats({ playerId }: Props) {
 function WinRateSummary({
   title,
   stats,
-  accent,
 }: {
   readonly title: string;
   readonly stats: WinRateStats;
-  readonly accent: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}>
+    <div className="w-full rounded-xl border border-white/10 bg-white/3 p-5">
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
         {stats.winRate}%<span className="text-sm text-gray-300 ml-2">({stats.totalGames}경기)</span>
@@ -85,12 +75,11 @@ interface AverageStatsSummaryProps {
     averageHeroDamage: number;
     averageDamageTaken: number;
   };
-  accent: string;
 }
 
-function AverageStatsSummary({ title, stats, accent }: AverageStatsSummaryProps) {
+function AverageStatsSummary({ title, stats }: AverageStatsSummaryProps) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-4 w-full`}>
+    <div className="w-full rounded-xl border border-white/10 bg-white/3 p-5">
       <h4 className="text-sm font-semibold text-gray-300">{title}</h4>
       <p className="text-3xl font-bold text-white mt-3">
         {round(stats.averageKills, 1)} / {round(stats.averageDeaths, 1)} / {round(stats.averageTakedowns, 1)}

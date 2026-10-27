@@ -15,7 +15,7 @@ export function TeammateFrequencyTab() {
   }
 
   if (!selectedPlayer || rows.length === 0) {
-    return <p className="py-12 text-center text-gray-500">함께 참가한 멤버 데이터가 없습니다.</p>;
+    return <p className="py-12 text-center text-gray-400">함께 참가한 멤버 데이터가 없습니다.</p>;
   }
 
   return (

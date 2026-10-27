@@ -58,7 +58,7 @@ export function HeroStats({ nickname }: Props) {
             id="personal-hero-map-select"
             value={selectedMap}
             onChange={(event) => setSelectedMap(event.target.value as MapFilter)}
-            className="rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white shadow-sm outline-none transition hover:bg-white/20 focus:border-cyan-300"
+            className="min-h-11 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white shadow-sm outline-none transition hover:bg-white/20 focus:border-cyan-300"
           >
             <option value="ALL">전체</option>
             {mapOptions.map((option) => (
@@ -79,8 +79,8 @@ export function HeroStats({ nickname }: Props) {
       )}
 
       {chartData.length > 0 && (
-        <div className="w-full flex gap-4">
-          <div className="space-y-3 w-full">
+        <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-4">
+          <div className="min-w-0 space-y-3">
             <h4 className="text-md font-semibold text-gray-400 uppercase tracking-wider">영웅별 경기 수</h4>
             <div
               style={{
@@ -100,7 +100,7 @@ export function HeroStats({ nickname }: Props) {
             </div>
           </div>
 
-          <div className="space-y-3 w-full">
+          <div className="min-w-0 space-y-3">
             <h4 className="text-md font-semibold text-gray-400 uppercase tracking-wider">영웅별 승률</h4>
             <div
               style={{

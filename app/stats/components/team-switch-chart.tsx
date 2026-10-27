@@ -66,7 +66,7 @@ export function TeamSwitchChart() {
   if (chartData.length === 0) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-gray-500">데이터가 없습니다.</p>
+        <p className="text-gray-400">데이터가 없습니다.</p>
       </div>
     );
   }
@@ -82,11 +82,11 @@ export function TeamSwitchChart() {
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white/5 rounded-xl p-4 border border-green-500/30">
-          <p className="text-xs text-gray-500 mb-1">팀 변경 시 승률 상승</p>
+          <p className="text-xs text-gray-400 mb-1">팀 변경 시 승률 상승</p>
           <p className="text-2xl font-bold text-green-400">{improvedPlayers.length}명</p>
         </div>
         <div className="bg-white/5 rounded-xl p-4 border border-red-500/30">
-          <p className="text-xs text-gray-500 mb-1">팀 변경 시 승률 하락</p>
+          <p className="text-xs text-gray-400 mb-1">팀 변경 시 승률 하락</p>
           <p className="text-2xl font-bold text-red-400">{worsenedPlayers.length}명</p>
         </div>
       </div>

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T02:18:50Z",
+  "title": "Design System: 연합인포맥스 히오스 동호회",
+  "extensions": {
+    "colorMeta": {
+      "selection-cyan": { "role": "primary", "displayName": "Selection Cyan", "tonalRamp": ["#083344", "#164e63", "#155e75", "#0e7490", "#0891b2", "#06b6d4", "#67e8f9", "#cffafe"] },
+      "ground": { "role": "neutral", "displayName": "Ground" },
+      "chart-win": { "role": "data", "displayName": "Chart Win" },
+      "chart-loss": { "role": "data", "displayName": "Chart Loss" },
+      "chart-games": { "role": "data", "displayName": "Chart Games" }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "View titles and site header." },
+      "body": { "displayName": "Body", "purpose": "Controls and table data." },
+      "label": { "displayName": "Label", "purpose": "Secondary context and table headings." }
+    },
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ],
+    "shadows": [
+      { "name": "topbar-selection", "value": "0 10px 15px -3px rgba(6,182,212,0.25)", "purpose": "Existing selected TopBar link; data panels are flat." }
+    ],
+    "motion": []
+  },
+  "components": [
+    {
+      "name": "Selected year", "kind": "button", "refersTo": "stats-year-selected",
+      "description": "Selected year in the statistics filter, with a 44px touch target.",
+      "html": "<button class=\"ds-year\" aria-pressed=\"true\">2026</button>",
+      "css": ".ds-year{min-height:44px;min-width:44px;padding:6px 12px;border:0;border-radius:6px;background:#06b6d4;color:#000;font:500 14px Pretendard,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer}.ds-year:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}"
+    },
+    {
+      "name": "Statistics tab", "kind": "nav",
+      "description": "Underlined current view in the horizontal statistics navigation.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-current\" aria-pressed=\"true\">개인 통계</button><button class=\"ds-tab\" aria-pressed=\"false\">팀 동료</button></nav>",
+      "css": ".ds-tabs{display:flex;gap:24px;border-bottom:1px solid rgba(255,255,255,.1);background:#0a0a12}.ds-tab{min-height:44px;padding:12px 0;border:0;border-bottom:2px solid transparent;background:transparent;color:#9ca3af;font:14px Pretendard,sans-serif;cursor:pointer}.ds-current{border-color:#22d3ee;color:white;font-weight:600}.ds-tab:hover{color:white}.ds-tab:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}"
+    },
+    {
+      "name": "Panel", "kind": "card", "refersTo": "panel",
+      "description": "Flat data panel with a translucent hairline and fill.",
+      "html": "<section class=\"ds-panel\"><strong>선수 순위</strong><p>점수순 · 14명</p></section>",
+      "css": ".ds-panel{padding:12px 16px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.03);color:white;font:14px Pretendard,sans-serif}.ds-panel p{margin:8px 0 0;color:#9ca3af;font-size:12px}"
+    },
+    {
+      "name": "Filter chip", "kind": "chip", "refersTo": "filter-chip-active",
+      "description": "Selected in-panel role filter.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"true\">탱커</button>",
+      "css": ".ds-chip{padding:4px 10px;border:1px solid rgba(103,232,249,.8);border-radius:9999px;background:rgba(103,232,249,.15);color:#cffafe;font:600 12px Pretendard,sans-serif;cursor:pointer}.ds-chip:hover{background:rgba(103,232,249,.22)}.ds-chip:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}"
+    },
+    {
+      "name": "Select", "kind": "input", "refersTo": "select",
+      "description": "Native select used for player and map filters.",
+      "html": "<label class=\"ds-label\">맵 <select class=\"ds-select\"><option>알터랙 고개</option><option>공포의 정원</option></select></label>",
+      "css": ".ds-label{color:#9ca3af;font:14px Pretendard,sans-serif}.ds-select{min-height:44px;margin-left:12px;padding:8px 12px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#0a0a12;color:white;font:14px Pretendard,sans-serif}.ds-select:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}"
+    },
+    {
+      "name": "Rank rail", "kind": "custom", "refersTo": "rank-rail",
+      "description": "Continuous rank-coloured rail beside standings rows.",
+      "html": "<div class=\"ds-rank\"><span>1</span><strong>선수</strong><span>56.6점</span></div>",
+      "css": ".ds-rank{display:flex;gap:16px;align-items:center;padding:12px;border-left:6px solid #c084fc;background:rgba(255,255,255,.03);color:white;font:14px Pretendard,sans-serif;font-variant-numeric:tabular-nums}.ds-rank span:last-child{margin-left:auto}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clubhouse Scoreboard",
+    "overview": "A near-black field where club records take priority, with cyan selection and rank colour providing structure. Data surfaces use translucent panels and fine dividers; the landing page carries the atmospheric treatment.",
+    "keyCharacteristics": ["Korean-first Pretendard typography", "Flat translucent data surfaces", "Cyan selection and rank rails", "Tabular standings and contextual records"],
+    "rules": [{ "name": "The Tabular Rule", "body": "Use tabular numerals and align numeric columns for comparison.", "section": "typography" }, { "name": "The Flat Data Rule", "body": "Separate data panels with hairlines and fill steps; chart tooltips are existing exceptions.", "section": "elevation" }],
+    "dos": ["Use a visible cyan focus outline on interactive controls.", "Preserve rank colours in the standings rail and badge."],
+    "donts": ["Do not use rank colours as full row backgrounds.", "Do not nest bordered cards inside data panels."]
+  }
+}
