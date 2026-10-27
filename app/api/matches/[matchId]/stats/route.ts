@@ -256,38 +256,41 @@ export async function PUT(
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      const byGameTeamId = new Map<string, TeamMemberAssignmentState[]>();
-      for (const member of affectedGameTeamMembers) {
-        const list = byGameTeamId.get(member.gameTeamId) ?? [];
-        list.push(member);
-        byGameTeamId.set(member.gameTeamId, list);
-      }
+    await prisma.$transaction(
+      async (tx) => {
+        const byGameTeamId = new Map<string, TeamMemberAssignmentState[]>();
+        for (const member of affectedGameTeamMembers) {
+          const list = byGameTeamId.get(member.gameTeamId) ?? [];
+          list.push(member);
+          byGameTeamId.set(member.gameTeamId, list);
+        }
 
-      for (const [gameTeamId, teamMembers] of byGameTeamId) {
-        await applyPlayerAssignments({
-          tx,
-          gameTeamId,
-          teamMembers,
-          updateByMemberId,
-          allPlayerIds,
-        });
-      }
+        for (const [gameTeamId, teamMembers] of byGameTeamId) {
+          await applyPlayerAssignments({
+            tx,
+            gameTeamId,
+            teamMembers,
+            updateByMemberId,
+            allPlayerIds,
+          });
+        }
 
-      for (const update of updates) {
-        await tx.gameTeamMember.update({
-          where: { id: update.gameTeamMemberId },
-          data: {
-            hero: update.hero,
-            position: update.position,
-            heroDamage: update.heroDamage,
-            siegeDamage: update.siegeDamage,
-            damageTaken: update.damageTaken,
-            healingDone: update.healingDone,
-          },
-        });
-      }
-    });
+        for (const update of updates) {
+          await tx.gameTeamMember.update({
+            where: { id: update.gameTeamMemberId },
+            data: {
+              hero: update.hero,
+              position: update.position,
+              heroDamage: update.heroDamage,
+              siegeDamage: update.siegeDamage,
+              damageTaken: update.damageTaken,
+              healingDone: update.healingDone,
+            },
+          });
+        }
+      },
+      { timeout: 20000, maxWait: 20000 },
+    );
 
     return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
