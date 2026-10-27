@@ -92,13 +92,16 @@ export async function createMatchFromReplays(input: unknown): Promise<CreateMatc
     if (!isUniqueConstraintError(error)) {
       throw error;
     }
-    return prisma.$transaction(async (tx) => {
-      const existing = await resolveExistingMatch(tx, persistenceInput);
-      if (!existing) {
-        throw replayConflict();
-      }
-      return { matchId: existing.id, gamesCreated: persistenceInput.games.length, idempotent: true };
-    });
+    return prisma.$transaction(
+      async (tx) => {
+        const existing = await resolveExistingMatch(tx, persistenceInput);
+        if (!existing) {
+          throw replayConflict();
+        }
+        return { matchId: existing.id, gamesCreated: persistenceInput.games.length, idempotent: true };
+      },
+      { timeout: 15000, maxWait: 15000 },
+    );
   }
 }
 
