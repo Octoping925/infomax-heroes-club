@@ -210,6 +210,18 @@ export default function MatchStatsPage() {
     });
   };
 
+  const moveGame = (index: number, direction: -1 | 1) => {
+    setStatsData((current) => {
+      if (!current) return current;
+      const target = index + direction;
+      if (target < 0 || target >= current.games.length) return current;
+      const games = [...current.games];
+      [games[index], games[target]] = [games[target], games[index]];
+      return { ...current, games: games.map((game, i) => ({ ...game, gameNumber: i + 1 })) };
+    });
+    setSaveResult({ status: "idle" });
+  };
+
   const handleSave = async () => {
     if (!selectedMatch || !statsData) return;
 
@@ -237,7 +249,7 @@ export default function MatchStatsPage() {
       const response = await fetch(`/api/matches/${selectedMatch.id}/stats`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates }),
+        body: JSON.stringify({ updates, gameOrder: statsData.games.map((game) => game.id) }),
       });
 
       const data: { success: true } | { error: string } = await response.json();
@@ -309,11 +321,15 @@ export default function MatchStatsPage() {
             )}
           </div>
 
-          {statsData?.games.map((game) => (
+          {statsData?.games.map((game, index) => (
             <div key={game.id} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 space-y-6">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-bold">{game.gameNumber}번째 경기</h2>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => moveGame(index, -1)} disabled={index === 0 || saveResult.status === "saving"} aria-label={`${game.gameNumber}번째 경기 위로 이동`} className="px-3 py-1 rounded-lg border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                    <button type="button" onClick={() => moveGame(index, 1)} disabled={index === statsData.games.length - 1 || saveResult.status === "saving"} aria-label={`${game.gameNumber}번째 경기 아래로 이동`} className="px-3 py-1 rounded-lg border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                  </div>
                   <Chip textSize="sm" className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full">
                     {game.map}
                   </Chip>

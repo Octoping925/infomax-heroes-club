@@ -1,4 +1,5 @@
 import { prisma } from "@/config/prisma";
+import { validateGameOrder } from "./game-order";
 import { Hero, HeroRole } from "@/domain/hots/models";
 import { fetchPlayerMap } from "@/app/api/stats/utils/player";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,6 +18,7 @@ type UpdateGameTeamMemberStatsInput = {
 
 type UpdateMatchStatsRequest = {
   readonly updates: ReadonlyArray<UpdateGameTeamMemberStatsInput>;
+  readonly gameOrder?: string[];
 };
 
 type TeamMemberAssignmentState = {
@@ -161,6 +163,14 @@ export async function PUT(
       }
     }
 
+    const games = body.gameOrder === undefined ? null : await prisma.game.findMany({
+      where: { matchId },
+      select: { id: true, gameNumber: true },
+    });
+    if (games && !validateGameOrder(body.gameOrder, games.map((game) => game.id))) {
+      return NextResponse.json({ error: "경기 순서가 올바르지 않습니다." }, { status: 400 });
+    }
+
     const targetMemberIds = updates.map((update) => update.gameTeamMemberId);
     const members = await prisma.gameTeamMember.findMany({
       where: {
@@ -258,6 +268,15 @@ export async function PUT(
 
     await prisma.$transaction(
       async (tx) => {
+        if (games && body.gameOrder) {
+          const temporaryStart = Math.max(0, ...games.map((game) => game.gameNumber)) + 1;
+          for (const [index, id] of body.gameOrder.entries()) {
+            await tx.game.update({ where: { id }, data: { gameNumber: temporaryStart + index } });
+          }
+          for (const [index, id] of body.gameOrder.entries()) {
+            await tx.game.update({ where: { id }, data: { gameNumber: index + 1 } });
+          }
+        }
         const byGameTeamId = new Map<string, TeamMemberAssignmentState[]>();
         for (const member of affectedGameTeamMembers) {
           const list = byGameTeamId.get(member.gameTeamId) ?? [];
