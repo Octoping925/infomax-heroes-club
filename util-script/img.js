@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 const data = [
     {
         "u": "storm_ui_icon_xalatath_q_shadowmark.png",
@@ -90,8 +92,6 @@ const data = [
 ]
 
 const prefix = "./public/talents/xalatath/";
-
-const fs = require("fs");
 
 for (const item of data) {
     const path = prefix + item.u;
