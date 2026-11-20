@@ -5,7 +5,9 @@ import {
   buildWinRateStatsFromResults,
   calculateTotalGames,
   createResultCounts,
+  createResultStreak,
   updateCountsByResult,
+  updateStreakByResult,
 } from "./stats";
 
 describe("stats 집계 유틸", () => {
@@ -44,5 +46,16 @@ describe("stats 집계 유틸", () => {
       draws: 1,
       winRate: 50,
     });
+  });
+
+  it("updateStreakByResult는 마지막 결과의 연속 횟수를 센다", () => {
+    const streak = createResultStreak();
+    for (const result of [GameResult.LOSE, GameResult.WIN, GameResult.WIN, GameResult.WIN]) {
+      updateStreakByResult(streak, result);
+    }
+    expect(streak).toEqual({ result: GameResult.WIN, count: 3 });
+
+    updateStreakByResult(streak, GameResult.DRAW);
+    expect(streak).toEqual({ result: GameResult.DRAW, count: 1 });
   });
 });

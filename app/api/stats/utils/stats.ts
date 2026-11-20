@@ -43,3 +43,22 @@ export function buildWinRateStatsFromResults(results: GameResult[]): WinRateStat
   }
   return buildWinRateStatsFromCounts(counts);
 }
+
+export type ResultStreak = {
+  result: GameResult | null;
+  count: number;
+};
+
+export function createResultStreak(): ResultStreak {
+  return { result: null, count: 0 };
+}
+
+/** 시간순으로 결과를 넣으면 마지막 결과의 연속 횟수를 유지한다 */
+export function updateStreakByResult(streak: ResultStreak, result: GameResult) {
+  if (streak.result === result) {
+    streak.count += 1;
+  } else {
+    streak.result = result;
+    streak.count = 1;
+  }
+}

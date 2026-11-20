@@ -6,8 +6,11 @@ import { fetchPlayerMap } from "../../utils/player";
 import {
   buildWinRateStatsFromCounts,
   createResultCounts,
+  createResultStreak,
   ResultCounts,
+  ResultStreak,
   updateCountsByResult,
+  updateStreakByResult,
 } from "@/app/api/stats/utils/stats";
 import { buildPlayedAtYearFilter, parseYearParam } from "@/app/api/stats/utils/query";
 
@@ -17,6 +20,7 @@ type PlayerAccumulator = {
   readonly playerNickname: string;
   readonly matchStats: ResultCounts;
   readonly gameStats: ResultCounts;
+  readonly matchStreak: ResultStreak;
 };
 
 export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<PlayerOverallWinRateResponse>>> {
@@ -35,6 +39,8 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
             },
           }
         : undefined,
+      // 연승/연패 계산을 위해 내전을 시간순으로 순회한다
+      orderBy: [{ matchTeam: { match: { playedAt: "asc" } } }, { matchTeam: { match: { createdAt: "asc" } } }],
       select: {
         playerId: true,
         matchTeam: {
@@ -85,6 +91,7 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
       playerNickname,
       matchStats: createResultCounts(),
       gameStats: createResultCounts(),
+      matchStreak: createResultStreak(),
     };
     accumulator.set(playerId, created);
     return created;
@@ -100,6 +107,7 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
     const winner = membership.matchTeam.match.winnerTeamNumber;
     const result = calculateGameResult(membership.matchTeam.teamNumber, winner);
     updateCountsByResult(entry.matchStats, result);
+    updateStreakByResult(entry.matchStreak, result);
   }
 
   for (const membership of gameMemberships) {
@@ -120,6 +128,7 @@ export async function GET(request: Request): Promise<NextResponse<ReadonlyArray<
       playerNickname: entry.playerNickname,
       matchStats: buildWinRateStatsFromCounts(entry.matchStats),
       gameStats: buildWinRateStatsFromCounts(entry.gameStats),
+      matchStreak: entry.matchStreak,
     }))
     .filter((entry) => entry.matchStats.totalGames > 0 || entry.gameStats.totalGames > 0)
     .toArray();

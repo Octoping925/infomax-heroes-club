@@ -1,4 +1,4 @@
-import { WinRateStats } from "@/app/api/stats/types";
+import { PlayerOverallWinRateResponse, WinRateStats } from "@/app/api/stats/types";
 import { useOverallWinRate } from "../../hooks/useOverallWinRate";
 import { usePlayerAverageStats } from "../../hooks/usePlayerAverageStats";
 import { commarize } from "@/utils/commarize";
@@ -35,7 +35,11 @@ export function OverallStats({ playerId }: Props) {
 
   return (
     <div className="flex flex-col md:flex-row gap-4">
-      <WinRateSummary title="내전 승률" stats={selectedPlayerStat.matchStats} />
+      <WinRateSummary
+        title="내전 승률"
+        stats={selectedPlayerStat.matchStats}
+        streak={selectedPlayerStat.matchStreak}
+      />
       <WinRateSummary title="경기 승률" stats={selectedPlayerStat.gameStats} />
       <AverageStatsSummary title="평균 스탯" stats={selectedPlayerKda} />
     </div>
@@ -45,9 +49,11 @@ export function OverallStats({ playerId }: Props) {
 function WinRateSummary({
   title,
   stats,
+  streak,
 }: {
   readonly title: string;
   readonly stats: WinRateStats;
+  readonly streak?: PlayerOverallWinRateResponse["matchStreak"];
 }) {
   return (
     <div className="w-full rounded-xl border border-white/10 bg-white/3 p-5">
@@ -57,6 +63,8 @@ function WinRateSummary({
       </p>
       <p className="text-md text-gray-400 mt-3">
         {stats.wins}승 {stats.losses}패 {stats.draws}무
+        {streak?.result === "WIN" && <span className="ml-2 font-semibold text-cyan-300">· {streak.count}연승 중</span>}
+        {streak?.result === "LOSE" && <span className="ml-2 font-semibold text-red-400">· {streak.count}연패 중</span>}
       </p>
     </div>
   );

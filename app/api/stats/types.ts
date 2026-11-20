@@ -1,4 +1,4 @@
-import { GameMap, Hero, HeroRole } from "@domain/hots/models";
+import { GameMap, GameResult, Hero, HeroRole } from "@domain/hots/models";
 import { round } from "es-toolkit";
 
 /** 승률 통계 기본 타입 */
@@ -85,6 +85,8 @@ export interface PlayerOverallWinRateResponse {
   readonly playerNickname: string;
   readonly matchStats: WinRateStats;
   readonly gameStats: WinRateStats;
+  /** 가장 최근 내전 결과의 연속 횟수 (기간 필터 기준) */
+  readonly matchStreak: { readonly result: GameResult | null; readonly count: number };
 }
 
 /** 팀 변경 승률 응답 */
