@@ -2,7 +2,7 @@ import type { HeroWinRateResponse } from "@/app/api/stats/types";
 import { HERO_CATALOG } from "@/domain/hots/constants";
 import type { Hero } from "@/domain/hots/models";
 import Image from "next/image";
-import { getPersonalHeroStatHighlights } from "./personal-hero-stat-highlights";
+import { getPersonalHeroStatHighlights, MIN_HERO_HIGHLIGHT_GAMES } from "./personal-hero-stat-highlights";
 
 interface Props {
   readonly stats: readonly HeroWinRateResponse[];
@@ -85,9 +85,9 @@ export default function HeroStatHighlights({ stats, onViewRecord }: Props) {
           카드 선정 기준
         </summary>
         <p className="pb-1 leading-relaxed">
-          승률과 패율은 10경기 이상부터 살펴봅니다. 승률 50%인 전적 15경기를 더해 계산하고,
+          {MIN_HERO_HIGHLIGHT_GAMES}경기 이상 플레이한 영웅을 살펴봅니다. 승률과 패율은 50% 전적 15경기를 더해 계산하고,
           경기 수가 적을수록 점수를 더 보수적으로 매깁니다. 무승부는 0.5승과 0.5패로 반영합니다.
-          보정 점수가 50을 넘긴 영웅 중 가장 높은 점수를 받은 영웅을 보여줍니다. 최다 픽은 3경기부터 표시합니다.
+          승률과 패율 카드는 보정 점수가 50을 넘긴 영웅 중 점수가 가장 높은 영웅을 보여줍니다.
         </p>
       </details>
     </section>

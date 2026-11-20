@@ -9,21 +9,14 @@ function record(hero: Hero, wins: number, losses: number, draws = 0): HeroWinRat
 }
 
 describe("getPersonalHeroStatHighlights", () => {
-  it("uses game count to keep small unbeaten and winless records out of the rate cards", () => {
-    const jaina = record("Jaina", 24, 12);
-    const illidan = record("Illidan", 8, 20);
+  it("allows records under ten games to qualify for both rate cards", () => {
+    const genji = record("Genji", 6, 0);
+    const uther = record("Uther", 0, 6);
     const muradin = record("Muradin", 29, 25);
 
-    expect(getPersonalHeroStatHighlights([
-      record("Genji", 9, 0),
-      record("Uther", 0, 9),
-      record("Valla", 3, 1),
-      jaina,
-      illidan,
-      muradin,
-    ])).toEqual({
-      strong: jaina,
-      weak: illidan,
+    expect(getPersonalHeroStatHighlights([genji, uther, muradin])).toEqual({
+      strong: genji,
+      weak: uther,
       mostPlayed: muradin,
       mostPlayedIsTied: false,
     });
@@ -34,7 +27,13 @@ describe("getPersonalHeroStatHighlights", () => {
     const illidan = record("Illidan", 2, 8);
     const muradin = record("Muradin", 0, 0, 12);
 
-    expect(getPersonalHeroStatHighlights([jaina, illidan, muradin])).toEqual({
+    expect(getPersonalHeroStatHighlights([
+      record("Genji", 3, 0),
+      record("Uther", 0, 3),
+      jaina,
+      illidan,
+      muradin,
+    ])).toEqual({
       strong: undefined,
       weak: undefined,
       mostPlayed: muradin,
