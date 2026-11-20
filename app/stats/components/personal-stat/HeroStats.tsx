@@ -1,6 +1,6 @@
 import { usePlayerHeroWinRate } from "../../hooks/usePlayerHeroWinRate";
 import { HeroMap, MAP_CATALOG } from "@/domain/hots/constants";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -10,9 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  ReferenceLine,
   TooltipContentProps,
 } from "recharts";
-import type { GameMap } from "@/domain/hots/models";
+import type { GameMap, Hero } from "@/domain/hots/models";
+import HeroStatHighlights from "./HeroStatHighlights";
 
 interface Props {
   readonly nickname: string;
@@ -23,6 +25,15 @@ type MapFilter = "ALL" | GameMap;
 export function HeroStats({ nickname }: Props) {
   const { data, error } = usePlayerHeroWinRate(nickname);
   const [selectedMap, setSelectedMap] = useState<MapFilter>("ALL");
+  const [focusedHero, setFocusedHero] = useState<Hero>();
+  const winRateChartRef = useRef<HTMLDivElement>(null);
+
+  const focusHeroRecord = (hero: Hero) => {
+    setFocusedHero(hero);
+    const tick = winRateChartRef.current?.querySelector<SVGTextElement>(`[data-hero="${hero}"]`);
+    tick?.focus({ preventScroll: true });
+    tick?.scrollIntoView({ block: "center" });
+  };
 
   if (error) {
     return (
@@ -38,6 +49,7 @@ export function HeroStats({ nickname }: Props) {
   const selectedHeroStats =
     selectedMap === "ALL" ? data.heroStats : (mapOptions.find((entry) => entry.map === selectedMap)?.heroStats ?? []);
   const chartData = selectedHeroStats.map((stat) => ({
+    hero: stat.hero,
     name: HeroMap[stat.hero] || stat.hero,
     totalGames: stat.totalGames,
     winRate: stat.winRate,
@@ -57,7 +69,10 @@ export function HeroStats({ nickname }: Props) {
           <select
             id="personal-hero-map-select"
             value={selectedMap}
-            onChange={(event) => setSelectedMap(event.target.value as MapFilter)}
+            onChange={(event) => {
+              setSelectedMap(event.target.value as MapFilter);
+              setFocusedHero(undefined);
+            }}
             className="min-h-11 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white shadow-sm outline-none transition hover:bg-white/20 focus:border-cyan-300"
           >
             <option value="ALL">전체</option>
@@ -69,6 +84,8 @@ export function HeroStats({ nickname }: Props) {
           </select>
         </div>
       </div>
+
+      <HeroStatHighlights stats={selectedHeroStats} onViewRecord={focusHeroRecord} />
 
       {chartData.length === 0 && (
         <div className="flex justify-center rounded-xl border border-dashed border-white/10 bg-white/5 py-10">
@@ -100,7 +117,7 @@ export function HeroStats({ nickname }: Props) {
             </div>
           </div>
 
-          <div className="min-w-0 space-y-3">
+          <div ref={winRateChartRef} className="min-w-0 space-y-3">
             <h4 className="text-md font-semibold text-gray-400 uppercase tracking-wider">영웅별 승률</h4>
             <div
               style={{
@@ -112,11 +129,40 @@ export function HeroStats({ nickname }: Props) {
                 <BarChart data={chartData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                   <XAxis type="number" domain={[0, 100]} stroke="#888" unit="%" />
-                  <YAxis type="category" dataKey="name" width={80} stroke="#888" tick={{ fontSize: 12 }} />
+                  <YAxis
+                    type="category"
+                    dataKey="hero"
+                    interval={0}
+                    width={80}
+                    stroke="#888"
+                    tick={({ x, y, payload }: { x: number; y: number; payload: { value: Hero } }) => {
+                      const stat = chartData.find(({ hero }) => hero === payload.value);
+                      if (!stat) return null;
+
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          data-hero={stat.hero}
+                          tabIndex={-1}
+                          role="img"
+                          aria-label={`${stat.name}, 승률 ${stat.winRate}%, ${stat.wins}승 ${stat.draws}무 ${stat.losses}패`}
+                          onFocus={(event) => event.stopPropagation()}
+                          dominantBaseline="central"
+                          textAnchor="end"
+                          fontSize={12}
+                          fill={focusedHero === stat.hero ? "#67e8f9" : "#888"}
+                        >
+                          {stat.name}
+                        </text>
+                      );
+                    }}
+                  />
+                  {focusedHero && <ReferenceLine y={focusedHero} stroke="#67e8f9" strokeOpacity={0.55} />}
                   <Tooltip content={HeroRateTooltip} />
                   <Bar dataKey="winRate" name="승률" fill="#22c55e">
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"} />
+                    {chartData.map((entry) => (
+                      <Cell key={entry.hero} fill={entry.winRate >= 50 ? "#22c55e" : "#ef4444"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -129,7 +175,7 @@ export function HeroStats({ nickname }: Props) {
   );
 }
 
-function HeroRateTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+function HeroRateTooltip({ active, payload }: TooltipContentProps<number, string>) {
   if (!active || !payload || !payload.length || !payload[0].payload) {
     return null;
   }
@@ -149,7 +195,7 @@ function HeroRateTooltip({ active, payload, label }: TooltipContentProps<number,
         lineHeight: 1.7,
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontWeight: 700, marginBottom: 4 }}>{d.name}</div>
       <div>
         승률: <b>{d.winRate}%</b>
       </div>
