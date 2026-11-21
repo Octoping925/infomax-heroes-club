@@ -2,6 +2,7 @@
 
 import type { TeamingPairStatResponse, TeamingPlayerProfileResponse, TeamingWindowStats } from "@/app/api/stats/types";
 import { HeroRoleLabelMap, HeroRole } from "@/domain/hots/models";
+import Link from "next/link";
 import { useTeamComposerData } from "../../hooks/useTeamComposerData";
 import { useMemo, useState } from "react";
 import { chooseCombinations } from "@/utils/combination";
@@ -341,6 +342,14 @@ export function TeamComposerTab() {
                     </ul>
                   </div>
                 </div>
+                <div className="pt-1">
+                  <Link
+                    href={buildMatchupHref(suggestion.teamA, suggestion.teamB, playerById)}
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-cyan-300/40 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                  >
+                    이 팀으로 매치업 프리뷰 열기 →
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
@@ -591,4 +600,22 @@ function renderPlayerBadge(player: TeamingPlayerProfileResponse | undefined): st
   const roleText = player.primaryRole ? HeroRoleLabelMap[player.primaryRole] : "-";
   const trendWinRate = getPlayerTrendWinRate(player);
   return `${player.playerName.slice(1)} (${roleText}, 승률 ${round(trendWinRate, 0)}%)`;
+}
+
+function buildMatchupHref(
+  teamAIds: ReadonlyArray<string>,
+  teamBIds: ReadonlyArray<string>,
+  playerById: Map<string, TeamingPlayerProfileResponse>,
+): string {
+  const teamANicknames = teamAIds
+    .map((id) => playerById.get(id)?.playerNickname)
+    .filter((nickname): nickname is string => Boolean(nickname));
+  const teamBNicknames = teamBIds
+    .map((id) => playerById.get(id)?.playerNickname)
+    .filter((nickname): nickname is string => Boolean(nickname));
+
+  const params = new URLSearchParams();
+  if (teamANicknames.length > 0) params.set("a", teamANicknames.join(","));
+  if (teamBNicknames.length > 0) params.set("b", teamBNicknames.join(","));
+  return `/matchup?${params.toString()}`;
 }

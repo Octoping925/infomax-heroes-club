@@ -19,6 +19,7 @@ export function TopBar({ value = "home", title }: TopBarProps) {
             <NavLink label="홈" href="/" isSelected={value === "home"} />
             <NavLink label="가이드" href="/guide" isSelected={value === "guide"} />
             <NavLink label="통계" href="/stats" isSelected={value === "stats"} />
+            <NavLink label="매치업" href="/matchup" isSelected={value === "matchup"} />
             <NavLink label="메타 티어" href="/tier" isSelected={value === "tier"} />
             <NavLink label="단어장" href="/glossary" isSelected={value === "glossary"} />
             <NavLink label="갤러리" href="/gallery" isSelected={value === "gallery"} />
