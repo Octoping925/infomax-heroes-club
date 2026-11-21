@@ -1,5 +1,6 @@
 import type { WinRateStats } from "@/app/api/stats/types";
 import type { GameMap, Hero, HeroRole } from "@/domain/hots/models";
+import type { HeroMetaGrade } from "@/domain/hots/service/hero-meta/hero-meta-tier";
 
 export type StrategySide = "ALLY" | "ENEMY";
 
@@ -106,14 +107,23 @@ export interface StrategyHeroRecommendation {
   readonly totalGames: number;
   readonly averageWinRate: number;
   readonly source: "MAP" | "OVERALL";
+  readonly scrimBanCount: number;
+  readonly scrimMapBanCount: number;
+  readonly metaTier: HeroMetaGrade | null;
+  readonly metaWinRate: number | null;
+  readonly metaBanRate: number | null;
   readonly reason: string;
 }
+
+export type StrategyMapAdvantage = "ALLY_HOME" | "EVEN" | "ENEMY_HOME";
 
 export interface StrategySelectedMapPlan {
   readonly map: GameMap;
   readonly allyAverageWinRate: number;
   readonly enemyAverageWinRate: number;
   readonly edge: number;
+  readonly advantage: StrategyMapAdvantage;
+  readonly metaSource: "MAP" | "OVERALL" | "NONE";
   readonly allyStandouts: ReadonlyArray<string>;
   readonly enemyStandouts: ReadonlyArray<string>;
   readonly recommendedBans: ReadonlyArray<StrategyHeroRecommendation>;
@@ -142,6 +152,7 @@ export interface StrategyMatchupReport {
 
 export interface StrategyReportResponse {
   readonly generatedAt: string;
+  readonly metaPatch: string | null;
   readonly allyTeam: StrategyTeamReport;
   readonly enemyTeam: StrategyTeamReport;
   readonly matchup: StrategyMatchupReport;

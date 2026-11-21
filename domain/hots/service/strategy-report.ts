@@ -2,6 +2,7 @@ import { calculateGameResult } from "@/domain/hots/service/match/common";
 import type {
   StrategyHeroSummary,
   StrategyHeroRecommendation,
+  StrategyMapAdvantage,
   StrategyMapSummary,
   StrategyMatchupReport,
   StrategyPlayerMatchup,
@@ -20,6 +21,12 @@ import type {
 import { buildWinRateStatsFromCounts, createResultCounts, updateCountsByResult } from "@/app/api/stats/utils/stats";
 import { HERO_CATALOG, MAP_CATALOG } from "@/domain/hots/constants";
 import { GameMap, GameResult, Hero, HeroRole } from "@/domain/hots/models";
+import { createHeroMetaDailyStore } from "@/domain/hots/repositories/hero-meta-snapshot";
+import {
+  gradeHeroStats,
+  type HeroMetaGrade,
+  type HeroMetaRow,
+} from "@/domain/hots/service/hero-meta/hero-meta-tier";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { groupBy, meanBy, round, uniq } from "es-toolkit";
 
@@ -109,6 +116,32 @@ type TeamAnalysis = {
   readonly mapMetrics: ReadonlyMap<GameMap, TeamMapMetric>;
 };
 
+type ScrimBanRow = {
+  readonly hero: Hero;
+  readonly gameTeam: {
+    readonly teamNumber: number;
+    readonly game: {
+      readonly map: GameMap;
+      readonly teams: ReadonlyArray<{
+        readonly teamNumber: number;
+        readonly members: ReadonlyArray<{
+          readonly playerId: string;
+        }>;
+      }>;
+    };
+  };
+};
+
+type ScrimTargetBanIndex = {
+  readonly overallByPlayer: ReadonlyMap<string, ReadonlyMap<Hero, number>>;
+  readonly mapByPlayer: ReadonlyMap<string, ReadonlyMap<GameMap, ReadonlyMap<Hero, number>>>;
+};
+
+type ResolvedMapMeta = {
+  readonly source: "MAP" | "OVERALL" | "NONE";
+  readonly byHero: ReadonlyMap<Hero, HeroMetaRow>;
+};
+
 export class StrategyReportError extends Error {
   readonly status: number;
 
@@ -156,7 +189,7 @@ export async function buildStrategyReport(
   const enemyPlayers = enemyNicknames.map((nickname) => playerByNickname.get(nickname)!);
   const allPlayerIds = [...allyPlayers, ...enemyPlayers].map((player) => player.id);
 
-  const [playerGameRows, relatedMatches] = await Promise.all([
+  const [playerGameRows, relatedMatches, scrimBanRows, metaSnapshot] = await Promise.all([
     prisma.gameTeamMember.findMany({
       where: {
         playerId: {
@@ -248,12 +281,62 @@ export async function buildStrategyReport(
         },
       },
     }),
+    prisma.gameTeamBan.findMany({
+      where: {
+        gameTeam: {
+          game: {
+            teams: {
+              some: {
+                members: {
+                  some: {
+                    playerId: {
+                      in: allPlayerIds,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        hero: true,
+        gameTeam: {
+          select: {
+            teamNumber: true,
+            game: {
+              select: {
+                map: true,
+                teams: {
+                  select: {
+                    teamNumber: true,
+                    members: {
+                      select: {
+                        playerId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    createHeroMetaDailyStore(prisma)
+      .get("all")
+      .catch(() => null),
   ]);
 
   const rowsByPlayer = groupBy(playerGameRows, (row) => row.playerId);
 
   const allyPlayerAnalyses = allyPlayers.map((player) => buildPlayerAnalysis(player, rowsByPlayer[player.id] ?? []));
   const enemyPlayerAnalyses = enemyPlayers.map((player) => buildPlayerAnalysis(player, rowsByPlayer[player.id] ?? []));
+  const targetBanIndex = buildScrimTargetBanIndex(
+    scrimBanRows,
+    [...allyPlayerAnalyses, ...enemyPlayerAnalyses],
+  );
+  const metaByMap = buildResolvedMetaByMap(selectedMaps, metaSnapshot);
 
   const allyTeam = buildTeamAnalysis("ALLY", allyPlayerAnalyses, relatedMatches);
   const enemyTeam = buildTeamAnalysis("ENEMY", enemyPlayerAnalyses, relatedMatches);
@@ -267,10 +350,13 @@ export async function buildStrategyReport(
     allyPlayerAnalyses,
     enemyPlayerAnalyses,
     matches: relatedMatches,
+    targetBanIndex,
+    metaByMap,
   });
 
   return {
     generatedAt: new Date().toISOString(),
+    metaPatch: metaSnapshot?.mapPatch ?? metaSnapshot?.patch ?? null,
     allyTeam: allyTeam.report,
     enemyTeam: enemyTeam.report,
     matchup,
@@ -724,6 +810,8 @@ function buildMatchupReport(input: {
   allyPlayerAnalyses: ReadonlyArray<PlayerAnalysis>;
   enemyPlayerAnalyses: ReadonlyArray<PlayerAnalysis>;
   matches: ReadonlyArray<MatchRow>;
+  targetBanIndex: ScrimTargetBanIndex;
+  metaByMap: ReadonlyMap<GameMap, ResolvedMapMeta>;
 }): StrategyMatchupReport {
   const enteredRosterCounts = createResultCounts();
   const playerMatchups = new Map<
@@ -791,6 +879,8 @@ function buildMatchupReport(input: {
       enemyMetric: input.enemyTeam.mapMetrics.get(map) ?? null,
       allyPlayerAnalyses: input.allyPlayerAnalyses,
       enemyPlayerAnalyses: input.enemyPlayerAnalyses,
+      targetBanIndex: input.targetBanIndex,
+      resolvedMeta: input.metaByMap.get(map) ?? { source: "NONE", byHero: new Map() },
     }),
   );
   const matchupRows = Array.from(playerMatchups.values(), (value) => {
@@ -832,17 +922,36 @@ function buildSelectedMapPlan(input: {
   enemyMetric: TeamMapMetric | null;
   allyPlayerAnalyses: ReadonlyArray<PlayerAnalysis>;
   enemyPlayerAnalyses: ReadonlyArray<PlayerAnalysis>;
+  targetBanIndex: ScrimTargetBanIndex;
+  resolvedMeta: ResolvedMapMeta;
 }): StrategySelectedMapPlan {
   const allyAverageWinRate = input.allyMetric?.averageWinRate ?? 0;
   const enemyAverageWinRate = input.enemyMetric?.averageWinRate ?? 0;
-  const recommendedPicks = buildHeroRecommendationsForMap(input.allyPlayerAnalyses, input.map);
-  const recommendedBans = buildHeroRecommendationsForMap(input.enemyPlayerAnalyses, input.map);
+  const edge = round(allyAverageWinRate - enemyAverageWinRate, 1);
+  const advantage: StrategyMapAdvantage = edge >= 8 ? "ALLY_HOME" : edge <= -8 ? "ENEMY_HOME" : "EVEN";
+
+  const recommendedPicks = buildHeroRecommendationsForMap({
+    playerAnalyses: input.allyPlayerAnalyses,
+    map: input.map,
+    targetBanIndex: input.targetBanIndex,
+    metaByHero: input.resolvedMeta.byHero,
+    mode: "PICK",
+  });
+  const recommendedBans = buildHeroRecommendationsForMap({
+    playerAnalyses: input.enemyPlayerAnalyses,
+    map: input.map,
+    targetBanIndex: input.targetBanIndex,
+    metaByHero: input.resolvedMeta.byHero,
+    mode: "BAN",
+  });
 
   return {
     map: input.map,
     allyAverageWinRate,
     enemyAverageWinRate,
-    edge: round(allyAverageWinRate - enemyAverageWinRate, 1),
+    edge,
+    advantage,
+    metaSource: input.resolvedMeta.source,
     allyStandouts: input.allyMetric?.standoutPlayers ?? [],
     enemyStandouts: input.enemyMetric?.standoutPlayers ?? [],
     recommendedPicks,
@@ -861,10 +970,13 @@ function buildSelectedMapPlan(input: {
   };
 }
 
-function buildHeroRecommendationsForMap(
-  playerAnalyses: ReadonlyArray<PlayerAnalysis>,
-  map: GameMap,
-): StrategyHeroRecommendation[] {
+function buildHeroRecommendationsForMap(input: {
+  playerAnalyses: ReadonlyArray<PlayerAnalysis>;
+  map: GameMap;
+  targetBanIndex: ScrimTargetBanIndex;
+  metaByHero: ReadonlyMap<Hero, HeroMetaRow>;
+  mode: "PICK" | "BAN";
+}): StrategyHeroRecommendation[] {
   const heroAccumulator = new Map<
     Hero,
     {
@@ -873,33 +985,58 @@ function buildHeroRecommendationsForMap(
       weightedWinRate: number;
       source: "MAP" | "OVERALL";
       mapBackedPlayers: number;
+      scrimBanCount: number;
+      scrimMapBanCount: number;
     }
   >();
 
-  for (const analysis of playerAnalyses) {
-    const mapCandidates = (analysis.mapHeroStatsByMap.get(map) ?? [])
+  for (const analysis of input.playerAnalyses) {
+    const playerOverallBans = input.targetBanIndex.overallByPlayer.get(analysis.player.id);
+    const playerMapBans = input.targetBanIndex.mapByPlayer.get(analysis.player.id)?.get(input.map);
+
+    const mapCandidates = (analysis.mapHeroStatsByMap.get(input.map) ?? [])
       .filter((item) => item.totalGames >= MIN_STRATEGY_HERO_GAMES)
       .slice(0, 2);
     const overallCandidates = analysis.report.signatureHeroes
       .filter((item) => item.totalGames >= MIN_STRATEGY_HERO_GAMES)
       .slice(0, 2);
-    const candidates = (mapCandidates.length > 0 ? mapCandidates : overallCandidates).slice(0, 2);
-    const source: "MAP" | "OVERALL" = mapCandidates.length > 0 ? "MAP" : "OVERALL";
 
-    for (const candidate of candidates) {
+    // Also include heroes heavily target-banned against this player in scrims (>= 2 bans) even with fewer played games
+    const heavilyBannedCandidates =
+      input.mode === "BAN" && playerOverallBans
+        ? analysis.allHeroStats
+            .filter((item) => (playerOverallBans.get(item.hero) ?? 0) >= 2 && item.totalGames >= 1)
+            .slice(0, 2)
+        : [];
+
+    const baseCandidates = (mapCandidates.length > 0 ? mapCandidates : overallCandidates).slice(0, 2);
+    const seenHeroes = new Set(baseCandidates.map((item) => item.hero));
+    const mergedCandidates = [
+      ...baseCandidates,
+      ...heavilyBannedCandidates.filter((item) => !seenHeroes.has(item.hero)),
+    ];
+    const baseSource: "MAP" | "OVERALL" = mapCandidates.length > 0 ? "MAP" : "OVERALL";
+
+    for (const candidate of mergedCandidates) {
+      const candidateSource: "MAP" | "OVERALL" =
+        baseSource === "MAP" && mapCandidates.some((item) => item.hero === candidate.hero) ? "MAP" : "OVERALL";
       const current = heroAccumulator.get(candidate.hero) ?? {
         players: new Set<string>(),
         totalGames: 0,
         weightedWinRate: 0,
-        source,
+        source: candidateSource,
         mapBackedPlayers: 0,
+        scrimBanCount: 0,
+        scrimMapBanCount: 0,
       };
 
       current.players.add(analysis.player.nickname);
       current.totalGames += candidate.totalGames;
       current.weightedWinRate += candidate.winRate * candidate.totalGames;
-      current.mapBackedPlayers += source === "MAP" ? 1 : 0;
-      if (source === "MAP") {
+      current.mapBackedPlayers += candidateSource === "MAP" ? 1 : 0;
+      current.scrimBanCount += playerOverallBans?.get(candidate.hero) ?? 0;
+      current.scrimMapBanCount += playerMapBans?.get(candidate.hero) ?? 0;
+      if (candidateSource === "MAP") {
         current.source = "MAP";
       }
 
@@ -911,6 +1048,30 @@ function buildHeroRecommendationsForMap(
     const playerNicknames = Array.from(value.players);
     const averageWinRate = value.totalGames > 0 ? round(value.weightedWinRate / value.totalGames, 1) : 0;
     const source = value.mapBackedPlayers > 0 ? "MAP" : value.source;
+    const metaRow = input.metaByHero.get(hero) ?? null;
+    const metaTier = metaRow?.tier ?? null;
+    const metaWinRate = metaRow ? round(metaRow.winRate, 1) : null;
+    const metaBanRate = metaRow?.banRate !== null && metaRow?.banRate !== undefined ? round(metaRow.banRate, 1) : null;
+
+    const baseReason =
+      source === "MAP"
+        ? `${playerNicknames.join(", ")}이(가) 이 맵에서 ${averageWinRate}% 승률(${value.totalGames}경기)`
+        : `${playerNicknames.join(", ")}이(가) 주력으로 쓰며 ${averageWinRate}% 승률(${value.totalGames}경기)`;
+
+    const extraNotes: string[] = [];
+    if (value.scrimBanCount > 0) {
+      extraNotes.push(
+        value.scrimMapBanCount > 0
+          ? `내전 피밴 ${value.scrimBanCount}회(이 맵 ${value.scrimMapBanCount}회)`
+          : `내전 피밴 ${value.scrimBanCount}회`,
+      );
+    }
+    if (metaTier) {
+      extraNotes.push(metaWinRate !== null ? `메타 ${metaTier}(${metaWinRate}%)` : `메타 ${metaTier}`);
+    }
+
+    const reason = extraNotes.length > 0 ? `${baseReason} · ${extraNotes.join(" · ")}` : `${baseReason}입니다.`;
+
     return {
       hero,
       playerNicknames,
@@ -918,13 +1079,15 @@ function buildHeroRecommendationsForMap(
       totalGames: value.totalGames,
       averageWinRate,
       source,
-      reason:
-        source === "MAP"
-          ? `${playerNicknames.join(", ")}이(가) 이 맵에서 ${averageWinRate}% 승률(${value.totalGames}경기)입니다.`
-          : `${playerNicknames.join(", ")}이(가) 주력으로 쓰며 ${averageWinRate}% 승률(${value.totalGames}경기)입니다.`,
+      scrimBanCount: value.scrimBanCount,
+      scrimMapBanCount: value.scrimMapBanCount,
+      metaTier,
+      metaWinRate,
+      metaBanRate,
+      reason,
     } satisfies StrategyHeroRecommendation;
   })
-    .toSorted((left, right) => compareHeroRecommendation(left, right))
+    .toSorted((left, right) => compareHeroRecommendation(left, right, input.mode))
     .slice(0, 3);
 }
 
@@ -1049,15 +1212,103 @@ function buildSelectedMapPlanSummaryLines(input: {
   return lines.slice(0, 4);
 }
 
-function compareHeroRecommendation(left: StrategyHeroRecommendation, right: StrategyHeroRecommendation): number {
-  const leftScore = scoreHeroRecommendation(left);
-  const rightScore = scoreHeroRecommendation(right);
-  return rightScore - leftScore || right.samplePlayers - left.samplePlayers || right.totalGames - left.totalGames;
+function buildScrimTargetBanIndex(
+  bans: ReadonlyArray<ScrimBanRow>,
+  analyses: ReadonlyArray<PlayerAnalysis>,
+): ScrimTargetBanIndex {
+  const playedHeroesByPlayer = new Map<string, Set<Hero>>(
+    analyses.map((analysis) => [
+      analysis.player.id,
+      new Set(analysis.allHeroStats.map((stat) => stat.hero)),
+    ]),
+  );
+
+  const overallByPlayer = new Map<string, Map<Hero, number>>();
+  const mapByPlayer = new Map<string, Map<GameMap, Map<Hero, number>>>();
+
+  for (const ban of bans) {
+    const map = ban.gameTeam.game.map;
+    const opposingTeams = ban.gameTeam.game.teams.filter((team) => team.teamNumber !== ban.gameTeam.teamNumber);
+
+    for (const opposingTeam of opposingTeams) {
+      for (const member of opposingTeam.members) {
+        const heroPool = playedHeroesByPlayer.get(member.playerId);
+        if (!heroPool || !heroPool.has(ban.hero)) {
+          continue;
+        }
+
+        const overallMap = overallByPlayer.get(member.playerId) ?? new Map<Hero, number>();
+        overallMap.set(ban.hero, (overallMap.get(ban.hero) ?? 0) + 1);
+        overallByPlayer.set(member.playerId, overallMap);
+
+        const perPlayerMaps = mapByPlayer.get(member.playerId) ?? new Map<GameMap, Map<Hero, number>>();
+        const perMap = perPlayerMaps.get(map) ?? new Map<Hero, number>();
+        perMap.set(ban.hero, (perMap.get(ban.hero) ?? 0) + 1);
+        perPlayerMaps.set(map, perMap);
+        mapByPlayer.set(member.playerId, perPlayerMaps);
+      }
+    }
+  }
+
+  return { overallByPlayer, mapByPlayer };
 }
 
-function scoreHeroRecommendation(item: StrategyHeroRecommendation): number {
+function buildResolvedMetaByMap(
+  selectedMaps: ReadonlyArray<GameMap>,
+  snapshot: Awaited<ReturnType<ReturnType<typeof createHeroMetaDailyStore>["get"]>>,
+): Map<GameMap, ResolvedMapMeta> {
+  const result = new Map<GameMap, ResolvedMapMeta>();
+  const overallGraded = snapshot?.stats
+    ? new Map(gradeHeroStats(snapshot.stats).map((row) => [row.hero, row] as const))
+    : null;
+
+  for (const map of selectedMaps) {
+    const mapStats = snapshot?.mapStats?.[map];
+    if (mapStats && mapStats.length > 0) {
+      const gradedMap = new Map(gradeHeroStats(mapStats).map((row) => [row.hero, row] as const));
+      result.set(map, { source: "MAP", byHero: gradedMap });
+    } else if (overallGraded) {
+      result.set(map, { source: "OVERALL", byHero: overallGraded });
+    } else {
+      result.set(map, { source: "NONE", byHero: new Map() });
+    }
+  }
+
+  return result;
+}
+
+const META_TIER_BONUS: Record<HeroMetaGrade, number> = {
+  OP: 10,
+  "1티어": 6,
+  "2티어": 2,
+  "3티어": 0,
+  "4티어": -3,
+  "5티어": -6,
+};
+
+function compareHeroRecommendation(
+  left: StrategyHeroRecommendation,
+  right: StrategyHeroRecommendation,
+  mode: "PICK" | "BAN",
+): number {
+  const leftScore = scoreHeroRecommendation(left, mode);
+  const rightScore = scoreHeroRecommendation(right, mode);
+  return (
+    rightScore - leftScore ||
+    right.scrimBanCount - left.scrimBanCount ||
+    right.samplePlayers - left.samplePlayers ||
+    right.totalGames - left.totalGames
+  );
+}
+
+function scoreHeroRecommendation(item: StrategyHeroRecommendation, mode: "PICK" | "BAN"): number {
   const sourceBonus = item.source === "MAP" ? 12 : 0;
-  return item.samplePlayers * 20 + item.averageWinRate + Math.min(item.totalGames, 10) * 2 + sourceBonus;
+  const metaBonus = item.metaTier ? META_TIER_BONUS[item.metaTier] : 0;
+  const scrimBanBonus =
+    mode === "BAN"
+      ? Math.min(item.scrimBanCount, 6) * 6 + Math.min(item.scrimMapBanCount, 4) * 5
+      : Math.min(item.scrimBanCount, 4) * 2;
+  return item.samplePlayers * 20 + item.averageWinRate + Math.min(item.totalGames, 10) * 2 + sourceBonus + metaBonus + scrimBanBonus;
 }
 
 function compareWinRateWithSample(

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDeferredValue, useState } from "react";
+import { useCallback, useDeferredValue, useState } from "react";
+import { sampleSize } from "es-toolkit";
 import type { PlayerListItem } from "@/app/api/players/route";
 import type {
   StrategyHeroRecommendation,
+  StrategyMapAdvantage,
   StrategyMatchupReport,
   StrategyPlayerMatchup,
   StrategyPlayerReport,
@@ -36,20 +38,78 @@ const ROLE_LABELS: Record<HeroRole, string> = {
 
 type Props = {
   readonly players: ReadonlyArray<PlayerListItem>;
+  readonly initialAllyNicknames?: ReadonlyArray<string>;
+  readonly initialEnemyNicknames?: ReadonlyArray<string>;
+  readonly initialSelectedMaps?: ReadonlyArray<GameMap>;
+  readonly initialReport?: StrategyReportResponse | null;
 };
 
-export default function StrategyAnalyzer({ players }: Props) {
+export default function StrategyAnalyzer({
+  players,
+  initialAllyNicknames = [],
+  initialEnemyNicknames = [],
+  initialSelectedMaps = [],
+  initialReport = null,
+}: Props) {
   const router = useRouter();
-  const [allyNicknames, setAllyNicknames] = useState<string[]>([]);
-  const [enemyNicknames, setEnemyNicknames] = useState<string[]>([]);
-  const [selectedMaps, setSelectedMaps] = useState<GameMap[]>([]);
+  const [allyNicknames, setAllyNicknames] = useState<string[]>([...initialAllyNicknames]);
+  const [enemyNicknames, setEnemyNicknames] = useState<string[]>([...initialEnemyNicknames]);
+  const [selectedMaps, setSelectedMaps] = useState<GameMap[]>([...initialSelectedMaps]);
   const [allyQuery, setAllyQuery] = useState("");
   const [enemyQuery, setEnemyQuery] = useState("");
   const [mapQuery, setMapQuery] = useState("");
-  const [report, setReport] = useState<StrategyReportResponse | null>(null);
+  const [report, setReport] = useState<StrategyReportResponse | null>(initialReport);
   const [error, setError] = useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const requestReport = useCallback(
+    async (
+      nextAlly: ReadonlyArray<string>,
+      nextEnemy: ReadonlyArray<string>,
+      nextMaps: ReadonlyArray<GameMap>,
+    ) => {
+      if (nextAlly.length === 0 || nextEnemy.length === 0 || nextMaps.length === 0) {
+        setError("우리 팀, 상대 팀, 분석할 맵을 모두 선택해주세요.");
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      setCopyMessage(null);
+
+      try {
+        const response = await fetch("/api/admin/strategy-report", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            allyNicknames: nextAlly,
+            enemyNicknames: nextEnemy,
+            selectedMaps: nextMaps,
+          }),
+        });
+
+        const data = (await response.json().catch(() => null)) as StrategyReportResponse | { error?: string } | null;
+        if (!response.ok) {
+          throw new Error(
+            data && "error" in data ? (data.error ?? "리포트 생성에 실패했습니다.") : "리포트 생성에 실패했습니다.",
+          );
+        }
+
+        setReport(data as StrategyReportResponse);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "리포트 생성에 실패했습니다.";
+        setError(message);
+        setReport(null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   const deferredAllyQuery = useDeferredValue(allyQuery);
   const deferredEnemyQuery = useDeferredValue(enemyQuery);
@@ -110,10 +170,42 @@ export default function StrategyAnalyzer({ players }: Props) {
   };
 
   const handleSwap = () => {
-    setAllyNicknames(enemyNicknames);
-    setEnemyNicknames(allyNicknames);
+    const nextAlly = [...enemyNicknames];
+    const nextEnemy = [...allyNicknames];
+    setAllyNicknames(nextAlly);
+    setEnemyNicknames(nextEnemy);
     setError(null);
-    setReport(null);
+    setCopyMessage(null);
+    if (report && nextAlly.length > 0 && nextEnemy.length > 0 && selectedMaps.length > 0) {
+      void requestReport(nextAlly, nextEnemy, selectedMaps);
+    } else {
+      setReport(null);
+    }
+  };
+
+  const handlePickRandomMaps = (count: number) => {
+    const allMaps = Object.keys(MAP_CATALOG) as GameMap[];
+    const picked = sampleSize(allMaps, Math.min(count, MAX_SELECTED_MAPS));
+    setSelectedMaps(picked);
+    setMapQuery("");
+    setError(null);
+    setCopyMessage(null);
+    if (allyNicknames.length > 0 && enemyNicknames.length > 0) {
+      void requestReport(allyNicknames, enemyNicknames, picked);
+    } else {
+      setReport(null);
+    }
+  };
+
+  const handleCopyBriefing = async () => {
+    if (!report) return;
+    try {
+      const text = formatAdminStrategyBriefing(report);
+      await navigator.clipboard.writeText(text);
+      setCopyMessage("현재 아군 시점 작전 요약을 클립보드에 복사했습니다.");
+    } catch {
+      setCopyMessage("클립보드 복사에 실패했습니다.");
+    }
   };
 
   const handleAddMap = (map: GameMap) => {
@@ -135,42 +227,7 @@ export default function StrategyAnalyzer({ players }: Props) {
   };
 
   const handleGenerateReport = async () => {
-    if (allyNicknames.length === 0 || enemyNicknames.length === 0 || selectedMaps.length === 0) {
-      setError("우리 팀, 상대 팀, 분석할 맵을 모두 선택해주세요.");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/admin/strategy-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          allyNicknames,
-          enemyNicknames,
-          selectedMaps,
-        }),
-      });
-
-      const data = (await response.json().catch(() => null)) as StrategyReportResponse | { error?: string } | null;
-      if (!response.ok) {
-        throw new Error(
-          data && "error" in data ? (data.error ?? "리포트 생성에 실패했습니다.") : "리포트 생성에 실패했습니다.",
-        );
-      }
-
-      setReport(data as StrategyReportResponse);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "리포트 생성에 실패했습니다.";
-      setError(message);
-      setReport(null);
-    } finally {
-      setIsLoading(false);
-    }
+    await requestReport(allyNicknames, enemyNicknames, selectedMaps);
   };
 
   const handleLogout = async () => {
@@ -206,9 +263,10 @@ export default function StrategyAnalyzer({ players }: Props) {
               </div>
 
               <div className="flex flex-wrap gap-2">
+                <HeaderPill text="관리자 전용" />
                 <HeaderPill text="공개 네비 미노출" />
-                <HeaderPill text="비밀번호 쿠키 보호" />
-                <HeaderPill text="맵별 밴/픽 제안" />
+                <HeaderPill text="내전 피밴 + 맵 메타 반영" />
+                <HeaderPill text="랜덤 맵 뽑기 통합" />
               </div>
             </div>
 
@@ -295,6 +353,7 @@ export default function StrategyAnalyzer({ players }: Props) {
               onQueryChange={setMapQuery}
               onPick={handleAddMap}
               onRemove={handleRemoveMap}
+              onPickRandom={handlePickRandomMaps}
             />
 
             <div className="flex flex-wrap items-center gap-3">
@@ -306,6 +365,14 @@ export default function StrategyAnalyzer({ players }: Props) {
               >
                 {isLoading ? "리포트 생성 중..." : "전략 리포트 생성"}
               </button>
+              {allyNicknames.length > 0 && enemyNicknames.length > 0 && (
+                <Link
+                  href={`/matchup?a=${encodeURIComponent(allyNicknames.join(","))}&b=${encodeURIComponent(enemyNicknames.join(","))}`}
+                  className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                >
+                  공개 매치업 프리뷰로 보기 →
+                </Link>
+              )}
               <p className="text-sm text-slate-400">
                 선택된 로스터: 우리 팀 {allyNicknames.length}명 / 상대 팀 {enemyNicknames.length}명 / 맵{" "}
                 {selectedMaps.length}개
@@ -323,7 +390,14 @@ export default function StrategyAnalyzer({ players }: Props) {
         {report ? (
           <div className="space-y-8">
             <section className="grid gap-6">
-              <MatchupHeadline report={report.matchup} generatedAt={report.generatedAt} />
+              <MatchupHeadline
+                report={report.matchup}
+                generatedAt={report.generatedAt}
+                metaPatch={report.metaPatch}
+                copyMessage={copyMessage}
+                onSwapAndRerun={handleSwap}
+                onCopyBriefing={handleCopyBriefing}
+              />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.5fr_0.5fr]">
@@ -489,6 +563,7 @@ function MapSelectionPanel({
   onQueryChange,
   onPick,
   onRemove,
+  onPickRandom,
 }: {
   readonly selectedMaps: ReadonlyArray<GameMap>;
   readonly query: string;
@@ -496,19 +571,38 @@ function MapSelectionPanel({
   readonly onQueryChange: (value: string) => void;
   readonly onPick: (map: GameMap) => void;
   readonly onRemove: (map: GameMap) => void;
+  readonly onPickRandom: (count: number) => void;
 }) {
   const isFull = selectedMaps.length >= MAX_SELECTED_MAPS;
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-linear-to-br from-violet-400/10 to-fuchsia-500/8 p-5">
-      <div className="mb-4 flex items-end justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-lg font-bold text-white">분석할 맵</p>
-          <p className="text-xs text-slate-300">최대 5개까지 선택해서 맵별 밴/픽 제안을 생성합니다.</p>
+          <p className="text-xs text-slate-300">
+            직접 고르거나 랜덤 맵 뽑기로 최대 5개까지 선택해 홈/어웨이 유불리와 밴/픽을 분석합니다.
+          </p>
         </div>
-        <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-slate-200">
-          {selectedMaps.length}/{MAX_SELECTED_MAPS}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPickRandom(3)}
+            className="rounded-full border border-violet-300/30 bg-violet-400/15 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-400/25"
+          >
+            🎲 랜덤 3맵 뽑기
+          </button>
+          <button
+            type="button"
+            onClick={() => onPickRandom(5)}
+            className="rounded-full border border-violet-300/25 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+          >
+            🎲 랜덤 5맵
+          </button>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-slate-200">
+            {selectedMaps.length}/{MAX_SELECTED_MAPS}
+          </span>
+        </div>
       </div>
 
       <div className="mb-4 min-h-24 rounded-2xl border border-white/10 bg-black/15 p-3">
@@ -568,7 +662,21 @@ function MapSelectionPanel({
   );
 }
 
-function MatchupHeadline({ report, generatedAt }: { report: StrategyMatchupReport; generatedAt: string }) {
+function MatchupHeadline({
+  report,
+  generatedAt,
+  metaPatch,
+  copyMessage,
+  onSwapAndRerun,
+  onCopyBriefing,
+}: {
+  report: StrategyMatchupReport;
+  generatedAt: string;
+  metaPatch: string | null;
+  copyMessage: string | null;
+  onSwapAndRerun: () => void;
+  onCopyBriefing: () => void;
+}) {
   return (
     <div className="rounded-[32px] border border-white/10 bg-linear-to-br from-slate-900/95 to-slate-950/95 p-6 shadow-[0_24px_120px_rgba(0,0,0,0.2)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -576,10 +684,37 @@ function MatchupHeadline({ report, generatedAt }: { report: StrategyMatchupRepor
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-200/80">Matchup Core</p>
           <h2 className="mt-2 text-3xl font-bold text-white">매치업 핵심 요약</h2>
         </div>
-        <p className="text-xs text-slate-400">{formatDateTime(generatedAt)} 생성</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {metaPatch && (
+            <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-100">
+              메타 패치 {metaPatch}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onSwapAndRerun}
+            className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10"
+          >
+            상대 시점으로 즉시 전환
+          </button>
+          <button
+            type="button"
+            onClick={onCopyBriefing}
+            className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/25"
+          >
+            작전 요약 복사
+          </button>
+          <p className="text-xs text-slate-400">{formatDateTime(generatedAt)} 생성</p>
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-4">
+      {copyMessage && (
+        <p className="mt-3 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100">
+          {copyMessage}
+        </p>
+      )}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <MetricBox
           label="로스터 맞대결"
           value={`${report.enteredRosterStats.wins}-${report.enteredRosterStats.losses}-${report.enteredRosterStats.draws}`}
@@ -620,9 +755,17 @@ function SelectedMapPlanBoard({ plans }: { plans: ReadonlyArray<StrategySelected
             <div key={plan.map} className="rounded-[28px] border border-white/10 bg-black/15 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xl font-bold text-white">{getMapName(plan.map)}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xl font-bold text-white">{getMapName(plan.map)}</p>
+                    <AdvantageBadge advantage={plan.advantage} />
+                  </div>
                   <p className="mt-1 text-sm text-slate-300">
                     우리 팀 {plan.allyAverageWinRate}% / 상대 {plan.enemyAverageWinRate}%
+                    {plan.metaSource !== "NONE" && (
+                      <span className="ml-2 text-xs text-slate-400">
+                        · {plan.metaSource === "MAP" ? "맵 메타 반영" : "전체 메타 반영"}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <Chip
@@ -701,9 +844,21 @@ function RecommendationList({
             <div key={`${title}-${item.hero}`} className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <HeroIcon hero={item.hero} />
-                <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${palette}`}>
-                  {item.source === "MAP" ? "맵 표본" : "통산 보정"}
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {item.scrimBanCount > 0 && (
+                    <span className="rounded-full border border-amber-300/30 bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                      피밴 {item.scrimBanCount}회
+                    </span>
+                  )}
+                  {item.metaTier && (
+                    <span className="rounded-full border border-violet-300/30 bg-violet-400/15 px-2 py-0.5 text-[11px] font-semibold text-violet-100">
+                      메타 {item.metaTier}
+                    </span>
+                  )}
+                  <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${palette}`}>
+                    {item.source === "MAP" ? "맵 표본" : "통산 보정"}
+                  </span>
+                </div>
               </div>
               <p className="mt-1 text-xs leading-5 text-slate-400">{item.reason}</p>
             </div>
@@ -1072,4 +1227,58 @@ function HeroIcon({ hero }: { hero: Hero }) {
       <p className="text-sm font-medium text-white">{getHeroName(hero)}</p>
     </div>
   );
+}
+
+function AdvantageBadge({ advantage }: { advantage: StrategyMapAdvantage }) {
+  if (advantage === "ALLY_HOME") {
+    return (
+      <span className="rounded-full border border-cyan-300/35 bg-cyan-400/15 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-100">
+        우리 팀 홈구장
+      </span>
+    );
+  }
+  if (advantage === "ENEMY_HOME") {
+    return (
+      <span className="rounded-full border border-rose-300/35 bg-rose-400/15 px-2.5 py-0.5 text-[11px] font-semibold text-rose-100">
+        상대 홈구장
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
+      박빙
+    </span>
+  );
+}
+
+function formatAdminStrategyBriefing(report: StrategyReportResponse): string {
+  const allyNames = report.allyTeam.roster.map((p) => p.playerNickname).join(", ");
+  const enemyNames = report.enemyTeam.roster.map((p) => p.playerNickname).join(", ");
+  const lines: string[] = [
+    `[내전 전략 브리핑 · 우리 팀 시점]`,
+    `우리 팀: ${allyNames} (최근 ${report.allyTeam.averageRecentWinRate}%)`,
+    `상대 팀: ${enemyNames} (최근 ${report.enemyTeam.averageRecentWinRate}%)`,
+    "",
+  ];
+
+  for (const plan of report.matchup.selectedMapPlans) {
+    const tag = plan.advantage === "ALLY_HOME" ? "홈구장" : plan.advantage === "ENEMY_HOME" ? "상대강세" : "박빙";
+    const bans = plan.recommendedBans
+      .map((item) => {
+        const extras: string[] = [];
+        if (item.scrimBanCount > 0) extras.push(`피밴${item.scrimBanCount}`);
+        if (item.metaTier) extras.push(item.metaTier);
+        return extras.length > 0 ? `${getHeroName(item.hero)}(${extras.join("/")})` : getHeroName(item.hero);
+      })
+      .join(", ");
+    const picks = plan.recommendedPicks.map((item) => getHeroName(item.hero)).join(", ");
+
+    lines.push(
+      `🗺️ ${getMapName(plan.map)} [${tag}, ${plan.edge > 0 ? `+${plan.edge}` : plan.edge}%p]`,
+      `  - 우선 밴: ${bans || "표본 부족"}`,
+      `  - 추천 픽: ${picks || "표본 부족"}`,
+    );
+  }
+
+  return lines.join("\n");
 }
