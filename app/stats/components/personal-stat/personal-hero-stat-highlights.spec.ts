@@ -9,9 +9,9 @@ function record(hero: Hero, wins: number, losses: number, draws = 0): HeroWinRat
 }
 
 describe("getPersonalHeroStatHighlights", () => {
-  it("allows records under ten games to qualify for both rate cards", () => {
-    const genji = record("Genji", 6, 0);
-    const uther = record("Uther", 0, 6);
+  it("allows three-game unbeaten and winless records to qualify for both rate cards", () => {
+    const genji = record("Genji", 3, 0);
+    const uther = record("Uther", 0, 3);
     const muradin = record("Muradin", 29, 25);
 
     expect(getPersonalHeroStatHighlights([genji, uther, muradin])).toEqual({
@@ -23,13 +23,13 @@ describe("getPersonalHeroStatHighlights", () => {
   });
 
   it("requires the adjusted rate to clear 50 and counts draws as half a result", () => {
-    const jaina = record("Jaina", 8, 2);
-    const illidan = record("Illidan", 2, 8);
+    const jaina = record("Jaina", 3, 1);
+    const illidan = record("Illidan", 1, 3);
     const muradin = record("Muradin", 0, 0, 12);
 
     expect(getPersonalHeroStatHighlights([
-      record("Genji", 3, 0),
-      record("Uther", 0, 3),
+      record("Genji", 2, 1),
+      record("Uther", 1, 2),
       jaina,
       illidan,
       muradin,

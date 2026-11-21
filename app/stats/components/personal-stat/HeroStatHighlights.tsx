@@ -88,6 +88,7 @@ export default function HeroStatHighlights({ stats, onViewRecord }: Props) {
           {MIN_HERO_HIGHLIGHT_GAMES}경기 이상 플레이한 영웅을 살펴봅니다. 승률과 패율은 50% 전적 15경기를 더해 계산하고,
           경기 수가 적을수록 점수를 더 보수적으로 매깁니다. 무승부는 0.5승과 0.5패로 반영합니다.
           승률과 패율 카드는 보정 점수가 50을 넘긴 영웅 중 점수가 가장 높은 영웅을 보여줍니다.
+          3경기 전승·전패도 후보에 오릅니다.
         </p>
       </details>
     </section>

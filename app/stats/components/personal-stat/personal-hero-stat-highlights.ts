@@ -4,6 +4,8 @@ import { calculateConservativeWinRateScore } from "../../utils/conservative-win-
 
 export const MIN_HERO_HIGHLIGHT_GAMES = 3;
 
+const rateScore = (stat: WinRateStats) => calculateConservativeWinRateScore(stat, { zScore: 0.65 });
+
 export function getPersonalHeroStatHighlights(stats: readonly HeroWinRateResponse[]) {
   const candidates = stats
     .filter((stat) => stat.totalGames >= MIN_HERO_HIGHLIGHT_GAMES)
@@ -16,8 +18,8 @@ export function getPersonalHeroStatHighlights(stats: readonly HeroWinRateRespons
   const mostPlayed = candidates.at(0);
 
   return {
-    strong: rankBy(calculateConservativeWinRateScore),
-    weak: rankBy((stat) => calculateConservativeWinRateScore({ ...stat, wins: stat.losses, losses: stat.wins })),
+    strong: rankBy(rateScore),
+    weak: rankBy((stat) => rateScore({ ...stat, wins: stat.losses, losses: stat.wins })),
     mostPlayed,
     mostPlayedIsTied: mostPlayed !== undefined && mostPlayed.totalGames === candidates[1]?.totalGames,
   };
